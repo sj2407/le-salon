@@ -119,13 +119,43 @@ export const MyCard = () => {
     try {
       setLoading(true)
 
-      // Archive current card
-      if (card) {
-        await archiveCurrentCard()
-      }
+      // Check if current card was created today
+      const today = new Date().toDateString()
+      const cardCreatedToday = card && new Date(card.created_at).toDateString() === today
 
-      // Create new card with entries
-      await createNewCard(newEntries)
+      if (cardCreatedToday) {
+        // Update today's card instead of creating a new one
+        // Delete old entries
+        await supabase
+          .from('entries')
+          .delete()
+          .eq('card_id', card.id)
+
+        // Insert new entries
+        if (newEntries.length > 0) {
+          const entriesWithCardId = newEntries.map((entry, index) => ({
+            ...entry,
+            card_id: card.id,
+            display_order: index
+          }))
+
+          const { data: insertedEntries, error: entriesError } = await supabase
+            .from('entries')
+            .insert(entriesWithCardId)
+            .select()
+
+          if (entriesError) throw entriesError
+          setEntries(insertedEntries)
+        } else {
+          setEntries([])
+        }
+      } else {
+        // Different day - archive current card and create new one
+        if (card) {
+          await archiveCurrentCard()
+        }
+        await createNewCard(newEntries)
+      }
 
       setIsEditing(false)
     } catch (err) {
@@ -165,6 +195,7 @@ export const MyCard = () => {
           card={card}
           entries={entries}
           displayName={profile.display_name}
+          photoUrl={profile.profile_photo_url}
           isEditable={true}
           onEdit={() => setIsEditing(true)}
         />

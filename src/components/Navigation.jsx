@@ -27,6 +27,7 @@ export const Navigation = () => {
           <Link to="/">My Card</Link>
           <Link to="/history">History</Link>
           <Link to="/friends">Friends</Link>
+          <Link to="/profile">Profile</Link>
           <button onClick={handleSignOut} style={{ padding: '6px 16px', fontSize: '13px' }}>
             Sign Out
           </button>

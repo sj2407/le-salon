@@ -12,7 +12,52 @@ const CATEGORY_CONFIG = {
   'Obsessing Over': { icon: ObsessingIcon, subcategories: [] }
 }
 
-export const CardDisplay = ({ card, entries, displayName, isEditable = false, onEdit }) => {
+const linkifyText = (text) => {
+  // Check if text ends with a URL (most common pattern)
+  // Changed \s+ to \s* to handle URLs with no space before them
+  const urlAtEndRegex = /^(.+?)\s*(https?:\/\/[^\s]+)$/
+  const matchEnd = text.match(urlAtEndRegex)
+
+  if (matchEnd) {
+    const [, title, url] = matchEnd
+    return (
+      <a
+        href={url.trim()}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          color: '#4A7BA7',
+          textDecoration: 'underline'
+        }}
+      >
+        {title.trim()}
+      </a>
+    )
+  }
+
+  // Check if text contains "Title | URL" format
+  if (text.includes(' | http')) {
+    const [title, url] = text.split(' | ')
+    return (
+      <a
+        href={url.trim()}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          color: '#4A7BA7',
+          textDecoration: 'underline'
+        }}
+      >
+        {title.trim()}
+      </a>
+    )
+  }
+
+  // If no URL detected, return plain text
+  return text
+}
+
+export const CardDisplay = ({ card, entries, displayName, photoUrl, isEditable = false, onEdit }) => {
   const formatDate = (date) => {
     const d = new Date(date)
     const options = { month: 'long', day: 'numeric', year: 'numeric' }
@@ -42,7 +87,7 @@ export const CardDisplay = ({ card, entries, displayName, isEditable = false, on
               categoryEntries.map(entry => (
                 <div key={entry.id} className="item">
                   {entry.subcategory && <p className="item-label">{entry.subcategory}</p>}
-                  <p className="item-text">{entry.content}</p>
+                  <p className="item-text">{linkifyText(entry.content)}</p>
                 </div>
               ))
             ) : (
@@ -50,7 +95,7 @@ export const CardDisplay = ({ card, entries, displayName, isEditable = false, on
             )
           ) : (
             categoryEntries.length > 0 ? (
-              <p className="freeform-text">{categoryEntries[0].content}</p>
+              <p className="freeform-text">{linkifyText(categoryEntries[0].content)}</p>
             ) : (
               <p className="freeform-text" style={{ color: '#999' }}>Nothing yet...</p>
             )
@@ -63,7 +108,24 @@ export const CardDisplay = ({ card, entries, displayName, isEditable = false, on
   return (
     <div className="card">
       <header className="card-header">
-        <h1 className="card-name">{displayName}</h1>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '20px', marginBottom: '8px', marginLeft: '80px' }}>
+          <h1 className="card-name">{displayName}</h1>
+          {photoUrl && (
+            <img
+              src={photoUrl}
+              alt={displayName}
+              style={{
+                width: '120px',
+                height: '120px',
+                borderRadius: '50%',
+                objectFit: 'cover',
+                border: '3px solid #2C2C2C',
+                boxShadow: '3px 3px 0 #2C2C2C',
+                filter: 'contrast(1.1) saturate(1.2) brightness(1.05)'
+              }}
+            />
+          )}
+        </div>
         {card && <p className="card-date">{formatDate(card.created_at)}</p>}
       </header>
 

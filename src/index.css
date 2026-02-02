@@ -58,6 +58,7 @@ body {
   grid-template-columns: 1fr 1fr;
   gap: 16px;
   margin-bottom: 16px;
+  align-items: start;
 }
 
 /* Section Box */
@@ -69,6 +70,9 @@ body {
   min-height: 180px;
   display: flex;
   flex-direction: column;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
 }
 
 .section-header {
@@ -120,6 +124,9 @@ body {
   line-height: 1.4;
   font-weight: 400;
   font-style: italic;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
 }
 
 /* Full Width Section */
@@ -138,6 +145,16 @@ body {
   font-size: 15px;
   line-height: 1.6;
   font-weight: 300;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+}
+
+/* Link Styles */
+a {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
 }
 
 /* Input Styles */

@@ -8,6 +8,7 @@ import { History } from './pages/History'
 import { Friends } from './pages/Friends'
 import { FindFriends } from './pages/FindFriends'
 import { FriendCard } from './pages/FriendCard'
+import { Profile } from './pages/Profile'
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth()
@@ -104,6 +105,14 @@ function AppRoutes() {
             element={
               <ProtectedRoute>
                 <FriendCard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
               </ProtectedRoute>
             }
           />
