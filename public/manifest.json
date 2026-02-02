@@ -1,0 +1,18 @@
+{
+  "name": "Le Salon",
+  "short_name": "Le Salon",
+  "description": "Share what you're reading, listening to, and looking forward to with friends",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F5F1EB",
+  "theme_color": "#FFFEFA",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/salon-icon.jpeg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any"
+    }
+  ]
+}
