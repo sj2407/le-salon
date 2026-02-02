@@ -335,21 +335,90 @@ nav a:hover {
 }
 
 /* Responsive */
-@media (max-width: 600px) {
+@media (max-width: 768px) {
+  body {
+    background-size: 20px 20px, 20px 20px, 100% 100%;
+  }
+
+  .container {
+    max-width: 100%;
+    padding: 24px 16px;
+  }
+
   .grid {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
 
   .card {
-    padding: 24px;
+    padding: 16px;
+  }
+
+  .card-header {
+    margin-bottom: 24px !important;
+  }
+
+  .card-name {
+    font-size: 48px;
+  }
+
+  .card-date {
+    font-size: 13px;
+  }
+
+  .section-box {
+    padding: 18px;
+    min-height: 160px;
+  }
+
+  .full-width-section {
+    padding: 18px;
+  }
+
+  .section-icon {
+    width: 42px;
+    height: 42px;
+  }
+
+  .section-title {
+    font-size: 19px;
+  }
+
+  nav .container {
+    max-width: 100%;
+  }
+
+  .nav-brand {
+    font-size: 28px;
+  }
+
+  nav a {
+    font-size: 13px;
+    margin: 0 8px;
+  }
+
+  nav button {
+    padding: 4px 12px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .card-header div {
+    flex-direction: column;
+    margin-left: 0 !important;
+    gap: 16px !important;
   }
 
   .card-name {
     font-size: 42px;
   }
 
-  .section-icon {
-    width: 42px;
-    height: 42px;
+  nav img {
+    height: 36px !important;
+  }
+
+  .nav-brand {
+    font-size: 24px;
   }
 }
