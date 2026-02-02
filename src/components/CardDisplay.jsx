@@ -75,10 +75,15 @@ export const CardDisplay = ({ card, entries, displayName, photoUrl, isEditable =
 
     const sectionClass = isFullWidth ? 'full-width-section' : 'section-box'
 
+    // Special case for "Listening" to add "to"
+    const titleText = categoryName === 'Listening'
+      ? `What I'm ${categoryName.toLowerCase()} to`
+      : `What I'm ${categoryName.toLowerCase()}`
+
     return (
       <div key={categoryName} className={sectionClass}>
         <div className="section-header">
-          <span className="section-title">{`What I'm ${categoryName.toLowerCase()}`}</span>
+          <span className="section-title">{titleText}</span>
           <Icon />
         </div>
         <div className="section-content">
@@ -95,7 +100,17 @@ export const CardDisplay = ({ card, entries, displayName, photoUrl, isEditable =
             )
           ) : (
             categoryEntries.length > 0 ? (
-              <p className="freeform-text">{linkifyText(categoryEntries[0].content)}</p>
+              (categoryName === 'Obsessing Over' || categoryName === 'Looking Forward To') ? (
+                <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                  {categoryEntries[0].content.split('\n').filter(line => line.trim()).map((line, index) => (
+                    <li key={index} className="item-text" style={{ marginBottom: '8px' }}>
+                      {linkifyText(line)}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="freeform-text">{linkifyText(categoryEntries[0].content)}</p>
+              )
             ) : (
               <p className="freeform-text" style={{ color: '#999' }}>Nothing yet...</p>
             )
@@ -106,21 +121,21 @@ export const CardDisplay = ({ card, entries, displayName, photoUrl, isEditable =
   }
 
   return (
-    <div className="card">
-      <header className="card-header">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '20px', marginBottom: '8px', marginLeft: '80px' }}>
+    <div className="card" style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}>
+      <header className="card-header" style={{ marginBottom: '40px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '28px', marginBottom: '12px', marginLeft: '100px' }}>
           <h1 className="card-name">{displayName}</h1>
           {photoUrl && (
             <img
               src={photoUrl}
               alt={displayName}
               style={{
-                width: '120px',
-                height: '120px',
+                width: '160px',
+                height: '160px',
                 borderRadius: '50%',
                 objectFit: 'cover',
-                border: '3px solid #2C2C2C',
-                boxShadow: '3px 3px 0 #2C2C2C',
+                border: '4px solid #2C2C2C',
+                boxShadow: '4px 4px 0 #2C2C2C',
                 filter: 'contrast(1.1) saturate(1.2) brightness(1.05)'
               }}
             />

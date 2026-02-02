@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import salonIcon from '../assets/salon-icon.jpeg'
 
 export const Navigation = () => {
   const { user, profile, signOut } = useAuth()
@@ -19,8 +20,19 @@ export const Navigation = () => {
   return (
     <nav>
       <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Link to="/" className="nav-brand" style={{ textDecoration: 'none', color: '#2C2C2C' }}>
-          Le Salon
+        <Link to="/" style={{ textDecoration: 'none', color: '#2C2C2C', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <img
+            src={salonIcon}
+            alt="Le Salon"
+            style={{
+              height: '48px',
+              width: 'auto',
+              borderRadius: '3px',
+              border: '1.5px solid #2C2C2C',
+              boxShadow: '2px 2px 0 rgba(44, 44, 44, 0.3)'
+            }}
+          />
+          <span className="nav-brand">Le Salon</span>
         </Link>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

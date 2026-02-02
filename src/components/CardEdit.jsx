@@ -119,10 +119,15 @@ export const CardEdit = ({ entries, displayName, onSave, onCancel }) => {
     const Icon = config.icon
     const sectionClass = isFullWidth ? 'full-width-section' : 'section-box'
 
+    // Special case for "Listening" to add "to"
+    const titleText = categoryName === 'Listening'
+      ? `What I'm ${categoryName.toLowerCase()} to`
+      : `What I'm ${categoryName.toLowerCase()}`
+
     return (
       <div key={categoryName} className={sectionClass}>
         <div className="section-header">
-          <span className="section-title">{`What I'm ${categoryName.toLowerCase()}`}</span>
+          <span className="section-title">{titleText}</span>
           <Icon />
         </div>
         <div className="section-content">
