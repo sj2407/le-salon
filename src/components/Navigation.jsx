@@ -100,47 +100,37 @@ export const Navigation = () => {
         </div>
       </nav>
 
-      {/* Mobile Menu Overlay */}
+      {/* Mobile Dropdown Menu */}
       {isMenuOpen && (
-        <div className="mobile-menu-overlay" onClick={closeMenu}>
-          <div className="mobile-menu-content" onClick={(e) => e.stopPropagation()}>
-            {/* Close Button */}
-            <button className="mobile-menu-close" onClick={closeMenu} aria-label="Close menu">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2C2C2C" strokeWidth="2" strokeLinecap="round">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
+        <>
+          {/* Invisible backdrop for click-outside-to-close */}
+          <div className="mobile-dropdown-backdrop" onClick={closeMenu}></div>
+
+          {/* Dropdown Menu */}
+          <div className="mobile-dropdown-menu">
+            <button onClick={() => handleNavClick('/')} className="mobile-dropdown-item">
+              My Card
             </button>
-
-            {/* Navigation Items */}
-            <nav className="mobile-menu-nav">
-              <button onClick={() => handleNavClick('/')} className="mobile-nav-item">
-                My Card
-              </button>
-              <button onClick={() => handleNavClick('/history')} className="mobile-nav-item">
-                History
-              </button>
-              <button onClick={() => handleNavClick('/reviews')} className="mobile-nav-item">
-                Reviews
-              </button>
-              <button onClick={() => handleNavClick('/todo')} className="mobile-nav-item">
-                Activity Board
-              </button>
-              <button onClick={() => handleNavClick('/friends')} className="mobile-nav-item">
-                Friends
-              </button>
-              <button onClick={() => handleNavClick('/profile')} className="mobile-nav-item">
-                Profile
-              </button>
-            </nav>
-
-            {/* Sign Out Button */}
-            <div className="mobile-menu-separator"></div>
-            <button onClick={handleSignOut} className="mobile-sign-out">
+            <button onClick={() => handleNavClick('/history')} className="mobile-dropdown-item">
+              History
+            </button>
+            <button onClick={() => handleNavClick('/reviews')} className="mobile-dropdown-item">
+              Reviews
+            </button>
+            <button onClick={() => handleNavClick('/todo')} className="mobile-dropdown-item">
+              Activity Board
+            </button>
+            <button onClick={() => handleNavClick('/friends')} className="mobile-dropdown-item">
+              Friends
+            </button>
+            <button onClick={() => handleNavClick('/profile')} className="mobile-dropdown-item">
+              Profile
+            </button>
+            <button onClick={handleSignOut} className="mobile-dropdown-item">
               Sign Out
             </button>
           </div>
-        </div>
+        </>
       )}
     </>
   )
