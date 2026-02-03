@@ -1,5 +1,5 @@
 import { ReadingIcon } from './icons/ReadingIcon'
-import { ListeningIcon } from './icons/ListeningIcon'
+import { VinylIcon } from './icons/VinylIcon'
 import { WatchingIcon } from './icons/WatchingIcon'
 import { LookingForwardIcon } from './icons/LookingForwardIcon'
 import { ObsessingIcon } from './icons/ObsessingIcon'
@@ -7,7 +7,7 @@ import { AIPromptIcon } from './icons/AIPromptIcon'
 
 const CATEGORY_CONFIG = {
   'Reading': { icon: ReadingIcon, subcategories: ['book', 'article'] },
-  'Listening': { icon: ListeningIcon, subcategories: ['music', 'podcast', 'audiobook'] },
+  'Listening': { icon: VinylIcon, subcategories: ['music', 'podcast', 'audiobook'] },
   'Watching': { icon: WatchingIcon, subcategories: ['tv', 'movie'] },
   'Looking Forward To': { icon: LookingForwardIcon, subcategories: [] },
   'Obsessing Over': { icon: ObsessingIcon, subcategories: [] },
@@ -88,10 +88,15 @@ export const CardDisplay = ({ card, entries, displayName, photoUrl, isEditable =
     }
 
     return (
-      <div key={categoryName} className={sectionClass}>
+      <div key={categoryName} className={sectionClass} style={categoryName === 'Listening' ? { position: 'relative', overflow: 'visible' } : {}}>
+        {categoryName === 'Listening' && (
+          <div style={{ position: 'absolute', top: '-25px', right: '-25px', zIndex: 10 }}>
+            <Icon />
+          </div>
+        )}
         <div className="section-header">
           <span className="section-title">{titleText}</span>
-          <Icon />
+          {categoryName !== 'Listening' && <Icon />}
         </div>
         <div className="section-content">
           {config.subcategories.length > 0 ? (
