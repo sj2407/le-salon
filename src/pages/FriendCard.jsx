@@ -325,6 +325,7 @@ export const FriendCard = () => {
               card={card}
               entries={entries}
               displayName={friendProfile.display_name}
+              photoUrl={friendProfile.profile_photo_url}
               isEditable={false}
             />
           )}
@@ -401,23 +402,21 @@ export const FriendCard = () => {
                   <h3 style={{ fontSize: '20px', marginBottom: '16px', fontWeight: 600 }}>
                     Currently Matching
                   </h3>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <ul style={{ margin: 0, paddingLeft: '20px', listStyleType: 'disc' }}>
                     {cardOverlaps.map((overlap, index) => (
-                      <div
+                      <li
                         key={index}
                         style={{
-                          background: '#FFFEFA',
-                          border: '1.5px solid #2C2C2C',
-                          borderRadius: '3px',
-                          padding: '16px',
                           fontSize: '15px',
-                          fontStyle: 'italic'
+                          fontStyle: 'italic',
+                          marginBottom: '8px',
+                          lineHeight: 1.6
                         }}
                       >
                         You're both {overlap.category.toLowerCase()}: <strong>{overlap.content}</strong>
-                      </div>
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 </div>
               )}
 
@@ -459,36 +458,28 @@ export const FriendCard = () => {
                   <h3 style={{ fontSize: '20px', marginBottom: '16px', fontWeight: 600 }}>
                     Shared Activity Interest
                   </h3>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <ul style={{ margin: 0, paddingLeft: '20px', listStyleType: 'disc' }}>
                     {activityOverlaps.map((activity, index) => (
-                      <div
+                      <li
                         key={index}
                         style={{
-                          background: '#FFFEFA',
-                          border: '1.5px solid #2C2C2C',
-                          borderRadius: '3px',
-                          padding: '16px',
                           fontSize: '15px',
-                          fontStyle: 'italic'
+                          fontStyle: 'italic',
+                          marginBottom: '8px',
+                          lineHeight: 1.6
                         }}
                       >
                         You're both interested in: <strong>{activity.description}</strong>
                         {activity.date_text && ` (${activity.date_text})`}
-                      </div>
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 </div>
               )}
 
               {/* Empty State */}
               {cardOverlaps.length === 0 && reviewOverlaps.length === 0 && activityOverlaps.length === 0 && (
-                <div style={{
-                  background: '#FFFEFA',
-                  border: '1.5px solid #2C2C2C',
-                  borderRadius: '3px',
-                  padding: '48px 32px',
-                  textAlign: 'center'
-                }}>
+                <div style={{ padding: '20px 0' }}>
                   <p style={{ fontSize: '16px', color: '#666', margin: 0, fontStyle: 'italic' }}>
                     No overlaps yet — check back as you both update your cards!
                   </p>
