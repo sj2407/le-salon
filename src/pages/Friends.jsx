@@ -135,9 +135,25 @@ export const Friends = () => {
                 alignItems: 'center',
                 background: '#FFFEFA'
               }}>
-                <div>
-                  <div style={{ fontWeight: 600 }}>{req.friendProfile.display_name}</div>
-                  <div style={{ fontSize: '14px', color: '#777' }}>@{req.friendProfile.username}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div>
+                    <div style={{ fontWeight: 600 }}>{req.friendProfile.display_name}</div>
+                    <div style={{ fontSize: '14px', color: '#777' }}>@{req.friendProfile.username}</div>
+                  </div>
+                  {req.friendProfile.profile_photo_url && (
+                    <img
+                      src={req.friendProfile.profile_photo_url}
+                      alt={req.friendProfile.display_name}
+                      style={{
+                        width: '48px',
+                        height: '48px',
+                        borderRadius: '50%',
+                        objectFit: 'cover',
+                        border: '2px solid #2C2C2C',
+                        flexShrink: 0
+                      }}
+                    />
+                  )}
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button onClick={() => handleAccept(req.id)} className="primary" style={{ padding: '8px 16px' }}>
@@ -165,10 +181,29 @@ export const Friends = () => {
                 padding: '16px',
                 border: '1.5px solid #2C2C2C',
                 borderRadius: '3px',
-                background: '#FFFEFA'
+                background: '#FFFEFA',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px'
               }}>
-                <div style={{ fontWeight: 600 }}>{req.friendProfile.display_name}</div>
-                <div style={{ fontSize: '14px', color: '#777' }}>@{req.friendProfile.username} — Pending</div>
+                <div>
+                  <div style={{ fontWeight: 600 }}>{req.friendProfile.display_name}</div>
+                  <div style={{ fontSize: '14px', color: '#777' }}>@{req.friendProfile.username} — Pending</div>
+                </div>
+                {req.friendProfile.profile_photo_url && (
+                  <img
+                    src={req.friendProfile.profile_photo_url}
+                    alt={req.friendProfile.display_name}
+                    style={{
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '50%',
+                      objectFit: 'cover',
+                      border: '2px solid #2C2C2C',
+                      flexShrink: 0
+                    }}
+                  />
+                )}
               </div>
             ))}
           </div>
@@ -198,7 +233,10 @@ export const Friends = () => {
                   borderRadius: '3px',
                   background: '#FFFEFA',
                   transition: 'all 0.2s',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px'
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = '#F5F1EB'
@@ -208,8 +246,24 @@ export const Friends = () => {
                   e.currentTarget.style.background = '#FFFEFA'
                   e.currentTarget.style.boxShadow = 'none'
                 }}>
-                  <div style={{ fontWeight: 600 }}>{friendship.friendProfile.display_name}</div>
-                  <div style={{ fontSize: '14px', color: '#777' }}>@{friendship.friendProfile.username}</div>
+                  <div>
+                    <div style={{ fontWeight: 600 }}>{friendship.friendProfile.display_name}</div>
+                    <div style={{ fontSize: '14px', color: '#777' }}>@{friendship.friendProfile.username}</div>
+                  </div>
+                  {friendship.friendProfile.profile_photo_url && (
+                    <img
+                      src={friendship.friendProfile.profile_photo_url}
+                      alt={friendship.friendProfile.display_name}
+                      style={{
+                        width: '48px',
+                        height: '48px',
+                        borderRadius: '50%',
+                        objectFit: 'cover',
+                        border: '2px solid #2C2C2C',
+                        flexShrink: 0
+                      }}
+                    />
+                  )}
                 </div>
               </Link>
             ))}
