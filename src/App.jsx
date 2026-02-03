@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { Navigation } from './components/Navigation'
+import { Footer } from './components/Footer'
 import { SignUp } from './pages/SignUp'
 import { SignIn } from './pages/SignIn'
 import { MyCard } from './pages/MyCard'
@@ -12,6 +13,7 @@ import { Friends } from './pages/Friends'
 import { FindFriends } from './pages/FindFriends'
 import { FriendCard } from './pages/FriendCard'
 import { Profile } from './pages/Profile'
+import { AdminFeedback } from './pages/AdminFeedback'
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth()
@@ -143,7 +145,16 @@ function AppRoutes() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/admin/feedback"
+            element={
+              <ProtectedRoute>
+                <AdminFeedback />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
+        <Footer />
       </AuthProvider>
     </BrowserRouter>
   )
