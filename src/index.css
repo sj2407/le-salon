@@ -532,6 +532,7 @@ nav a {
   text-decoration: none;
   margin: 0 12px;
   font-size: 14px;
+  white-space: nowrap;
 }
 
 nav a:hover {
@@ -753,6 +754,186 @@ nav a:hover {
   background: #F5F1EB;
 }
 
+/* Reviews Page - Post-it Style Cards */
+.review-card {
+  position: relative;
+  transition: transform 200ms ease-out, box-shadow 200ms ease-out;
+}
+
+/* Random slight rotation for each review card */
+.review-card[data-index="0"],
+.review-card[data-index="3"],
+.review-card[data-index="6"],
+.review-card[data-index="9"] {
+  transform: rotate(-0.3deg);
+  animation: reviewSway1 5s ease-in-out infinite;
+}
+
+.review-card[data-index="1"],
+.review-card[data-index="4"],
+.review-card[data-index="7"],
+.review-card[data-index="10"] {
+  transform: rotate(0.4deg);
+  animation: reviewSway2 5.5s ease-in-out infinite;
+}
+
+.review-card[data-index="2"],
+.review-card[data-index="5"],
+.review-card[data-index="8"],
+.review-card[data-index="11"] {
+  transform: rotate(-0.2deg);
+  animation: reviewSway3 6s ease-in-out infinite;
+}
+
+/* Hover effect - lift and enhance shadow */
+@media (hover: hover) and (pointer: fine) {
+  .review-card:hover {
+    transform: translateY(-4px) rotate(0deg);
+    box-shadow: 4px 6px 16px rgba(0, 0, 0, 0.15);
+    animation: none;
+  }
+}
+
+/* Gentle sway animations for review cards */
+@keyframes reviewSway1 {
+  0%, 100% { transform: rotate(-0.3deg) translateY(0); }
+  50% { transform: rotate(0.1deg) translateY(-1px); }
+}
+
+@keyframes reviewSway2 {
+  0%, 100% { transform: rotate(0.4deg) translateY(0); }
+  50% { transform: rotate(0.6deg) translateY(-1px); }
+}
+
+@keyframes reviewSway3 {
+  0%, 100% { transform: rotate(-0.2deg) translateY(0); }
+  50% { transform: rotate(0.2deg) translateY(-1px); }
+}
+
+/* Filter Pills - Handmade Feel */
+.filter-pill {
+  border: 1.5px solid #2C2C2C;
+  border-radius: 14px 16px 15px 17px; /* Slightly uneven for handmade feel */
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.filter-pill:hover {
+  transform: translateY(-1px);
+  box-shadow: 2px 3px 6px rgba(0, 0, 0, 0.12);
+}
+
+/* Tab Buttons - Green Glow */
+.tab-button {
+  position: relative;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .tab-button:hover {
+    background: rgba(200, 230, 201, 0.3) !important;
+    box-shadow: 0 0 20px rgba(129, 199, 132, 0.4);
+    transform: translateY(-2px) scale(1.02);
+    color: #4CAF50 !important;
+  }
+}
+
+.tab-button:active {
+  transform: translateY(0) scale(1);
+  box-shadow: 0 0 12px rgba(129, 199, 132, 0.3);
+}
+
+/* Active tab underline */
+.tab-button[data-active="true"] {
+  color: #4CAF50 !important;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: #4CAF50;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+
+/* Activity Board - Pinned Note Style */
+.activity-board-note {
+  background: #FFFEF8;
+  border-radius: 2px;
+  box-shadow: 3px 4px 12px rgba(0, 0, 0, 0.1);
+  transform: rotate(0.3deg);
+  animation: noteSway 8s ease-in-out infinite;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+@keyframes noteSway {
+  0%, 100% { transform: rotate(0.3deg) translateY(0); }
+  50% { transform: rotate(0.5deg) translateY(-1px); }
+}
+
+/* Hand-drawn Table Styling */
+.activity-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.activity-table thead tr {
+  border-bottom: 2px solid #D0D0D0;
+}
+
+.activity-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  color: #666;
+  border-right: 1px dashed #E0E0E0;
+  position: relative;
+}
+
+.activity-table th:last-child {
+  border-right: none;
+}
+
+.activity-table td {
+  padding: 14px 16px;
+  font-size: 14px;
+  border-right: 1px dashed #E0E0E0;
+  border-bottom: 1px dashed #E8E8E8;
+}
+
+.activity-table td:last-child {
+  border-right: none;
+}
+
+.activity-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Responsive: less rotation on mobile */
+@media (max-width: 768px) {
+  .activity-board-note {
+    transform: rotate(0.3deg);
+  }
+
+  @keyframes noteSway {
+    0%, 100% { transform: rotate(0.3deg) translateY(0); }
+    50% { transform: rotate(0.5deg) translateY(-1px); }
+  }
+
+  .activity-table {
+    font-size: 12px;
+  }
+
+  .activity-table th,
+  .activity-table td {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+}
+
 /* Media Queries */
 
 /* Mobile - show hamburger, hide desktop nav */
@@ -784,6 +965,7 @@ nav a:hover {
     display: flex;
     align-items: center;
     gap: 8px;
+    flex-wrap: nowrap;
   }
 
   .hamburger-button {

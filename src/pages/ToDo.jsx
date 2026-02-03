@@ -273,10 +273,9 @@ export const ToDo = () => {
   }
 
   const getTodayFormatted = () => {
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
     const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
     const today = new Date()
-    return `${days[today.getDay()]}, ${months[today.getMonth()]} ${today.getDate()}, ${today.getFullYear()}`
+    return `${months[today.getMonth()]} ${today.getDate()}, ${today.getFullYear()}`
   }
 
   if (loading) {
@@ -292,38 +291,75 @@ export const ToDo = () => {
     : activities.filter(activity => activity.city === cityFilter)
 
   return (
-    <div className="container" style={{ maxWidth: '1200px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <div className="handwritten" style={{ fontSize: '32px' }}>
+    <div className="container" style={{ maxWidth: '900px', position: 'relative' }}>
+      {/* Collage dancing people - top right */}
+      <img
+        src="/images/activity-ready.png"
+        alt=""
+        style={{
+          position: 'absolute',
+          top: '0px',
+          right: '30px',
+          width: '180px',
+          height: 'auto',
+          opacity: 0.75,
+          pointerEvents: 'none',
+          zIndex: 0,
+          animation: 'calendarFloat 5s ease-in-out infinite',
+          filter: 'contrast(1.2) brightness(1.05)'
+        }}
+      />
+
+      <div style={{ marginBottom: '24px', position: 'relative', zIndex: 1, marginLeft: '60px' }}>
+        <div className="handwritten" style={{ fontSize: '32px', marginBottom: '16px' }}>
           {getTodayFormatted()}
         </div>
-        <button onClick={openAddModal} className="primary">
-          Add Activity
-        </button>
-      </div>
 
-      {/* City filter */}
-      <div style={{ marginBottom: '24px' }}>
-        <label style={{ fontSize: '14px', fontWeight: 600, marginRight: '8px' }}>Filter by city:</label>
-        <select
-          value={cityFilter}
-          onChange={(e) => setCityFilter(e.target.value)}
-          style={{
-            padding: '8px 12px',
-            fontSize: '14px',
-            border: '1.5px solid #2C2C2C',
-            borderRadius: '3px',
-            background: '#FFFEFA',
-            cursor: 'pointer'
-          }}
-        >
-          <option value="all">All Cities</option>
-          {CITY_OPTIONS.map((cityOption) => (
-            <option key={cityOption} value={cityOption}>
-              {cityOption}
-            </option>
-          ))}
-        </select>
+        {/* Filter and Add Activity stacked */}
+        <div>
+          <div style={{ marginBottom: '8px' }}>
+            <label style={{ fontFamily: 'Caveat, cursive', fontSize: '18px', marginRight: '8px' }}>Filter by city:</label>
+            <select
+              value={cityFilter}
+              onChange={(e) => setCityFilter(e.target.value)}
+              style={{
+                padding: '6px 12px',
+                fontSize: '14px',
+                border: '1px solid #D0D0D0',
+                borderRadius: '16px',
+                background: '#FFFEFA',
+                cursor: 'pointer',
+                boxShadow: '1px 2px 4px rgba(0, 0, 0, 0.08)'
+              }}
+            >
+              <option value="all">All Cities</option>
+              {CITY_OPTIONS.map((cityOption) => (
+                <option key={cityOption} value={cityOption}>
+                  {cityOption}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <button
+            onClick={openAddModal}
+            style={{
+              background: 'none',
+              border: 'none',
+              fontFamily: 'Caveat, cursive',
+              fontSize: '18px',
+              color: '#4A7BA7',
+              cursor: 'pointer',
+              padding: '0',
+              fontWeight: 'bold',
+              transition: 'opacity 0.2s'
+            }}
+            onMouseEnter={(e) => e.target.style.opacity = '0.7'}
+            onMouseLeave={(e) => e.target.style.opacity = '1'}
+          >
+            + Add Activity
+          </button>
+        </div>
       </div>
 
       {filteredActivities.length === 0 ? (
@@ -333,135 +369,138 @@ export const ToDo = () => {
             : `No activities in ${cityFilter}.`}
         </div>
       ) : (
-        <div style={{ overflowX: 'auto' }}>
-          <table
+        <div className="activity-board-note" style={{ position: 'relative' }}>
+          {/* Pushpin - SVG without background */}
+          <svg
+            width="50"
+            height="50"
+            viewBox="0 0 100 100"
             style={{
-              width: '100%',
-              borderCollapse: 'collapse',
-              background: '#FFFEFA',
-              border: '2px solid #2C2C2C',
-              borderRadius: '4px',
-              boxShadow: '4px 4px 0 #2C2C2C'
+              position: 'absolute',
+              top: '-20px',
+              left: '-5px',
+              zIndex: 10,
+              pointerEvents: 'none',
+              filter: 'drop-shadow(2px 2px 3px rgba(0,0,0,0.2))',
+              transform: 'rotate(-45deg)'
             }}
           >
-            <thead>
-              <tr style={{ background: '#F5F1EB', borderBottom: '2px solid #2C2C2C' }}>
-                <th style={{ padding: '16px', textAlign: 'left', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, borderRight: '1px solid #E8E8E8', minWidth: '120px' }}>
-                  Friend
-                </th>
-                <th style={{ padding: '16px', textAlign: 'left', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, borderRight: '1px solid #E8E8E8', minWidth: '200px' }}>
-                  Activity
-                </th>
-                <th style={{ padding: '16px', textAlign: 'left', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, borderRight: '1px solid #E8E8E8', minWidth: '100px' }}>
-                  Date
-                </th>
-                <th style={{ padding: '16px', textAlign: 'left', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, borderRight: '1px solid #E8E8E8', minWidth: '100px' }}>
-                  City
-                </th>
-                <th style={{ padding: '16px', textAlign: 'left', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, borderRight: '1px solid #E8E8E8', minWidth: '120px' }}>
-                  Location
-                </th>
-                <th style={{ padding: '16px', textAlign: 'left', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, borderRight: '1px solid #E8E8E8', minWidth: '80px' }}>
-                  Price
-                </th>
-                <th style={{ padding: '16px', textAlign: 'left', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, minWidth: '150px' }}>
-                  Interested
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredActivities.map((activity, index) => {
-                const poster = profiles[activity.user_id]
-                const interestedInitials = getInterestedInitials(activity.id)
-                const userIsInterested = isUserInterested(activity.id)
+            {/* Pin body */}
+            <ellipse cx="40" cy="35" rx="28" ry="32" fill="#E74C3C" />
+            <ellipse cx="40" cy="35" rx="28" ry="32" fill="url(#pinGradient)" />
 
-                return (
-                  <tr key={activity.id} style={{ borderBottom: index < filteredActivities.length - 1 ? '1px solid #E8E8E8' : 'none' }}>
-                    <td style={{ padding: '16px', fontSize: '14px', borderRight: '1px solid #E8E8E8' }}>
-                      <Link to={`/friend/${activity.user_id}`} style={{ color: '#4A7BA7', textDecoration: 'underline' }}>
-                        {poster?.display_name || 'Unknown'}
-                      </Link>
-                    </td>
-                    <td style={{ padding: '16px', fontSize: '14px', fontStyle: 'italic', borderRight: '1px solid #E8E8E8' }}>
-                      {activity.description}
-                    </td>
-                    <td style={{ padding: '16px', fontSize: '14px', borderRight: '1px solid #E8E8E8' }}>
-                      {activity.date_text || '—'}
-                    </td>
-                    <td style={{ padding: '16px', fontSize: '14px', borderRight: '1px solid #E8E8E8' }}>
-                      {activity.city || '—'}
-                    </td>
-                    <td style={{ padding: '16px', fontSize: '14px', borderRight: '1px solid #E8E8E8' }}>
-                      {activity.location || '—'}
-                    </td>
-                    <td style={{ padding: '16px', fontSize: '14px', borderRight: '1px solid #E8E8E8' }}>
-                      {activity.price || '—'}
-                    </td>
-                    <td style={{ padding: '16px', fontSize: '14px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                        {interestedInitials.length > 0 && (
-                          <span style={{ color: '#777', fontSize: '13px' }}>
-                            {interestedInitials.join(' ')}
-                          </span>
-                        )}
-                        <button
-                          onClick={() => toggleInterest(activity.id)}
-                          style={{
-                            padding: '4px 10px',
-                            fontSize: '14px',
-                            background: userIsInterested ? '#D0E0D0' : '#FFFEFA',
-                            border: '1.5px solid #2C2C2C',
-                            borderRadius: '3px',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          {userIsInterested ? '✓' : '+'}
-                        </button>
-                        {activity.user_id === profile.id && (
-                          <>
-                            <button
-                              onClick={() => openEditModal(activity)}
-                              style={{
-                                background: 'none',
-                                border: 'none',
-                                cursor: 'pointer',
-                                padding: '4px',
-                                fontSize: '16px',
-                                opacity: 0.5,
-                                transition: 'opacity 0.2s'
-                              }}
-                              onMouseEnter={(e) => e.target.style.opacity = '1'}
-                              onMouseLeave={(e) => e.target.style.opacity = '0.5'}
-                              title="Edit"
-                            >
-                              ✏️
-                            </button>
-                            <button
-                              onClick={() => handleDelete(activity.id)}
-                              style={{
-                                background: 'none',
-                                border: 'none',
-                                cursor: 'pointer',
-                                padding: '4px',
-                                fontSize: '16px',
-                                opacity: 0.5,
-                                transition: 'opacity 0.2s'
-                              }}
-                              onMouseEnter={(e) => e.target.style.opacity = '1'}
-                              onMouseLeave={(e) => e.target.style.opacity = '0.5'}
-                              title="Delete"
-                            >
-                              🗑️
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+            {/* Highlight */}
+            <ellipse cx="30" cy="25" rx="12" ry="15" fill="rgba(255,255,255,0.3)" />
+
+            {/* Pin needle */}
+            <path d="M 40 65 L 38 95 L 42 95 Z" fill="#C0C0C0" />
+            <path d="M 38 95 L 40 100 L 42 95 Z" fill="#A0A0A0" />
+
+            {/* Shadow on pin */}
+            <ellipse cx="50" cy="40" rx="8" ry="12" fill="rgba(0,0,0,0.15)" />
+
+            <defs>
+              <radialGradient id="pinGradient" cx="30%" cy="30%">
+                <stop offset="0%" stopColor="rgba(255,255,255,0.4)" />
+                <stop offset="70%" stopColor="rgba(0,0,0,0)" />
+                <stop offset="100%" stopColor="rgba(0,0,0,0.2)" />
+              </radialGradient>
+            </defs>
+          </svg>
+
+          <div style={{ overflowX: 'auto' }}>
+            <table className="activity-table">
+              <thead>
+                <tr>
+                  <th>Friend</th>
+                  <th>Activity</th>
+                  <th>Date</th>
+                  <th>City</th>
+                  <th>Location</th>
+                  <th>Price</th>
+                  <th>Interested</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredActivities.map((activity) => {
+                  const poster = profiles[activity.user_id]
+                  const interestedInitials = getInterestedInitials(activity.id)
+                  const userIsInterested = isUserInterested(activity.id)
+
+                  return (
+                    <tr key={activity.id}>
+                      <td>
+                        <Link to={`/friend/${activity.user_id}`} style={{ color: '#4A7BA7', textDecoration: 'underline' }}>
+                          {poster?.display_name || 'Unknown'}
+                        </Link>
+                      </td>
+                      <td style={{ fontStyle: 'italic' }}>{activity.description}</td>
+                      <td>{activity.date_text || '—'}</td>
+                      <td>{activity.city || '—'}</td>
+                      <td>{activity.location || '—'}</td>
+                      <td>{activity.price || '—'}</td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                          {interestedInitials.length > 0 && (
+                            <span style={{ color: '#777', fontSize: '12px' }}>
+                              {interestedInitials.join(' ')}
+                            </span>
+                          )}
+                          <button
+                            onClick={() => toggleInterest(activity.id)}
+                            style={{
+                              padding: '3px 8px',
+                              fontSize: '12px',
+                              background: userIsInterested ? '#D0E0D0' : '#FFFEFA',
+                              border: '1px solid #C0C0C0',
+                              borderRadius: '10px',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            {userIsInterested ? '✓' : '+'}
+                          </button>
+                          {activity.user_id === profile.id && (
+                            <>
+                              <button
+                                onClick={() => openEditModal(activity)}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                  padding: '2px',
+                                  fontSize: '14px',
+                                  opacity: 0.5
+                                }}
+                                onMouseEnter={(e) => e.target.style.opacity = '1'}
+                                onMouseLeave={(e) => e.target.style.opacity = '0.5'}
+                              >
+                                ✏️
+                              </button>
+                              <button
+                                onClick={() => handleDelete(activity.id)}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                  padding: '2px',
+                                  opacity: 0.6,
+                                  display: 'flex'
+                                }}
+                                onMouseEnter={(e) => e.target.style.opacity = '1'}
+                                onMouseLeave={(e) => e.target.style.opacity = '0.6'}
+                              >
+                                <img src="/images/eraser.jpeg" alt="Delete" style={{ width: '18px', height: '18px', objectFit: 'contain' }} />
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

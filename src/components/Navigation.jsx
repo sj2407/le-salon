@@ -81,6 +81,7 @@ export const Navigation = () => {
             <Link to="/reviews">Reviews</Link>
             <Link to="/todo">Activity Board</Link>
             <Link to="/friends">Friends</Link>
+            <Link to="/help">Help</Link>
             <Link to="/profile">Profile</Link>
             <button onClick={handleSignOut} style={{ padding: '6px 16px', fontSize: '13px' }}>
               Sign Out
@@ -122,6 +123,9 @@ export const Navigation = () => {
             </button>
             <button onClick={() => handleNavClick('/friends')} className="mobile-dropdown-item">
               Friends
+            </button>
+            <button onClick={() => handleNavClick('/help')} className="mobile-dropdown-item">
+              Help
             </button>
             <button onClick={() => handleNavClick('/profile')} className="mobile-dropdown-item">
               Profile

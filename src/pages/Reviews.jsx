@@ -271,13 +271,31 @@ export const Reviews = () => {
     : reviews.filter(review => review.tag === filterTag)
 
   return (
-    <div className="container" style={{ maxWidth: '720px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+    <div className="container" style={{ maxWidth: '720px', position: 'relative' }}>
+      {/* Collage element - gavel peeking from corner */}
+      <img
+        src="/images/gavel-ready.png"
+        alt=""
+        style={{
+          position: 'absolute',
+          top: '15px',
+          left: '180px',
+          width: '70px',
+          height: '70px',
+          opacity: 0.4,
+          pointerEvents: 'none',
+          zIndex: 0,
+          animation: 'bookFloat 4.5s ease-in-out infinite',
+          filter: 'contrast(2.5) brightness(1.35)'
+        }}
+      />
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', position: 'relative', zIndex: 1 }}>
         <h1 className="handwritten" style={{ fontSize: '42px', margin: 0 }}>
           Reviews
         </h1>
-        <button onClick={openAddModal} className="primary">
-          Add Review
+        <button onClick={openAddModal} style={{ background: 'none', border: 'none', fontFamily: 'Caveat, cursive', fontSize: '20px', color: '#4A7BA7', cursor: 'pointer', fontWeight: 'bold', padding: 0 }}>
+          + Add Review
         </button>
       </div>
 
@@ -285,32 +303,35 @@ export const Reviews = () => {
       <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
         <button
           onClick={() => setActiveTab('myReviews')}
+          className="tab-button"
+          data-active={activeTab === 'myReviews'}
           style={{
             padding: '8px 20px',
             fontSize: '14px',
-            background: activeTab === 'myReviews' ? '#2C2C2C' : 'transparent',
-            color: activeTab === 'myReviews' ? '#FFFEFA' : '#2C2C2C',
-            border: '1.5px solid #2C2C2C',
-            borderRadius: '3px',
+            fontFamily: 'Caveat, cursive',
+            fontSize: '20px',
+            background: 'transparent',
+            border: 'none',
             cursor: 'pointer',
-            fontWeight: 500,
-            transition: 'all 0.2s'
+            color: '#2C2C2C',
+            transition: 'all 250ms ease-out'
           }}
         >
           My Reviews
         </button>
         <button
           onClick={() => setActiveTab('recs')}
+          className="tab-button"
+          data-active={activeTab === 'recs'}
           style={{
             padding: '8px 20px',
-            fontSize: '14px',
-            background: activeTab === 'recs' ? '#2C2C2C' : 'transparent',
-            color: activeTab === 'recs' ? '#FFFEFA' : '#2C2C2C',
-            border: '1.5px solid #2C2C2C',
-            borderRadius: '3px',
+            fontSize: '20px',
+            fontFamily: 'Caveat, cursive',
+            background: 'transparent',
+            border: 'none',
             cursor: 'pointer',
-            fontWeight: 500,
-            transition: 'all 0.2s',
+            color: '#2C2C2C',
+            transition: 'all 250ms ease-out',
             position: 'relative'
           }}
         >
@@ -339,16 +360,13 @@ export const Reviews = () => {
           <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
         <button
           onClick={() => setFilterTag('all')}
+          className="filter-pill"
           style={{
             padding: '6px 14px',
             fontSize: '13px',
             background: filterTag === 'all' ? '#2C2C2C' : '#FFFEFA',
             color: filterTag === 'all' ? '#FFFEFA' : '#2C2C2C',
-            border: '1.5px solid #2C2C2C',
-            borderRadius: '16px',
-            cursor: 'pointer',
-            fontWeight: filterTag === 'all' ? 600 : 400,
-            transition: 'all 0.2s'
+            fontWeight: filterTag === 'all' ? 600 : 400
           }}
         >
           All
@@ -357,16 +375,13 @@ export const Reviews = () => {
           <button
             key={tagOption}
             onClick={() => setFilterTag(tagOption)}
+            className="filter-pill"
             style={{
               padding: '6px 14px',
               fontSize: '13px',
               background: filterTag === tagOption ? '#2C2C2C' : '#FFFEFA',
               color: filterTag === tagOption ? '#FFFEFA' : '#2C2C2C',
-              border: '1.5px solid #2C2C2C',
-              borderRadius: '16px',
-              cursor: 'pointer',
-              fontWeight: filterTag === tagOption ? 600 : 400,
-              transition: 'all 0.2s'
+              fontWeight: filterTag === tagOption ? 600 : 400
             }}
           >
             {TAG_ICONS[tagOption]} {tagOption}
@@ -382,15 +397,17 @@ export const Reviews = () => {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {filteredReviews.map((review) => (
+          {filteredReviews.map((review, index) => (
             <div
               key={review.id}
+              className="review-card"
+              data-index={index}
               style={{
                 background: '#FFFEFA',
-                border: '1px solid #D0D0D0',
-                borderRadius: '4px',
+                border: 'none',
+                borderRadius: '2px',
                 padding: '14px 16px',
-                boxShadow: '0 1px 2px rgba(0, 0, 0, 0.06)'
+                boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)'
               }}
             >
               {/* Single line: Icon + Title + Rating + Expand + Edit/Delete */}
@@ -444,16 +461,25 @@ export const Reviews = () => {
                     border: 'none',
                     cursor: 'pointer',
                     padding: '4px',
-                    fontSize: '16px',
-                    opacity: 0.4,
+                    opacity: 0.6,
                     transition: 'opacity 0.2s',
-                    flexShrink: 0
+                    flexShrink: 0,
+                    display: 'flex',
+                    alignItems: 'center'
                   }}
-                  onMouseEnter={(e) => e.target.style.opacity = '0.8'}
-                  onMouseLeave={(e) => e.target.style.opacity = '0.4'}
+                  onMouseEnter={(e) => e.target.style.opacity = '1'}
+                  onMouseLeave={(e) => e.target.style.opacity = '0.6'}
                   title="Delete"
                 >
-                  🗑️
+                  <img
+                    src="/images/eraser.jpeg"
+                    alt="Delete"
+                    style={{
+                      width: '24px',
+                      height: '24px',
+                      objectFit: 'contain'
+                    }}
+                  />
                 </button>
               </div>
 
@@ -485,15 +511,18 @@ export const Reviews = () => {
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {recommendations.map((review) => (
+              {recommendations.map((review, index) => (
                 <div
                   key={review.id}
+                  className="review-card"
+                  data-index={index}
                   style={{
                     background: '#FFFEFA',
-                    border: '1.5px solid #2C2C2C',
-                    borderRadius: '3px',
+                    border: 'none',
+                    borderRadius: '2px',
                     padding: '20px 24px',
-                    position: 'relative'
+                    position: 'relative',
+                    boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)'
                   }}
                 >
                   <div style={{ fontSize: '13px', color: '#666', marginBottom: '12px' }}>

@@ -114,8 +114,26 @@ export const History = () => {
   }
 
   return (
-    <div className="container" style={{ maxWidth: '1200px' }}>
-      <h1 className="handwritten" style={{ fontSize: '42px', marginBottom: '32px', textAlign: 'center' }}>
+    <div className="container" style={{ maxWidth: '1200px', position: 'relative' }}>
+      {/* Writing hand collage */}
+      <img
+        src="/images/writing-ready.png"
+        alt=""
+        style={{
+          position: 'absolute',
+          top: '0px',
+          left: '280px',
+          width: '120px',
+          height: 'auto',
+          opacity: 0.75,
+          pointerEvents: 'none',
+          zIndex: 0,
+          animation: 'bookFloat 4.5s ease-in-out infinite',
+          filter: 'contrast(1.5) brightness(1.15)'
+        }}
+      />
+
+      <h1 className="handwritten" style={{ fontSize: '42px', marginBottom: '32px', textAlign: 'left', marginLeft: '60px', position: 'relative', zIndex: 1 }}>
         My History
       </h1>
 
@@ -124,88 +142,107 @@ export const History = () => {
           No cards yet. Start by creating your first card!
         </div>
       ) : (
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{
-            width: '100%',
-            borderCollapse: 'collapse',
-            background: '#FFFEFA',
-            border: '2px solid #2C2C2C',
-            borderRadius: '4px',
-            boxShadow: '4px 4px 0 #2C2C2C'
-          }}>
-            <thead>
-              <tr style={{ background: '#F5F1EB', borderBottom: '2px solid #2C2C2C' }}>
-                <th className="history-date-header" style={{
-                  padding: '12px',
-                  textAlign: 'left',
-                  fontSize: '11px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                  fontWeight: 600,
-                  background: '#F5F1EB',
-                  borderRight: '1.5px solid #2C2C2C',
-                  minWidth: '100px'
-                }}>
-                  Date
-                </th>
-                {allColumns.map(column => (
-                  <th key={column} style={{
-                    padding: '16px',
+        <div className="activity-board-note" style={{ position: 'relative' }}>
+          {/* SVG Pushpin at -45deg */}
+          <svg
+            width="50"
+            height="50"
+            viewBox="0 0 50 50"
+            style={{
+              position: 'absolute',
+              top: '-20px',
+              left: '-5px',
+              zIndex: 10,
+              transform: 'rotate(-45deg)'
+            }}
+          >
+            <ellipse cx="25" cy="8" rx="8" ry="6" fill="#C41E3A"/>
+            <path d="M 20 8 L 22 25 L 28 25 L 30 8 Z" fill="#8B1A2D"/>
+            <circle cx="25" cy="8" r="4" fill="#E63946"/>
+            <line x1="25" y1="25" x2="25" y2="38" stroke="#A0A0A0" strokeWidth="1.5"/>
+            <path d="M 23 37 L 25 42 L 27 37 Z" fill="#808080"/>
+          </svg>
+
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{
+              width: '100%',
+              borderCollapse: 'collapse',
+              background: '#FFFEFA'
+            }}>
+              <thead>
+                <tr style={{ background: '#F5F1EB', borderBottom: '1px dashed #2C2C2C' }}>
+                  <th className="history-date-header" style={{
+                    padding: '12px',
                     textAlign: 'left',
                     fontSize: '11px',
                     textTransform: 'uppercase',
                     letterSpacing: '0.06em',
                     fontWeight: 600,
-                    minWidth: '180px',
-                    borderRight: '1px solid #E8E8E8'
+                    background: '#F5F1EB',
+                    borderRight: '1px dashed #2C2C2C',
+                    minWidth: '100px'
                   }}>
-                    {column}
+                    Date
                   </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {historyData.map((row, index) => (
-                <tr key={index} style={{
-                  borderBottom: index < historyData.length - 1 ? '1px solid #E8E8E8' : 'none',
-                  background: row.isCurrent ? '#FFF9E6' : '#FFFEFA'
-                }}>
-                  <td className="history-date-cell" style={{
-                    padding: '12px',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    background: row.isCurrent ? '#FFF9E6' : '#FFFEFA',
-                    borderRight: '1.5px solid #2C2C2C',
-                    whiteSpace: 'nowrap'
-                  }}>
-                    <div>{formatDate(row.date)}</div>
-                    {row.isCurrent && (
-                      <div style={{
-                        marginTop: '4px',
-                        fontSize: '9px',
-                        color: '#F4A460',
-                        fontWeight: 600
-                      }}>
-                        ●
-                      </div>
-                    )}
-                  </td>
                   {allColumns.map(column => (
-                    <td key={column} style={{
+                    <th key={column} style={{
                       padding: '16px',
-                      fontSize: '14px',
-                      fontStyle: 'italic',
-                      color: row.entries[column] ? '#2C2C2C' : '#CCC',
-                      borderRight: '1px solid #E8E8E8',
-                      lineHeight: '1.4'
+                      textAlign: 'left',
+                      fontSize: '11px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.06em',
+                      fontWeight: 600,
+                      minWidth: '180px',
+                      borderRight: '1px dashed #E0E0E0'
                     }}>
-                      {row.entries[column] || '—'}
-                    </td>
+                      {column}
+                    </th>
                   ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {historyData.map((row, index) => (
+                  <tr key={index} style={{
+                    borderBottom: index < historyData.length - 1 ? '1px dashed #E8E8E8' : 'none',
+                    background: row.isCurrent ? '#FFF9E6' : '#FFFEFA'
+                  }}>
+                    <td className="history-date-cell" style={{
+                      padding: '12px',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      background: row.isCurrent ? '#FFF9E6' : '#FFFEFA',
+                      borderRight: '1px dashed #2C2C2C',
+                      whiteSpace: 'nowrap'
+                    }}>
+                      <div>{formatDate(row.date)}</div>
+                      {row.isCurrent && (
+                        <div style={{
+                          marginTop: '4px',
+                          fontSize: '9px',
+                          color: '#F4A460',
+                          fontWeight: 600
+                        }}>
+                          ●
+                        </div>
+                      )}
+                    </td>
+                    {allColumns.map(column => (
+                      <td key={column} style={{
+                        padding: '16px',
+                        fontSize: '14px',
+                        fontStyle: 'italic',
+                        color: row.entries[column] ? '#2C2C2C' : '#CCC',
+                        borderRight: '1px dashed #E0E0E0',
+                        lineHeight: '1.4'
+                      }}>
+                        {row.entries[column] || '—'}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

@@ -14,6 +14,7 @@ import { FindFriends } from './pages/FindFriends'
 import { FriendCard } from './pages/FriendCard'
 import { Profile } from './pages/Profile'
 import { AdminFeedback } from './pages/AdminFeedback'
+import { Help } from './pages/Help'
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth()
@@ -142,6 +143,14 @@ function AppRoutes() {
             element={
               <ProtectedRoute>
                 <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/help"
+            element={
+              <ProtectedRoute>
+                <Help />
               </ProtectedRoute>
             }
           />
