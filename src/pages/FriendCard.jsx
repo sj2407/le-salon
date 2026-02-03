@@ -25,10 +25,14 @@ export const FriendCard = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [activeTab, setActiveTab] = useState('card')
+  const [cardOverlaps, setCardOverlaps] = useState([])
+  const [reviewOverlaps, setReviewOverlaps] = useState([])
+  const [activityOverlaps, setActivityOverlaps] = useState([])
 
   useEffect(() => {
     if (profile && friendId) {
       fetchFriendCard()
+      fetchOverlaps()
     }
   }, [profile, friendId])
 
@@ -112,6 +116,127 @@ export const FriendCard = () => {
     setExpandedReviews(newExpanded)
   }
 
+  const fetchOverlaps = async () => {
+    try {
+      // 1. Card overlaps - matching content on current cards
+      // Get my current card entries
+      const { data: myCardData } = await supabase
+        .from('cards')
+        .select('id')
+        .eq('user_id', profile.id)
+        .eq('is_current', true)
+        .single()
+
+      const { data: friendCardData } = await supabase
+        .from('cards')
+        .select('id')
+        .eq('user_id', friendId)
+        .eq('is_current', true)
+        .single()
+
+      if (myCardData && friendCardData) {
+        const { data: myEntries } = await supabase
+          .from('entries')
+          .select('category, content')
+          .eq('card_id', myCardData.id)
+
+        const { data: friendEntries } = await supabase
+          .from('entries')
+          .select('category, content')
+          .eq('card_id', friendCardData.id)
+
+        if (myEntries && friendEntries) {
+          // Find matching content (case-insensitive)
+          const matches = myEntries
+            .map(myEntry => {
+              const friendEntry = friendEntries.find(
+                fe => fe.content.toLowerCase() === myEntry.content.toLowerCase() &&
+                      fe.category === myEntry.category
+              )
+              if (friendEntry) {
+                return {
+                  category: myEntry.category,
+                  content: myEntry.content
+                }
+              }
+              return null
+            })
+            .filter(Boolean)
+
+          setCardOverlaps(matches)
+        }
+      }
+
+      // 2. Review overlaps - same titles reviewed
+      const { data: reviewOverlapsData, error: reviewError } = await supabase
+        .from('reviews')
+        .select('title, tag, rating')
+        .eq('user_id', profile.id)
+
+      if (!reviewError && reviewOverlapsData) {
+        // Get friend's reviews
+        const { data: friendReviewsData } = await supabase
+          .from('reviews')
+          .select('title, tag, rating')
+          .eq('user_id', friendId)
+
+        if (friendReviewsData) {
+          // Find matching titles (case-insensitive)
+          const matches = reviewOverlapsData
+            .map(myReview => {
+              const friendReview = friendReviewsData.find(
+                fr => fr.title.toLowerCase() === myReview.title.toLowerCase()
+              )
+              if (friendReview) {
+                return {
+                  title: myReview.title,
+                  tag: myReview.tag,
+                  yourRating: myReview.rating,
+                  friendRating: friendReview.rating
+                }
+              }
+              return null
+            })
+            .filter(Boolean)
+
+          setReviewOverlaps(matches)
+        }
+      }
+
+      // 3. Activity overlaps - shared activity interests
+      const { data: activityOverlapsData, error: activityError } = await supabase
+        .from('activity_interests')
+        .select('activity_id')
+        .eq('user_id', profile.id)
+
+      if (!activityError && activityOverlapsData) {
+        const myActivityIds = activityOverlapsData.map(a => a.activity_id)
+
+        if (myActivityIds.length > 0) {
+          const { data: friendActivitiesData } = await supabase
+            .from('activity_interests')
+            .select('activity_id')
+            .eq('user_id', friendId)
+            .in('activity_id', myActivityIds)
+
+          if (friendActivitiesData && friendActivitiesData.length > 0) {
+            const sharedActivityIds = friendActivitiesData.map(a => a.activity_id)
+
+            const { data: activitiesData } = await supabase
+              .from('activities')
+              .select('description, date_text')
+              .in('id', sharedActivityIds)
+              .eq('is_archived', false)
+
+            setActivityOverlaps(activitiesData || [])
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching overlaps:', err)
+    }
+  }
+
   if (loading) {
     return (
       <div className="container">
@@ -174,6 +299,23 @@ export const FriendCard = () => {
               }}
             >
               Reviews
+            </button>
+            <button
+              onClick={() => setActiveTab('overlap')}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: '12px 24px',
+                fontSize: '16px',
+                fontWeight: activeTab === 'overlap' ? 600 : 400,
+                color: activeTab === 'overlap' ? '#2C2C2C' : '#777',
+                borderBottom: activeTab === 'overlap' ? '3px solid #2C2C2C' : '3px solid transparent',
+                marginBottom: '-2px',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              Overlap
             </button>
           </div>
 
@@ -242,6 +384,114 @@ export const FriendCard = () => {
                 )}
               </div>
             ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'overlap' && (
+            <div style={{ maxWidth: '720px', marginLeft: 'auto', marginRight: 'auto' }}>
+              <h2 className="handwritten" style={{ fontSize: '32px', marginBottom: '32px' }}>
+                What you have in common
+              </h2>
+
+              {/* Section 1: Currently Matching Cards */}
+              {cardOverlaps.length > 0 && (
+                <div style={{ marginBottom: '48px' }}>
+                  <h3 style={{ fontSize: '20px', marginBottom: '16px', fontWeight: 600 }}>
+                    Currently Matching
+                  </h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {cardOverlaps.map((overlap, index) => (
+                      <div
+                        key={index}
+                        style={{
+                          background: '#FFFEFA',
+                          border: '1.5px solid #2C2C2C',
+                          borderRadius: '3px',
+                          padding: '16px',
+                          fontSize: '15px',
+                          fontStyle: 'italic'
+                        }}
+                      >
+                        You're both {overlap.category.toLowerCase()}: <strong>{overlap.content}</strong>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Section 2: Shared Reviews */}
+              {reviewOverlaps.length > 0 && (
+                <div style={{ marginBottom: '48px' }}>
+                  <h3 style={{ fontSize: '20px', marginBottom: '16px', fontWeight: 600 }}>
+                    Shared Reviews
+                  </h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {reviewOverlaps.map((overlap, index) => (
+                      <div
+                        key={index}
+                        style={{
+                          background: '#FFFEFA',
+                          border: '1.5px solid #2C2C2C',
+                          borderRadius: '3px',
+                          padding: '16px'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                          <span style={{ fontSize: '18px' }}>{TAG_ICONS[overlap.tag]}</span>
+                          <strong style={{ fontSize: '16px' }}>{overlap.title}</strong>
+                        </div>
+                        <div style={{ fontSize: '14px', color: '#666' }}>
+                          You: <span className="handwritten" style={{ fontSize: '18px', color: '#2C2C2C' }}>{overlap.yourRating}/10</span>
+                          {' '} • {' '}
+                          {friendProfile?.display_name}: <span className="handwritten" style={{ fontSize: '18px', color: '#2C2C2C' }}>{overlap.friendRating}/10</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Section 3: Shared Activity Interest */}
+              {activityOverlaps.length > 0 && (
+                <div style={{ marginBottom: '48px' }}>
+                  <h3 style={{ fontSize: '20px', marginBottom: '16px', fontWeight: 600 }}>
+                    Shared Activity Interest
+                  </h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {activityOverlaps.map((activity, index) => (
+                      <div
+                        key={index}
+                        style={{
+                          background: '#FFFEFA',
+                          border: '1.5px solid #2C2C2C',
+                          borderRadius: '3px',
+                          padding: '16px',
+                          fontSize: '15px',
+                          fontStyle: 'italic'
+                        }}
+                      >
+                        You're both interested in: <strong>{activity.description}</strong>
+                        {activity.date_text && ` (${activity.date_text})`}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Empty State */}
+              {cardOverlaps.length === 0 && reviewOverlaps.length === 0 && activityOverlaps.length === 0 && (
+                <div style={{
+                  background: '#FFFEFA',
+                  border: '1.5px solid #2C2C2C',
+                  borderRadius: '3px',
+                  padding: '48px 32px',
+                  textAlign: 'center'
+                }}>
+                  <p style={{ fontSize: '16px', color: '#666', margin: 0, fontStyle: 'italic' }}>
+                    No overlaps yet — check back as you both update your cards!
+                  </p>
                 </div>
               )}
             </div>

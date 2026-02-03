@@ -77,10 +77,15 @@ export const CardDisplay = ({ card, entries, displayName, photoUrl, isEditable =
 
     const sectionClass = isFullWidth ? 'full-width-section' : 'section-box'
 
-    // Special case for "Listening" to add "to"
-    const titleText = categoryName === 'Listening'
-      ? `What I'm ${categoryName.toLowerCase()} to`
-      : `What I'm ${categoryName.toLowerCase()}`
+    // Special cases for title formatting
+    let titleText
+    if (categoryName === 'Listening') {
+      titleText = `What I'm ${categoryName.toLowerCase()} to`
+    } else if (categoryName === 'My latest AI prompt') {
+      titleText = categoryName // Keep as is, don't add "What I'm"
+    } else {
+      titleText = `What I'm ${categoryName.toLowerCase()}`
+    }
 
     return (
       <div key={categoryName} className={sectionClass}>
@@ -154,7 +159,9 @@ export const CardDisplay = ({ card, entries, displayName, photoUrl, isEditable =
       </div>
 
       {renderCategorySection('Obsessing Over', true)}
-      {renderCategorySection('My latest AI prompt', true)}
+      <div style={{ marginTop: '16px' }}>
+        {renderCategorySection('My latest AI prompt', true)}
+      </div>
 
       {isEditable && (
         <button onClick={onEdit} className="edit-button" style={{ marginTop: '20px', width: '100%' }}>
