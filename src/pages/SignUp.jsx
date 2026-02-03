@@ -8,6 +8,7 @@ export const SignUp = () => {
   const [displayName, setDisplayName] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   const { signUp } = useAuth()
   const navigate = useNavigate()
@@ -59,14 +60,35 @@ export const SignUp = () => {
 
           <div className="form-group">
             <label className="form-label">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              placeholder="••••••••"
-              minLength={6}
-            />
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                placeholder="••••••••"
+                minLength={6}
+                style={{ paddingRight: '45px' }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '8px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '4px 8px',
+                  fontSize: '14px',
+                  color: '#777'
+                }}
+              >
+                {showPassword ? '🙈' : '👁️'}
+              </button>
+            </div>
           </div>
 
           {error && <div className="error-message">{error}</div>}

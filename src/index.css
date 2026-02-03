@@ -441,4 +441,12 @@ nav a:hover {
   .nav-brand {
     font-size: 24px;
   }
+
+  /* History table mobile - remove sticky date column */
+  .history-date-header,
+  .history-date-cell {
+    position: relative !important;
+    left: auto !important;
+    min-width: 80px !important;
+  }
 }

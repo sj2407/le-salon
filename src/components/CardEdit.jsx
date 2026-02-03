@@ -160,7 +160,16 @@ export const CardEdit = ({ entries, displayName, onSave, onCancel }) => {
                       className="edit-input"
                       value={content}
                       onChange={(e) => handleChange(categoryName, sub, index, e.target.value)}
-                      placeholder={`e.g., ${sub === 'book' ? 'Book Title' : sub === 'article' ? 'Article Title | URL' : 'Song/Artist'}`}
+                      placeholder={`e.g., ${
+                        sub === 'book' ? 'Book Title' :
+                        sub === 'article' ? 'Article Title URL' :
+                        sub === 'music' ? 'Song/Artist' :
+                        sub === 'podcast' ? 'Podcast Name' :
+                        sub === 'audiobook' ? 'Audiobook Title' :
+                        sub === 'tv' ? 'Show Title' :
+                        sub === 'movie' ? 'Movie Title' :
+                        'Title'
+                      }`}
                       style={{ flex: 1 }}
                     />
                     {formData[categoryName][sub].length > 1 && (

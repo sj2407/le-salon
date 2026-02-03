@@ -85,17 +85,11 @@ export const History = () => {
 
   const formatDate = (dateString) => {
     const date = new Date(dateString)
-    const dateStr = date.toLocaleDateString('en-US', {
+    return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric'
     })
-    const timeStr = date.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    })
-    return `${dateStr} at ${timeStr}`
   }
 
   // Get all unique column headers
@@ -141,18 +135,16 @@ export const History = () => {
           }}>
             <thead>
               <tr style={{ background: '#F5F1EB', borderBottom: '2px solid #2C2C2C' }}>
-                <th style={{
-                  padding: '16px',
+                <th className="history-date-header" style={{
+                  padding: '12px',
                   textAlign: 'left',
-                  fontSize: '13px',
+                  fontSize: '11px',
                   textTransform: 'uppercase',
                   letterSpacing: '0.06em',
                   fontWeight: 600,
-                  position: 'sticky',
-                  left: 0,
                   background: '#F5F1EB',
                   borderRight: '1.5px solid #2C2C2C',
-                  minWidth: '120px'
+                  minWidth: '100px'
                 }}>
                   Date
                 </th>
@@ -178,28 +170,24 @@ export const History = () => {
                   borderBottom: index < historyData.length - 1 ? '1px solid #E8E8E8' : 'none',
                   background: row.isCurrent ? '#FFF9E6' : '#FFFEFA'
                 }}>
-                  <td style={{
-                    padding: '16px',
-                    fontSize: '14px',
+                  <td className="history-date-cell" style={{
+                    padding: '12px',
+                    fontSize: '13px',
                     fontWeight: 600,
-                    position: 'sticky',
-                    left: 0,
                     background: row.isCurrent ? '#FFF9E6' : '#FFFEFA',
                     borderRight: '1.5px solid #2C2C2C',
                     whiteSpace: 'nowrap'
                   }}>
-                    {formatDate(row.date)}
+                    <div>{formatDate(row.date)}</div>
                     {row.isCurrent && (
-                      <span style={{
-                        marginLeft: '8px',
-                        fontSize: '10px',
+                      <div style={{
+                        marginTop: '4px',
+                        fontSize: '9px',
                         color: '#F4A460',
-                        fontWeight: 600,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.06em'
+                        fontWeight: 600
                       }}>
-                        Current
-                      </span>
+                        ●
+                      </div>
                     )}
                   </td>
                   {allColumns.map(column => (
