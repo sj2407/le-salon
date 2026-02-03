@@ -24,6 +24,7 @@ export const FriendCard = () => {
   const [expandedReviews, setExpandedReviews] = useState(new Set())
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [activeTab, setActiveTab] = useState('card')
 
   useEffect(() => {
     if (profile && friendId) {
@@ -137,21 +138,63 @@ export const FriendCard = () => {
       </div>
 
       {friendProfile && (
-        <CardDisplay
-          card={card}
-          entries={entries}
-          displayName={friendProfile.display_name}
-          isEditable={false}
-        />
-      )}
+        <>
+          {/* Tab Navigation */}
+          <div style={{ display: 'flex', gap: '16px', marginBottom: '32px', borderBottom: '2px solid #E8E8E8' }}>
+            <button
+              onClick={() => setActiveTab('card')}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: '12px 24px',
+                fontSize: '16px',
+                fontWeight: activeTab === 'card' ? 600 : 400,
+                color: activeTab === 'card' ? '#2C2C2C' : '#777',
+                borderBottom: activeTab === 'card' ? '3px solid #2C2C2C' : '3px solid transparent',
+                marginBottom: '-2px',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              Card
+            </button>
+            <button
+              onClick={() => setActiveTab('reviews')}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: '12px 24px',
+                fontSize: '16px',
+                fontWeight: activeTab === 'reviews' ? 600 : 400,
+                color: activeTab === 'reviews' ? '#2C2C2C' : '#777',
+                borderBottom: activeTab === 'reviews' ? '3px solid #2C2C2C' : '3px solid transparent',
+                marginBottom: '-2px',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              Reviews
+            </button>
+          </div>
 
-      {/* Friend's Reviews Section */}
-      {friendProfile && reviews.length > 0 && (
-        <div style={{ marginTop: '48px', maxWidth: '720px', marginLeft: 'auto', marginRight: 'auto' }}>
-          <h2 className="handwritten" style={{ fontSize: '36px', marginBottom: '24px', textAlign: 'center' }}>
-            {friendProfile.display_name}'s Reviews
-          </h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {/* Tab Content */}
+          {activeTab === 'card' && (
+            <CardDisplay
+              card={card}
+              entries={entries}
+              displayName={friendProfile.display_name}
+              isEditable={false}
+            />
+          )}
+
+          {activeTab === 'reviews' && (
+            <div style={{ maxWidth: '720px', marginLeft: 'auto', marginRight: 'auto' }}>
+              {reviews.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px', fontStyle: 'italic', color: '#777' }}>
+                  {friendProfile.display_name} hasn't added any reviews yet.
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {reviews.map((review) => (
               <div
                 key={review.id}
@@ -199,8 +242,11 @@ export const FriendCard = () => {
                 )}
               </div>
             ))}
-          </div>
-        </div>
+                </div>
+              )}
+            </div>
+          )}
+        </>
       )}
     </div>
   )
