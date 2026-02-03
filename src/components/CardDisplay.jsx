@@ -87,16 +87,25 @@ export const CardDisplay = ({ card, entries, displayName, photoUrl, isEditable =
       titleText = `What I'm ${categoryName.toLowerCase()}`
     }
 
+    // Categories with floating top-right corner icons
+    const hasFloatingIcon = ['Reading', 'Listening', 'Watching', 'Looking Forward To', 'Obsessing Over', 'My latest AI prompt'].includes(categoryName)
+
+    // Different positioning for different icons
+    let iconPosition = { top: '-10px', right: '5px' }
+    if (categoryName === 'Reading' || categoryName === 'Watching' || categoryName === 'Obsessing Over') {
+      iconPosition = { top: '-10px', right: '45px' }
+    }
+
     return (
-      <div key={categoryName} className={sectionClass} style={categoryName === 'Listening' ? { position: 'relative', overflow: 'visible' } : {}}>
-        {categoryName === 'Listening' && (
-          <div style={{ position: 'absolute', top: '-25px', right: '-25px', zIndex: 10 }}>
+      <div key={categoryName} className={sectionClass} style={hasFloatingIcon ? { position: 'relative', overflow: 'visible' } : {}}>
+        {hasFloatingIcon && (
+          <div style={{ position: 'absolute', ...iconPosition, zIndex: 10 }}>
             <Icon />
           </div>
         )}
         <div className="section-header">
           <span className="section-title">{titleText}</span>
-          {categoryName !== 'Listening' && <Icon />}
+          {!hasFloatingIcon && <Icon />}
         </div>
         <div className="section-content">
           {config.subcategories.length > 0 ? (

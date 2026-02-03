@@ -313,6 +313,71 @@ body {
   }
 }
 
+/* Book icon float animation - slightly different timing */
+@keyframes bookFloat {
+  0%, 100% {
+    transform: translateY(0) translateX(0) rotate(0deg);
+  }
+  30% {
+    transform: translateY(-4px) translateX(-2px) rotate(-1deg);
+  }
+  60% {
+    transform: translateY(-6px) translateX(2px) rotate(1deg);
+  }
+}
+
+/* TV icon float animation */
+@keyframes tvFloat {
+  0%, 100% {
+    transform: translateY(0) translateX(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-5px) translateX(3px) rotate(1.5deg);
+  }
+  75% {
+    transform: translateY(-3px) translateX(-3px) rotate(-1.5deg);
+  }
+}
+
+/* Brain icon float animation */
+@keyframes brainFloat {
+  0%, 100% {
+    transform: translateY(0) translateX(0) rotate(0deg);
+  }
+  35% {
+    transform: translateY(-6px) translateX(-3px) rotate(-2deg);
+  }
+  65% {
+    transform: translateY(-4px) translateX(3px) rotate(1deg);
+  }
+}
+
+/* Calendar icon float animation */
+@keyframes calendarFloat {
+  0%, 100% {
+    transform: translateY(0) translateX(0) rotate(0deg);
+  }
+  40% {
+    transform: translateY(-5px) translateX(2px) rotate(1.5deg);
+  }
+  80% {
+    transform: translateY(-3px) translateX(-2px) rotate(-1deg);
+  }
+}
+
+/* Robot icon float animation */
+@keyframes robotFloat {
+  0%, 100% {
+    transform: translateY(0) translateX(0) rotate(0deg);
+  }
+  33% {
+    transform: translateY(-6px) translateX(3px) rotate(2deg);
+  }
+  66% {
+    transform: translateY(-4px) translateX(-2px) rotate(-1.5deg);
+  }
+}
+
 .full-width-section .section-header {
   margin-bottom: 12px;
 }

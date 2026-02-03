@@ -1,5 +1,4 @@
 import { useRef } from 'react'
-import { motion } from 'framer-motion'
 
 export const VinylIcon = ({ className = "section-icon" }) => {
   const audioRef = useRef(null)
@@ -35,51 +34,18 @@ export const VinylIcon = ({ className = "section-icon" }) => {
         <source src="/sounds/vinyl-crackle.wav" type="audio/wav" />
       </audio>
 
-      <motion.svg
-        className={className}
-        viewBox="0 0 100 100"
+      <img
+        src="/images/vinyl-ready.png"
+        alt="Vinyl"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         style={{
           cursor: 'pointer',
           width: '90px',
-          height: '90px'
+          height: '90px',
+          objectFit: 'contain'
         }}
-        animate={{ rotate: 360 }}
-        transition={{
-          duration: 4,
-          repeat: Infinity,
-          ease: "linear"
-        }}
-      >
-        {/* Outer vinyl disc - black */}
-        <circle cx="50" cy="50" r="45" fill="#1a1a1a" stroke="#2C2C2C" strokeWidth="1.5" />
-
-        {/* Groove lines - subtle gradient circles */}
-        <circle cx="50" cy="50" r="42" fill="none" stroke="#2a2a2a" strokeWidth="0.6" opacity="0.6" />
-        <circle cx="50" cy="50" r="38" fill="none" stroke="#2a2a2a" strokeWidth="0.6" opacity="0.5" />
-        <circle cx="50" cy="50" r="34" fill="none" stroke="#2a2a2a" strokeWidth="0.6" opacity="0.5" />
-        <circle cx="50" cy="50" r="30" fill="none" stroke="#2a2a2a" strokeWidth="0.6" opacity="0.4" />
-        <circle cx="50" cy="50" r="26" fill="none" stroke="#2a2a2a" strokeWidth="0.6" opacity="0.4" />
-        <circle cx="50" cy="50" r="22" fill="none" stroke="#2a2a2a" strokeWidth="0.6" opacity="0.3" />
-        <circle cx="50" cy="50" r="18" fill="none" stroke="#2a2a2a" strokeWidth="0.6" opacity="0.3" />
-
-        {/* Center label - classic vinyl red */}
-        <circle cx="50" cy="50" r="14" fill="#C84848" stroke="#2C2C2C" strokeWidth="1.2" />
-
-        {/* Center hole */}
-        <circle cx="50" cy="50" r="5" fill="#2C2C2C" />
-
-        {/* Inner label ring detail */}
-        <circle cx="50" cy="50" r="11" fill="none" stroke="#2C2C2C" strokeWidth="0.4" opacity="0.4" />
-
-        {/* Subtle reflection/shine on top left */}
-        <path
-          d="M 30 20 Q 40 15, 50 15 Q 45 20, 40 25"
-          fill="white"
-          opacity="0.1"
-        />
-      </motion.svg>
+      />
     </div>
   )
 }
