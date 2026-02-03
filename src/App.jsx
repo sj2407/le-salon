@@ -5,6 +5,9 @@ import { SignUp } from './pages/SignUp'
 import { SignIn } from './pages/SignIn'
 import { MyCard } from './pages/MyCard'
 import { History } from './pages/History'
+import { Reviews } from './pages/Reviews'
+import { ToDo } from './pages/ToDo'
+import { PastActivities } from './pages/PastActivities'
 import { Friends } from './pages/Friends'
 import { FindFriends } from './pages/FindFriends'
 import { FriendCard } from './pages/FriendCard'
@@ -81,6 +84,30 @@ function AppRoutes() {
             element={
               <ProtectedRoute>
                 <History />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reviews"
+            element={
+              <ProtectedRoute>
+                <Reviews />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/todo"
+            element={
+              <ProtectedRoute>
+                <ToDo />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/todo/past"
+            element={
+              <ProtectedRoute>
+                <PastActivities />
               </ProtectedRoute>
             }
           />

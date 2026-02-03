@@ -38,6 +38,8 @@ export const Navigation = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Link to="/">My Card</Link>
           <Link to="/history">History</Link>
+          <Link to="/reviews">Reviews</Link>
+          <Link to="/todo">Activity Board</Link>
           <Link to="/friends">Friends</Link>
           <Link to="/profile">Profile</Link>
           <button onClick={handleSignOut} style={{ padding: '6px 16px', fontSize: '13px' }}>

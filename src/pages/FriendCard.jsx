@@ -4,6 +4,15 @@ import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { CardDisplay } from '../components/CardDisplay'
 
+const TAG_ICONS = {
+  movie: '🎬',
+  book: '📖',
+  podcast: '🎧',
+  show: '📺',
+  album: '💿',
+  other: '✨'
+}
+
 export const FriendCard = () => {
   const { friendId } = useParams()
   const { profile } = useAuth()
@@ -11,6 +20,8 @@ export const FriendCard = () => {
   const [friendProfile, setFriendProfile] = useState(null)
   const [card, setCard] = useState(null)
   const [entries, setEntries] = useState([])
+  const [reviews, setReviews] = useState([])
+  const [expandedReviews, setExpandedReviews] = useState(new Set())
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -72,12 +83,32 @@ export const FriendCard = () => {
         if (entriesError) throw entriesError
         setEntries(entriesData || [])
       }
+
+      // Get friend's reviews
+      const { data: reviewsData, error: reviewsError } = await supabase
+        .from('reviews')
+        .select('*')
+        .eq('user_id', friendId)
+        .order('created_at', { ascending: false })
+
+      if (reviewsError) throw reviewsError
+      setReviews(reviewsData || [])
     } catch (err) {
       console.error('Error fetching friend card:', err)
       setError(err.message)
     } finally {
       setLoading(false)
     }
+  }
+
+  const toggleExpanded = (reviewId) => {
+    const newExpanded = new Set(expandedReviews)
+    if (newExpanded.has(reviewId)) {
+      newExpanded.delete(reviewId)
+    } else {
+      newExpanded.add(reviewId)
+    }
+    setExpandedReviews(newExpanded)
   }
 
   if (loading) {
@@ -112,6 +143,64 @@ export const FriendCard = () => {
           displayName={friendProfile.display_name}
           isEditable={false}
         />
+      )}
+
+      {/* Friend's Reviews Section */}
+      {friendProfile && reviews.length > 0 && (
+        <div style={{ marginTop: '48px', maxWidth: '720px', marginLeft: 'auto', marginRight: 'auto' }}>
+          <h2 className="handwritten" style={{ fontSize: '36px', marginBottom: '24px', textAlign: 'center' }}>
+            {friendProfile.display_name}'s Reviews
+          </h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {reviews.map((review) => (
+              <div
+                key={review.id}
+                style={{
+                  background: '#FFFEFA',
+                  border: '1px solid #D0D0D0',
+                  borderRadius: '4px',
+                  padding: '14px 16px',
+                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.06)'
+                }}
+              >
+                {/* Single line: Icon + Title + Rating + Expand */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '18px', flexShrink: 0 }}>{TAG_ICONS[review.tag]}</span>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {review.title}
+                  </h3>
+                  <div className="handwritten" style={{ fontSize: '28px', lineHeight: 1, color: '#2C2C2C', flexShrink: 0 }}>
+                    {review.rating}/10
+                  </div>
+                  {review.review_text && (
+                    <button
+                      onClick={() => toggleExpanded(review.id)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: '4px',
+                        fontSize: '16px',
+                        color: '#4A7BA7',
+                        fontWeight: 600,
+                        flexShrink: 0
+                      }}
+                    >
+                      {expandedReviews.has(review.id) ? '−' : '+'}
+                    </button>
+                  )}
+                </div>
+
+                {/* Expanded review text appears below */}
+                {review.review_text && expandedReviews.has(review.id) && (
+                  <div style={{ marginTop: '12px', fontSize: '14px', lineHeight: 1.6, color: '#2C2C2C', fontStyle: 'italic' }}>
+                    {review.review_text}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   )
