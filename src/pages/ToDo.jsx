@@ -299,7 +299,7 @@ export const ToDo = () => {
         style={{
           position: 'absolute',
           top: '0px',
-          right: '30px',
+          right: '20px',
           width: '180px',
           height: 'auto',
           opacity: 0.75,
@@ -310,7 +310,7 @@ export const ToDo = () => {
         }}
       />
 
-      <div style={{ marginBottom: '24px', position: 'relative', zIndex: 1, marginLeft: '60px' }}>
+      <div style={{ marginBottom: '24px', position: 'relative', zIndex: 1, marginLeft: '40px' }}>
         <div className="handwritten" style={{ fontSize: '32px', marginBottom: '16px' }}>
           {getTodayFormatted()}
         </div>

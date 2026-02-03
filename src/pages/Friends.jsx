@@ -125,15 +125,18 @@ export const Friends = () => {
             Pending Requests
           </h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {pendingRequests.map((req) => (
+            {pendingRequests.map((req, index) => (
               <div key={req.id} style={{
                 padding: '16px',
-                border: '1.5px solid #2C2C2C',
+                border: 'none',
                 borderRadius: '3px',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                background: '#FFFEFA'
+                background: '#FFFEFA',
+                transform: `rotate(${index % 2 === 0 ? '-0.5' : '0.5'}deg)`,
+                boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)',
+                animation: `reviewSway${(index % 3) + 1} ${5 + index % 2}s ease-in-out infinite`
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <div>
@@ -176,15 +179,18 @@ export const Friends = () => {
             Sent Requests
           </h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {sentRequests.map((req) => (
+            {sentRequests.map((req, index) => (
               <div key={req.id} style={{
                 padding: '16px',
-                border: '1.5px solid #2C2C2C',
+                border: 'none',
                 borderRadius: '3px',
                 background: '#FFFEFA',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '12px'
+                gap: '12px',
+                transform: `rotate(${index % 2 === 0 ? '-0.5' : '0.5'}deg)`,
+                boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)',
+                animation: `reviewSway${(index % 3) + 1} ${5 + index % 2}s ease-in-out infinite`
               }}>
                 <div>
                   <div style={{ fontWeight: 600 }}>{req.friendProfile.display_name}</div>
@@ -221,7 +227,7 @@ export const Friends = () => {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {friends.map((friendship) => (
+            {friends.map((friendship, index) => (
               <Link
                 key={friendship.id}
                 to={`/friend/${friendship.friendProfile.id}`}
@@ -229,14 +235,17 @@ export const Friends = () => {
               >
                 <div style={{
                   padding: '16px',
-                  border: '1.5px solid #2C2C2C',
+                  border: 'none',
                   borderRadius: '3px',
                   background: '#FFFEFA',
                   transition: 'all 0.2s',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '12px'
+                  gap: '12px',
+                  transform: `rotate(${index % 2 === 0 ? '-0.5' : '0.5'}deg)`,
+                  boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)',
+                  animation: `reviewSway${(index % 3) + 1} ${5 + index % 2}s ease-in-out infinite`
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = '#F5F1EB'

@@ -122,7 +122,7 @@ export const History = () => {
         style={{
           position: 'absolute',
           top: '0px',
-          left: '280px',
+          left: '360px',
           width: '120px',
           height: 'auto',
           opacity: 0.75,
@@ -133,7 +133,7 @@ export const History = () => {
         }}
       />
 
-      <h1 className="handwritten" style={{ fontSize: '42px', marginBottom: '32px', textAlign: 'left', marginLeft: '60px', position: 'relative', zIndex: 1 }}>
+      <h1 className="handwritten" style={{ fontSize: '42px', marginBottom: '32px', textAlign: 'left', marginLeft: '30px', position: 'relative', zIndex: 1 }}>
         My History
       </h1>
 
