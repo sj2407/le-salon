@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 
-const TAG_ICONS = {
+export const TAG_ICONS = {
   movie: '🎬',
   book: '📖',
   podcast: '🎧',
@@ -16,22 +16,28 @@ const TAG_OPTIONS = ['movie', 'book', 'podcast', 'show', 'album', 'other']
 export const Reviews = () => {
   const { profile } = useAuth()
   const [reviews, setReviews] = useState([])
+  const [recommendations, setRecommendations] = useState([])
+  const [friends, setFriends] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingReview, setEditingReview] = useState(null)
   const [expandedReviews, setExpandedReviews] = useState(new Set())
   const [filterTag, setFilterTag] = useState('all')
+  const [activeTab, setActiveTab] = useState('myReviews')
 
   // Form state
   const [title, setTitle] = useState('')
   const [tag, setTag] = useState('other')
   const [rating, setRating] = useState(7.0)
   const [reviewText, setReviewText] = useState('')
+  const [recommendToFriends, setRecommendToFriends] = useState([])
   const [error, setError] = useState('')
 
   useEffect(() => {
     if (profile) {
       fetchReviews()
+      fetchRecommendations()
+      fetchFriends()
     }
   }, [profile])
 
@@ -53,23 +59,102 @@ export const Reviews = () => {
     }
   }
 
+  const fetchRecommendations = async () => {
+    try {
+      const { data: recsData, error: recsError } = await supabase
+        .from('review_recommendations')
+        .select('review_id')
+        .eq('recommended_to_user_id', profile.id)
+
+      if (recsError) throw recsError
+
+      if (!recsData || recsData.length === 0) {
+        setRecommendations([])
+        return
+      }
+
+      const reviewIds = recsData.map(r => r.review_id)
+
+      const { data: reviewsData, error: reviewsError } = await supabase
+        .from('reviews')
+        .select(`
+          *,
+          profiles!reviews_user_id_fkey(display_name, username)
+        `)
+        .in('id', reviewIds)
+        .order('created_at', { ascending: false })
+
+      if (reviewsError) throw reviewsError
+
+      setRecommendations(reviewsData || [])
+    } catch (err) {
+      console.error('Error fetching recommendations:', err)
+    }
+  }
+
+  const fetchFriends = async () => {
+    try {
+      // Get accepted friendships
+      const { data: friendshipsData, error: friendshipsError } = await supabase
+        .from('friendships')
+        .select('*')
+        .eq('status', 'accepted')
+        .or(`requester_id.eq.${profile.id},recipient_id.eq.${profile.id}`)
+
+      if (friendshipsError) throw friendshipsError
+
+      // Get friend IDs
+      const friendIds = friendshipsData.map(f =>
+        f.requester_id === profile.id ? f.recipient_id : f.requester_id
+      )
+
+      if (friendIds.length > 0) {
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, display_name, username')
+          .in('id', friendIds)
+
+        if (profilesError) throw profilesError
+        setFriends(profilesData || [])
+      }
+    } catch (err) {
+      console.error('Error fetching friends:', err)
+    }
+  }
+
   const openAddModal = () => {
     setEditingReview(null)
     setTitle('')
     setTag('other')
     setRating(7.0)
     setReviewText('')
+    setRecommendToFriends([])
     setError('')
     setShowModal(true)
   }
 
-  const openEditModal = (review) => {
+  const openEditModal = async (review) => {
     setEditingReview(review)
     setTitle(review.title)
     setTag(review.tag)
     setRating(review.rating)
     setReviewText(review.review_text || '')
     setError('')
+
+    // Load existing recommendations for this review
+    try {
+      const { data, error } = await supabase
+        .from('review_recommendations')
+        .select('recommended_to_user_id')
+        .eq('review_id', review.id)
+
+      if (error) throw error
+      setRecommendToFriends(data?.map(r => r.recommended_to_user_id) || [])
+    } catch (err) {
+      console.error('Error loading recommendations:', err)
+      setRecommendToFriends([])
+    }
+
     setShowModal(true)
   }
 
@@ -78,6 +163,8 @@ export const Reviews = () => {
     setError('')
 
     try {
+      let reviewId = editingReview?.id
+
       if (editingReview) {
         // Update existing review
         const { error } = await supabase
@@ -94,7 +181,7 @@ export const Reviews = () => {
         if (error) throw error
       } else {
         // Create new review
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('reviews')
           .insert({
             user_id: profile.id,
@@ -103,8 +190,38 @@ export const Reviews = () => {
             rating: parseFloat(rating),
             review_text: reviewText.trim() || null
           })
+          .select()
+          .single()
 
         if (error) throw error
+        reviewId = data.id
+      }
+
+      // Save recommendations
+      if (reviewId && recommendToFriends.length > 0) {
+        // Delete existing recommendations
+        await supabase
+          .from('review_recommendations')
+          .delete()
+          .eq('review_id', reviewId)
+
+        // Insert new recommendations
+        const recommendations = recommendToFriends.map(friendId => ({
+          review_id: reviewId,
+          recommended_to_user_id: friendId
+        }))
+
+        const { error: recsError } = await supabase
+          .from('review_recommendations')
+          .insert(recommendations)
+
+        if (recsError) throw recsError
+      } else if (reviewId) {
+        // Clear all recommendations if none selected
+        await supabase
+          .from('review_recommendations')
+          .delete()
+          .eq('review_id', reviewId)
       }
 
       setShowModal(false)
@@ -164,8 +281,62 @@ export const Reviews = () => {
         </button>
       </div>
 
-      {/* Filter tags */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
+      {/* Tab buttons */}
+      <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
+        <button
+          onClick={() => setActiveTab('myReviews')}
+          style={{
+            padding: '8px 20px',
+            fontSize: '14px',
+            background: activeTab === 'myReviews' ? '#2C2C2C' : 'transparent',
+            color: activeTab === 'myReviews' ? '#FFFEFA' : '#2C2C2C',
+            border: '1.5px solid #2C2C2C',
+            borderRadius: '3px',
+            cursor: 'pointer',
+            fontWeight: 500,
+            transition: 'all 0.2s'
+          }}
+        >
+          My Reviews
+        </button>
+        <button
+          onClick={() => setActiveTab('recs')}
+          style={{
+            padding: '8px 20px',
+            fontSize: '14px',
+            background: activeTab === 'recs' ? '#2C2C2C' : 'transparent',
+            color: activeTab === 'recs' ? '#FFFEFA' : '#2C2C2C',
+            border: '1.5px solid #2C2C2C',
+            borderRadius: '3px',
+            cursor: 'pointer',
+            fontWeight: 500,
+            transition: 'all 0.2s',
+            position: 'relative'
+          }}
+        >
+          Recs from Friends
+          {recommendations.length > 0 && (
+            <span style={{
+              position: 'absolute',
+              top: '-6px',
+              right: '-6px',
+              background: '#E8534F',
+              color: 'white',
+              borderRadius: '10px',
+              padding: '2px 6px',
+              fontSize: '11px',
+              fontWeight: 600
+            }}>
+              {recommendations.length}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {activeTab === 'myReviews' ? (
+        <>
+          {/* Filter tags */}
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
         <button
           onClick={() => setFilterTag('all')}
           style={{
@@ -296,6 +467,82 @@ export const Reviews = () => {
           ))}
         </div>
       )}
+        </>
+      ) : (
+        <>
+          {/* Recommendations from Friends */}
+          {recommendations.length === 0 ? (
+            <div style={{
+              background: '#FFFEFA',
+              border: '1.5px solid #2C2C2C',
+              borderRadius: '3px',
+              padding: '48px 32px',
+              textAlign: 'center'
+            }}>
+              <p style={{ fontSize: '16px', color: '#666', margin: 0 }}>
+                No recommendations yet. When friends recommend reviews to you, they'll appear here!
+              </p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {recommendations.map((review) => (
+                <div
+                  key={review.id}
+                  style={{
+                    background: '#FFFEFA',
+                    border: '1.5px solid #2C2C2C',
+                    borderRadius: '3px',
+                    padding: '20px 24px',
+                    position: 'relative'
+                  }}
+                >
+                  <div style={{ fontSize: '13px', color: '#666', marginBottom: '12px' }}>
+                    Recommended by {review.profiles?.display_name || 'a friend'}
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '20px' }}>{TAG_ICONS[review.tag] || '📌'}</span>
+                    <h3 style={{ fontSize: '18px', margin: 0, flex: 1 }}>{review.title}</h3>
+                    <span className="handwritten" style={{ fontSize: '24px', fontWeight: 600 }}>
+                      {review.rating}/10
+                    </span>
+                  </div>
+
+                  {review.review_text && (
+                    <div style={{ marginTop: '12px' }}>
+                      <p style={{
+                        fontSize: '14px',
+                        lineHeight: '1.6',
+                        margin: 0,
+                        whiteSpace: expandedReviews.has(review.id) ? 'pre-wrap' : 'nowrap',
+                        overflow: expandedReviews.has(review.id) ? 'visible' : 'hidden',
+                        textOverflow: expandedReviews.has(review.id) ? 'clip' : 'ellipsis'
+                      }}>
+                        {review.review_text}
+                      </p>
+                      <button
+                        onClick={() => toggleExpanded(review.id)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#2C2C2C',
+                          fontSize: '13px',
+                          cursor: 'pointer',
+                          padding: '4px 0',
+                          marginTop: '4px',
+                          textDecoration: 'underline'
+                        }}
+                      >
+                        {expandedReviews.has(review.id) ? 'Show less' : 'Read more'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
 
       {/* Add/Edit Modal */}
       {showModal && (
@@ -355,8 +602,9 @@ export const Reviews = () => {
                     border: '1px solid #ccc',
                     borderRadius: '3px',
                     background: '#FFFEFA',
+                    fontFamily: 'Source Serif 4, Georgia, serif',
                     fontSize: '15px',
-                    fontFamily: 'Source Serif 4, Georgia, serif'
+                    fontStyle: 'italic'
                   }}
                 >
                   {TAG_OPTIONS.map((option) => (
@@ -389,6 +637,43 @@ export const Reviews = () => {
                   style={{ minHeight: '120px' }}
                 />
               </div>
+
+              {friends.length > 0 && (
+                <div className="form-group">
+                  <label className="form-label">Who would love this? (optional)</label>
+                  <div>
+                    {friends.map(friend => (
+                      <div key={friend.id} style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+                        <label
+                          htmlFor={`friend-${friend.id}`}
+                          style={{
+                            fontFamily: 'Source Serif 4, Georgia, serif',
+                            fontSize: '15px',
+                            fontStyle: 'italic',
+                            cursor: 'pointer',
+                            margin: 0,
+                            marginRight: '8px'
+                          }}
+                        >
+                          {friend.display_name}
+                        </label>
+                        <input
+                          type="checkbox"
+                          id={`friend-${friend.id}`}
+                          checked={recommendToFriends.includes(friend.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setRecommendToFriends([...recommendToFriends, friend.id])
+                            } else {
+                              setRecommendToFriends(recommendToFriends.filter(id => id !== friend.id))
+                            }
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {error && <div className="error-message">{error}</div>}
 
