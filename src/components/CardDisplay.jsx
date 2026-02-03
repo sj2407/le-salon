@@ -3,13 +3,15 @@ import { ListeningIcon } from './icons/ListeningIcon'
 import { WatchingIcon } from './icons/WatchingIcon'
 import { LookingForwardIcon } from './icons/LookingForwardIcon'
 import { ObsessingIcon } from './icons/ObsessingIcon'
+import { AIPromptIcon } from './icons/AIPromptIcon'
 
 const CATEGORY_CONFIG = {
   'Reading': { icon: ReadingIcon, subcategories: ['book', 'article'] },
   'Listening': { icon: ListeningIcon, subcategories: ['music', 'podcast', 'audiobook'] },
   'Watching': { icon: WatchingIcon, subcategories: ['tv', 'movie'] },
   'Looking Forward To': { icon: LookingForwardIcon, subcategories: [] },
-  'Obsessing Over': { icon: ObsessingIcon, subcategories: [] }
+  'Obsessing Over': { icon: ObsessingIcon, subcategories: [] },
+  'My latest AI prompt': { icon: AIPromptIcon, subcategories: [] }
 }
 
 const linkifyText = (text) => {
@@ -100,7 +102,7 @@ export const CardDisplay = ({ card, entries, displayName, photoUrl, isEditable =
             )
           ) : (
             categoryEntries.length > 0 ? (
-              (categoryName === 'Obsessing Over' || categoryName === 'Looking Forward To') ? (
+              (categoryName === 'Obsessing Over' || categoryName === 'Looking Forward To' || categoryName === 'My latest AI prompt') ? (
                 <ul style={{ margin: 0, paddingLeft: '20px' }}>
                   {categoryEntries[0].content.split('\n').filter(line => line.trim()).map((line, index) => (
                     <li key={index} className="item-text" style={{ marginBottom: '8px' }}>
@@ -152,6 +154,7 @@ export const CardDisplay = ({ card, entries, displayName, photoUrl, isEditable =
       </div>
 
       {renderCategorySection('Obsessing Over', true)}
+      {renderCategorySection('My latest AI prompt', true)}
 
       {isEditable && (
         <button onClick={onEdit} className="edit-button" style={{ marginTop: '20px', width: '100%' }}>

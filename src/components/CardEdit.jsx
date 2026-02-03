@@ -4,13 +4,15 @@ import { ListeningIcon } from './icons/ListeningIcon'
 import { WatchingIcon } from './icons/WatchingIcon'
 import { LookingForwardIcon } from './icons/LookingForwardIcon'
 import { ObsessingIcon } from './icons/ObsessingIcon'
+import { AIPromptIcon } from './icons/AIPromptIcon'
 
 const CATEGORY_CONFIG = {
   'Reading': { icon: ReadingIcon, subcategories: ['book', 'article'] },
   'Listening': { icon: ListeningIcon, subcategories: ['music', 'podcast', 'audiobook'] },
   'Watching': { icon: WatchingIcon, subcategories: ['tv', 'movie'] },
   'Looking Forward To': { icon: LookingForwardIcon, subcategories: [] },
-  'Obsessing Over': { icon: ObsessingIcon, subcategories: [] }
+  'Obsessing Over': { icon: ObsessingIcon, subcategories: [] },
+  'My latest AI prompt': { icon: AIPromptIcon, subcategories: [] }
 }
 
 export const CardEdit = ({ entries, displayName, onSave, onCancel }) => {
@@ -198,7 +200,11 @@ export const CardEdit = ({ entries, displayName, onSave, onCancel }) => {
             <textarea
               value={formData[categoryName] || ''}
               onChange={(e) => handleChange(categoryName, null, 0, e.target.value)}
-              placeholder={`What are you ${categoryName.toLowerCase()}?`}
+              placeholder={
+                categoryName === 'My latest AI prompt'
+                  ? 'What did you ask AI lately?'
+                  : `What are you ${categoryName.toLowerCase()}?`
+              }
               style={{ minHeight: isFullWidth ? '100px' : '80px' }}
             />
           )}
@@ -222,6 +228,7 @@ export const CardEdit = ({ entries, displayName, onSave, onCancel }) => {
       </div>
 
       {renderCategoryEdit('Obsessing Over', true)}
+      {renderCategoryEdit('My latest AI prompt', true)}
 
       <div style={{ marginTop: '20px', display: 'flex', gap: '12px' }}>
         <button onClick={handleSave} className="primary" style={{ flex: 1 }}>
