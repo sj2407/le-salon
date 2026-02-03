@@ -122,7 +122,7 @@ export const History = () => {
         style={{
           position: 'absolute',
           top: '0px',
-          left: '360px',
+          left: '280px',
           width: '120px',
           height: 'auto',
           opacity: 0.75,
