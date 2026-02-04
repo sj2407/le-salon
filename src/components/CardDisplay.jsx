@@ -95,6 +95,13 @@ export const CardDisplay = ({ card, entries, displayName, photoUrl, isEditable =
     if (categoryName === 'Reading' || categoryName === 'Watching' || categoryName === 'Obsessing Over') {
       iconPosition = { top: '-10px', right: '45px' }
     }
+    // Move TV and agenda icons to the right
+    if (categoryName === 'Watching') {
+      iconPosition = { top: '-10px', right: '30px' }
+    }
+    if (categoryName === 'Looking Forward To') {
+      iconPosition = { top: '-10px', right: '-20px' }
+    }
 
     return (
       <div key={categoryName} className={sectionClass} style={hasFloatingIcon ? { position: 'relative', overflow: 'visible' } : {}}>
