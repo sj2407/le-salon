@@ -84,7 +84,7 @@ export const Friends = () => {
 
       // Create notification for requester
       if (friendship) {
-        await supabase
+        const { error: notifError } = await supabase
           .from('notifications')
           .insert({
             user_id: friendship.requester_id,
@@ -92,6 +92,10 @@ export const Friends = () => {
             actor_id: profile.id,
             message: `${profile.display_name} accepted your friend request`
           })
+
+        if (notifError) {
+          console.error('Notification insert failed:', notifError)
+        }
       }
 
       await fetchFriendships()

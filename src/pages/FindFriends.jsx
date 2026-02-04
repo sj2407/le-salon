@@ -67,7 +67,7 @@ export const FindFriends = () => {
       if (error) throw error
 
       // Create notification for recipient
-      await supabase
+      const { error: notifError } = await supabase
         .from('notifications')
         .insert({
           user_id: recipientId,
@@ -75,6 +75,10 @@ export const FindFriends = () => {
           actor_id: profile.id,
           message: `${profile.display_name} wants to be friends`
         })
+
+      if (notifError) {
+        console.error('Notification insert failed:', notifError)
+      }
 
       setMessage('Friend request sent!')
       setSearchResults(searchResults.filter(user => user.id !== recipientId))

@@ -60,6 +60,9 @@ export const Wishlist = () => {
     setError('')
 
     try {
+      const trimmedLink = link.trim() || null
+      let savedItemId = editingItem?.id
+
       if (editingItem) {
         // Update existing item
         const { error } = await supabase
@@ -67,7 +70,7 @@ export const Wishlist = () => {
           .update({
             name,
             type: type.trim() || null,
-            link: link.trim() || null,
+            link: trimmedLink,
             updated_at: new Date().toISOString()
           })
           .eq('id', editingItem.id)
@@ -75,16 +78,19 @@ export const Wishlist = () => {
         if (error) throw error
       } else {
         // Create new item
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('wishlist_items')
           .insert({
             user_id: profile.id,
             name,
             type: type.trim() || null,
-            link: link.trim() || null
+            link: trimmedLink
           })
+          .select()
+          .single()
 
         if (error) throw error
+        savedItemId = data.id
       }
 
       setShowModal(false)
@@ -127,7 +133,7 @@ export const Wishlist = () => {
         alt=""
         style={{
           position: 'absolute',
-          top: '5px',
+          top: '25px',
           left: '200px',
           width: '80px',
           height: 'auto',
@@ -143,19 +149,31 @@ export const Wishlist = () => {
         <h1 className="handwritten" style={{ fontSize: '42px', margin: 0, marginLeft: '20px' }}>
           Wishlist
         </h1>
-        <button onClick={openAddModal} style={{
-          background: 'none',
-          border: 'none',
-          fontFamily: 'Caveat, cursive',
-          fontSize: '20px',
-          color: '#4A7BA7',
-          cursor: 'pointer',
-          fontWeight: 'bold',
-          padding: 0
-        }}>
-          + Add Item
-        </button>
       </div>
+
+      <button onClick={openAddModal} style={{
+        position: 'absolute',
+        top: '140px',
+        right: '0',
+        background: '#DCDCDC',
+        border: 'none',
+        borderRadius: '50%',
+        fontSize: '12px',
+        color: '#333',
+        cursor: 'pointer',
+        width: '18px',
+        height: '18px',
+        minWidth: '18px',
+        minHeight: '18px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 0,
+        lineHeight: 1,
+        zIndex: 1
+      }}>
+        +
+      </button>
 
       <p style={{ fontSize: '15px', color: '#666', fontStyle: 'italic', marginBottom: '24px', textAlign: 'center' }}>
         Add items you'd like, and friends can anonymously claim them as gifts for you.
@@ -185,51 +203,52 @@ export const Wishlist = () => {
             >
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                  {item.type && (
-                    <span style={{
-                      fontSize: '12px',
-                      color: '#666',
-                      background: '#F5F1EB',
-                      padding: '2px 8px',
-                      borderRadius: '10px',
-                      fontWeight: 500
-                    }}>
-                      {item.type}
+                    {item.type && (
+                      <span style={{
+                        fontSize: '12px',
+                        color: '#666',
+                        background: '#F5F1EB',
+                        padding: '2px 8px',
+                        borderRadius: '10px',
+                        fontWeight: 500
+                      }}>
+                        {item.type}
+                      </span>
+                    )}
+                    <span style={{ fontSize: '13px' }}>
+                      {item.claimed_by ? (
+                        <span style={{
+                          color: '#4CAF50',
+                          fontWeight: 600,
+                          background: 'rgba(76, 175, 80, 0.1)',
+                          padding: '2px 8px',
+                          borderRadius: '10px'
+                        }}>
+                          Claimed ✓
+                        </span>
+                      ) : (
+                        <span style={{ color: '#999' }}>Available</span>
+                      )}
                     </span>
-                  )}
-                </div>
-                {item.link ? (
-                  <a
-                    href={item.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      fontSize: '16px',
-                      fontWeight: 600,
-                      color: '#4A7BA7',
-                      textDecoration: 'underline'
-                    }}
-                  >
-                    {item.name}
-                  </a>
-                ) : (
-                  <div style={{ fontSize: '16px', fontWeight: 600 }}>{item.name}</div>
-                )}
-                <div style={{ marginTop: '4px', fontSize: '13px' }}>
-                  {item.claimed_by ? (
-                    <span style={{
-                      color: '#4CAF50',
-                      fontWeight: 600,
-                      background: 'rgba(76, 175, 80, 0.1)',
-                      padding: '2px 8px',
-                      borderRadius: '10px'
-                    }}>
-                      Claimed ✓
-                    </span>
+                  </div>
+                  {item.link ? (
+                    <a
+                      href={item.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        fontSize: '14px',
+                        fontStyle: 'italic',
+                        fontWeight: 400,
+                        color: '#4A7BA7',
+                        textDecoration: 'underline'
+                      }}
+                    >
+                      {item.name}
+                    </a>
                   ) : (
-                    <span style={{ color: '#999' }}>Available</span>
+                    <div style={{ fontSize: '14px', fontStyle: 'italic', fontWeight: 400 }}>{item.name}</div>
                   )}
-                </div>
               </div>
 
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>

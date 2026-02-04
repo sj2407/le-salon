@@ -253,7 +253,7 @@ export const ToDo = () => {
         // Create notification for activity owner (if not the current user)
         const activity = activities.find(a => a.id === activityId)
         if (activity && activity.user_id !== profile.id) {
-          await supabase
+          const { error: notifError } = await supabase
             .from('notifications')
             .insert({
               user_id: activity.user_id,
@@ -263,6 +263,10 @@ export const ToDo = () => {
               reference_name: activity.description,
               message: `${profile.display_name} is interested in ${activity.description}`
             })
+
+          if (notifError) {
+            console.error('Notification insert failed:', notifError)
+          }
         }
       }
 

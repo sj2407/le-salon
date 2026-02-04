@@ -47,7 +47,7 @@ export const FriendWishlist = ({ friendId, friendName }) => {
 
       // Create anonymous notification for wishlist owner
       if (item) {
-        await supabase
+        const { error: notifError } = await supabase
           .from('notifications')
           .insert({
             user_id: item.user_id,
@@ -57,6 +57,10 @@ export const FriendWishlist = ({ friendId, friendName }) => {
             reference_name: item.name,
             message: `Someone claimed ${item.name} from your wishlist`
           })
+
+        if (notifError) {
+          console.error('Notification insert failed:', notifError)
+        }
       }
 
       fetchWishlistItems()

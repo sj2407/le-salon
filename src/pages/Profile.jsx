@@ -95,7 +95,7 @@ export const Profile = () => {
         My Profile
       </h1>
 
-      <div className="card" style={{ border: 'none', boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)', transform: 'rotate(0.5deg)', animation: 'gentleSway1 5s ease-in-out infinite' }}>
+      <div className="card" style={{ border: 'none', boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)' }}>
         <form onSubmit={handleSave}>
           {/* Profile Photo */}
           <div style={{ textAlign: 'center', marginBottom: '32px' }}>

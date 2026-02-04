@@ -192,7 +192,7 @@ export const Reviews = () => {
 
         // Create notifications for NEW recommendations only
         for (const friendId of newFriendIds) {
-          await supabase
+          const { error: notifError } = await supabase
             .from('notifications')
             .insert({
               user_id: friendId,
@@ -202,6 +202,10 @@ export const Reviews = () => {
               reference_name: title,
               message: `${profile.display_name} recommended ${title}`
             })
+
+          if (notifError) {
+            console.error('Notification insert failed:', notifError)
+          }
         }
       } else if (reviewId) {
         // Clear all recommendations if none selected
