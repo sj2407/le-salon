@@ -249,6 +249,21 @@ export const ToDo = () => {
           })
 
         if (error) throw error
+
+        // Create notification for activity owner (if not the current user)
+        const activity = activities.find(a => a.id === activityId)
+        if (activity && activity.user_id !== profile.id) {
+          await supabase
+            .from('notifications')
+            .insert({
+              user_id: activity.user_id,
+              type: 'activity_interest',
+              actor_id: profile.id,
+              reference_id: activityId,
+              reference_name: activity.description,
+              message: `${profile.display_name} is interested in ${activity.description}`
+            })
+        }
       }
 
       fetchActivities()

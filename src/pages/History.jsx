@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
 
 export const History = () => {
   const { profile } = useAuth()
@@ -90,6 +92,73 @@ export const History = () => {
       day: 'numeric',
       year: 'numeric'
     })
+  }
+
+  const exportToPDF = () => {
+    try {
+      console.log('Starting PDF export...')
+      console.log('jsPDF:', jsPDF)
+
+      const doc = new jsPDF('landscape')
+      console.log('jsPDF instance created:', doc)
+
+      // Add title
+      doc.setFontSize(20)
+      doc.text('My History', 14, 20)
+
+      // Add user info
+      doc.setFontSize(10)
+      doc.text(`${profile.display_name} (@${profile.username})`, 14, 28)
+      doc.text(`Generated on ${new Date().toLocaleDateString()}`, 14, 34)
+
+      // Prepare table data
+      const tableColumn = ['Date', ...allColumns]
+      const tableRows = historyData.map(row => [
+        formatDate(row.date) + (row.isCurrent ? ' (Current)' : ''),
+        ...allColumns.map(column => row.entries[column] || '—')
+      ])
+
+      console.log('Table data prepared:', tableColumn.length, 'columns,', tableRows.length, 'rows')
+      console.log('autoTable function:', typeof autoTable)
+
+      // Use autoTable as a standalone function
+      autoTable(doc, {
+        head: [tableColumn],
+        body: tableRows,
+        startY: 40,
+        styles: {
+          fontSize: 8,
+          cellPadding: 3,
+          lineColor: [44, 44, 44],
+          lineWidth: 0.1
+        },
+        headStyles: {
+          fillColor: [245, 241, 235],
+          textColor: [44, 44, 44],
+          fontStyle: 'bold',
+          fontSize: 9
+        },
+        alternateRowStyles: {
+          fillColor: [255, 254, 250]
+        },
+        columnStyles: {
+          0: { cellWidth: 30, fontStyle: 'bold' }
+        },
+        margin: { top: 40 }
+      })
+
+      console.log('Table added, saving PDF...')
+
+      // Save the PDF
+      const filename = `le-salon-history-${profile.username}-${new Date().toISOString().split('T')[0]}.pdf`
+      doc.save(filename)
+
+      console.log('PDF saved successfully:', filename)
+    } catch (err) {
+      console.error('Error exporting PDF:', err)
+      console.error('Error stack:', err.stack)
+      alert(`Failed to export PDF: ${err.message}`)
+    }
   }
 
   // Get all unique column headers
@@ -243,6 +312,40 @@ export const History = () => {
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {historyData.length > 0 && (
+        <div style={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          marginTop: '16px',
+          marginRight: '8px'
+        }}>
+          <button
+            onClick={exportToPDF}
+            title="Export to PDF"
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '8px',
+              opacity: 0.6,
+              transition: 'opacity 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}
+            onMouseEnter={(e) => e.target.style.opacity = '1'}
+            onMouseLeave={(e) => e.target.style.opacity = '0.6'}
+          >
+            {/* Simple PDF icon */}
+            <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+              <rect x="6" y="2" width="20" height="28" rx="2" fill="#E74C3C" stroke="#2C2C2C" strokeWidth="1.5"/>
+              <path d="M10 12h12M10 16h12M10 20h8" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+              <text x="16" y="10" fontSize="6" fill="white" textAnchor="middle" fontWeight="bold">PDF</text>
+            </svg>
+          </button>
         </div>
       )}
 

@@ -123,6 +123,25 @@ export const Help = () => {
           </p>
         </div>
 
+        {/* Notifications Section */}
+        <div style={{ marginBottom: '32px', borderTop: '1px dashed #E0E0E0', paddingTop: '24px' }}>
+          <h2 className="handwritten" style={{ fontSize: '32px', marginBottom: '16px', color: '#2C2C2C' }}>
+            🔔 Notifications
+          </h2>
+          <p style={{ fontSize: '15px', lineHeight: '1.6', marginBottom: '12px' }}>
+            Stay updated when friends interact with your content. The bell icon in the header shows you what's new!
+          </p>
+          <ul style={{ fontSize: '15px', lineHeight: '1.8', marginLeft: '24px', marginBottom: '12px' }}>
+            <li>Get notified when friends send or accept friend requests</li>
+            <li>See when someone is interested in your activities</li>
+            <li>Know when friends recommend reviews to you</li>
+            <li>Get an alert when someone claims a wishlist item (anonymous)</li>
+          </ul>
+          <p style={{ fontSize: '14px', fontStyle: 'italic', color: '#666' }}>
+            💡 Tip: Click the bell to see all unread notifications—they're automatically marked as read when you view them!
+          </p>
+        </div>
+
         {/* Getting Started */}
         <div style={{
           background: '#FFF9E6',

@@ -72,12 +72,28 @@ export const Friends = () => {
 
   const handleAccept = async (friendshipId) => {
     try {
+      // Get the friendship to find the requester
+      const friendship = pendingRequests.find(req => req.id === friendshipId)
+
       const { error } = await supabase
         .from('friendships')
         .update({ status: 'accepted' })
         .eq('id', friendshipId)
 
       if (error) throw error
+
+      // Create notification for requester
+      if (friendship) {
+        await supabase
+          .from('notifications')
+          .insert({
+            user_id: friendship.requester_id,
+            type: 'friend_accepted',
+            actor_id: profile.id,
+            message: `${profile.display_name} accepted your friend request`
+          })
+      }
+
       await fetchFriendships()
     } catch (err) {
       console.error('Error accepting request:', err)

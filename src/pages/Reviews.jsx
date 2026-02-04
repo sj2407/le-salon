@@ -199,6 +199,15 @@ export const Reviews = () => {
 
       // Save recommendations
       if (reviewId && recommendToFriends.length > 0) {
+        // Get existing recommendations to determine which are new
+        const { data: existingRecs } = await supabase
+          .from('review_recommendations')
+          .select('recommended_to_user_id')
+          .eq('review_id', reviewId)
+
+        const existingFriendIds = existingRecs?.map(r => r.recommended_to_user_id) || []
+        const newFriendIds = recommendToFriends.filter(id => !existingFriendIds.includes(id))
+
         // Delete existing recommendations
         await supabase
           .from('review_recommendations')
@@ -216,6 +225,20 @@ export const Reviews = () => {
           .insert(recommendations)
 
         if (recsError) throw recsError
+
+        // Create notifications for NEW recommendations only
+        for (const friendId of newFriendIds) {
+          await supabase
+            .from('notifications')
+            .insert({
+              user_id: friendId,
+              type: 'recommendation',
+              actor_id: profile.id,
+              reference_id: reviewId,
+              reference_name: title,
+              message: `${profile.display_name} recommended ${title}`
+            })
+        }
       } else if (reviewId) {
         // Clear all recommendations if none selected
         await supabase

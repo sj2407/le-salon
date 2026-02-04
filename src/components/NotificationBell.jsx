@@ -1,0 +1,293 @@
+import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
+import { supabase } from '../lib/supabase'
+
+export const NotificationBell = () => {
+  const { profile } = useAuth()
+  const navigate = useNavigate()
+  const [unreadCount, setUnreadCount] = useState(0)
+  const [notifications, setNotifications] = useState([])
+  const [isOpen, setIsOpen] = useState(false)
+  const dropdownRef = useRef(null)
+
+  useEffect(() => {
+    if (profile) {
+      fetchUnreadCount()
+    }
+  }, [profile])
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false)
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isOpen])
+
+  const fetchUnreadCount = async () => {
+    try {
+      const { count, error } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', profile.id)
+        .eq('read', false)
+
+      if (error) throw error
+      setUnreadCount(count || 0)
+    } catch (err) {
+      console.error('Error fetching unread count:', err)
+    }
+  }
+
+  const fetchUnreadNotifications = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', profile.id)
+        .eq('read', false)
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      return data || []
+    } catch (err) {
+      console.error('Error fetching notifications:', err)
+      return []
+    }
+  }
+
+  const markAllAsRead = async (notificationIds) => {
+    if (notificationIds.length === 0) return
+
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .update({ read: true })
+        .in('id', notificationIds)
+
+      if (error) throw error
+    } catch (err) {
+      console.error('Error marking notifications as read:', err)
+    }
+  }
+
+  const handleBellClick = async () => {
+    if (!isOpen) {
+      // Opening dropdown - fetch and mark as read
+      const unread = await fetchUnreadNotifications()
+      setNotifications(unread)
+
+      // Mark all as read immediately
+      const notificationIds = unread.map(n => n.id)
+      await markAllAsRead(notificationIds)
+
+      // Clear badge
+      setUnreadCount(0)
+      setIsOpen(true)
+    } else {
+      // Closing dropdown
+      setIsOpen(false)
+    }
+  }
+
+  const handleNotificationClick = (notification) => {
+    setIsOpen(false)
+
+    // Navigate based on notification type
+    switch (notification.type) {
+      case 'friend_request':
+        navigate('/friends')
+        break
+      case 'friend_accepted':
+        navigate(`/friend/${notification.actor_id}`)
+        break
+      case 'activity_interest':
+        navigate('/todo')
+        break
+      case 'recommendation':
+        navigate('/reviews')
+        break
+      case 'wishlist_claimed':
+        navigate('/wishlist')
+        break
+      default:
+        break
+    }
+  }
+
+  const getRelativeTime = (timestamp) => {
+    const now = new Date()
+    const then = new Date(timestamp)
+    const diffMs = now - then
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMs / 3600000)
+    const diffDays = Math.floor(diffMs / 86400000)
+
+    if (diffMins < 1) return 'Just now'
+    if (diffMins < 60) return `${diffMins}m ago`
+    if (diffHours < 24) return `${diffHours}h ago`
+    if (diffDays === 1) return 'Yesterday'
+    if (diffDays < 7) return `${diffDays}d ago`
+    return new Date(timestamp).toLocaleDateString()
+  }
+
+  return (
+    <div style={{ position: 'relative' }} ref={dropdownRef}>
+      {/* Bell Icon Button */}
+      <button
+        onClick={handleBellClick}
+        style={{
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          padding: '8px',
+          position: 'relative',
+          display: 'flex',
+          alignItems: 'center'
+        }}
+        aria-label="Notifications"
+      >
+        {/* Bell Icon SVG */}
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#2C2C2C"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+          <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+        </svg>
+
+        {/* Badge */}
+        {unreadCount > 0 && (
+          <span
+            style={{
+              position: 'absolute',
+              top: '4px',
+              right: '4px',
+              background: '#E8534F',
+              color: 'white',
+              borderRadius: '10px',
+              padding: '2px 6px',
+              fontSize: '11px',
+              fontWeight: 600,
+              lineHeight: 1,
+              minWidth: '18px',
+              textAlign: 'center'
+            }}
+          >
+            {unreadCount > 9 ? '9+' : unreadCount}
+          </span>
+        )}
+      </button>
+
+      {/* Dropdown */}
+      {isOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            top: '60px',
+            right: '8px',
+            width: 'min(340px, calc(100vw - 16px))',
+            maxHeight: '70vh',
+            overflowY: 'auto',
+            background: '#FFFEFA',
+            borderRadius: '8px',
+            boxShadow: '2px 4px 12px rgba(0, 0, 0, 0.12)',
+            zIndex: 1000
+          }}
+        >
+          {/* Header */}
+          <div
+            style={{
+              padding: '16px',
+              borderBottom: '1px dashed #D0D0D0',
+              fontFamily: 'Caveat, cursive',
+              fontSize: '24px',
+              fontWeight: 600
+            }}
+          >
+            Notifications
+          </div>
+
+          {/* Notification List */}
+          {notifications.length === 0 ? (
+            <div
+              style={{
+                padding: '40px 20px',
+                textAlign: 'center',
+                fontStyle: 'italic',
+                color: '#999'
+              }}
+            >
+              You're all caught up!
+            </div>
+          ) : (
+            <div>
+              {notifications.map((notification, index) => (
+                <div key={notification.id}>
+                  <button
+                    onClick={() => handleNotificationClick(notification)}
+                    style={{
+                      width: '100%',
+                      background: 'none',
+                      border: 'none',
+                      padding: '12px 16px',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      transition: 'background 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = '#F5F1EB'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                  >
+                    <div style={{ fontSize: '14px', lineHeight: 1.4, marginBottom: '4px' }}>
+                      {notification.message}
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#999' }}>
+                      {getRelativeTime(notification.created_at)}
+                    </div>
+                  </button>
+                  {index < notifications.length - 1 && (
+                    <div style={{ borderTop: '1px dashed #E0E0E0', margin: '0 16px' }} />
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Footer with "See all" link */}
+          <div style={{ borderTop: '1px dashed #D0D0D0', padding: '12px 16px', textAlign: 'center' }}>
+            <button
+              onClick={() => {
+                setIsOpen(false)
+                navigate('/notifications')
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#4A7BA7',
+                fontSize: '14px',
+                cursor: 'pointer',
+                textDecoration: 'underline',
+                fontWeight: 500
+              }}
+            >
+              See all notifications →
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

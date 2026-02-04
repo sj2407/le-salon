@@ -33,6 +33,8 @@ export const FriendWishlist = ({ friendId, friendName }) => {
 
   const handleClaim = async (itemId) => {
     try {
+      const item = items.find(i => i.id === itemId)
+
       const { error } = await supabase
         .from('wishlist_items')
         .update({
@@ -42,6 +44,21 @@ export const FriendWishlist = ({ friendId, friendName }) => {
         .eq('id', itemId)
 
       if (error) throw error
+
+      // Create anonymous notification for wishlist owner
+      if (item) {
+        await supabase
+          .from('notifications')
+          .insert({
+            user_id: item.user_id,
+            type: 'wishlist_claimed',
+            actor_id: profile.id,
+            reference_id: itemId,
+            reference_name: item.name,
+            message: `Someone claimed ${item.name} from your wishlist`
+          })
+      }
+
       fetchWishlistItems()
     } catch (err) {
       console.error('Error claiming item:', err)

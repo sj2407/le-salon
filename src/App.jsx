@@ -14,6 +14,7 @@ import { FindFriends } from './pages/FindFriends'
 import { FriendCard } from './pages/FriendCard'
 import { Profile } from './pages/Profile'
 import { Wishlist } from './pages/Wishlist'
+import { Notifications } from './pages/Notifications'
 import { AdminFeedback } from './pages/AdminFeedback'
 import { Help } from './pages/Help'
 
@@ -152,6 +153,14 @@ function AppRoutes() {
             element={
               <ProtectedRoute>
                 <Wishlist />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute>
+                <Notifications />
               </ProtectedRoute>
             }
           />

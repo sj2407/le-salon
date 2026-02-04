@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import salonIcon from '../assets/salon-icon.jpeg'
+import { NotificationBell } from './NotificationBell'
 
 export const Navigation = () => {
   const { user, profile, signOut } = useAuth()
@@ -74,17 +75,22 @@ export const Navigation = () => {
             <span className="nav-brand">Le Salon</span>
           </Link>
 
-          {/* Hamburger Button (All Screens) */}
-          <button
-            className="hamburger-button"
-            onClick={() => setIsMenuOpen(true)}
-            aria-label="Toggle menu"
-            style={{ display: 'flex' }}
-          >
-            <span></span>
-            <span></span>
-            <span></span>
-          </button>
+          {/* Right side: Bell + Hamburger */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <NotificationBell />
+
+            {/* Hamburger Button (All Screens) */}
+            <button
+              className="hamburger-button"
+              onClick={() => setIsMenuOpen(true)}
+              aria-label="Toggle menu"
+              style={{ display: 'flex' }}
+            >
+              <span></span>
+              <span></span>
+              <span></span>
+            </button>
+          </div>
         </div>
       </nav>
 
@@ -113,6 +119,9 @@ export const Navigation = () => {
             </button>
             <button onClick={() => handleNavClick('/wishlist')} className="mobile-dropdown-item">
               Wishlist
+            </button>
+            <button onClick={() => handleNavClick('/notifications')} className="mobile-dropdown-item">
+              Notifications
             </button>
             <button onClick={() => handleNavClick('/help')} className="mobile-dropdown-item">
               Help
