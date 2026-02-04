@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { CardDisplay } from '../components/CardDisplay'
+import { FriendWishlist } from '../components/FriendWishlist'
 
 const TAG_ICONS = {
   movie: '🎬',
@@ -317,6 +318,23 @@ export const FriendCard = () => {
             >
               Overlap
             </button>
+            <button
+              onClick={() => setActiveTab('wishlist')}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: '12px 24px',
+                fontSize: '16px',
+                fontWeight: activeTab === 'wishlist' ? 600 : 400,
+                color: activeTab === 'wishlist' ? '#2C2C2C' : '#777',
+                borderBottom: activeTab === 'wishlist' ? '3px solid #2C2C2C' : '3px solid transparent',
+                marginBottom: '-2px',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              Wishlist
+            </button>
           </div>
 
           {/* Tab Content */}
@@ -486,6 +504,10 @@ export const FriendCard = () => {
                 </div>
               )}
             </div>
+          )}
+
+          {activeTab === 'wishlist' && (
+            <FriendWishlist friendId={friendId} friendName={friendProfile?.display_name} />
           )}
         </>
       )}

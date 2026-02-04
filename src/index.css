@@ -936,44 +936,23 @@ nav a:hover {
 
 /* Media Queries */
 
-/* Mobile - show hamburger, hide desktop nav */
+/* Always show hamburger menu for all screen sizes */
+.nav-links-desktop {
+  display: none;
+}
+
+.hamburger-button {
+  display: flex;
+}
+
+/* Mobile specific nav padding */
 @media (max-width: 767px) {
-  .nav-links-desktop {
-    display: none;
-  }
-
-  .hamburger-button {
-    display: flex;
-  }
-
-  .mobile-menu-overlay {
-    display: block;
-  }
-
   nav {
     padding: 8px 20px;
   }
 
   nav .container {
     padding: 0;
-  }
-}
-
-/* Desktop - show nav links, hide hamburger */
-@media (min-width: 768px) {
-  .nav-links-desktop {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: nowrap;
-  }
-
-  .hamburger-button {
-    display: none;
-  }
-
-  .mobile-menu-overlay {
-    display: none !important;
   }
 }
 

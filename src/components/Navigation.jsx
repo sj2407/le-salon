@@ -74,25 +74,12 @@ export const Navigation = () => {
             <span className="nav-brand">Le Salon</span>
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="nav-links-desktop">
-            <Link to="/">My Card</Link>
-            <Link to="/history">History</Link>
-            <Link to="/reviews">Reviews</Link>
-            <Link to="/todo">Activity Board</Link>
-            <Link to="/friends">Friends</Link>
-            <Link to="/help">Help</Link>
-            <Link to="/profile">Profile</Link>
-            <button onClick={handleSignOut} style={{ padding: '6px 16px', fontSize: '13px' }}>
-              Sign Out
-            </button>
-          </div>
-
-          {/* Hamburger Button (Mobile Only) */}
+          {/* Hamburger Button (All Screens) */}
           <button
             className="hamburger-button"
             onClick={() => setIsMenuOpen(true)}
             aria-label="Toggle menu"
+            style={{ display: 'flex' }}
           >
             <span></span>
             <span></span>
@@ -123,6 +110,9 @@ export const Navigation = () => {
             </button>
             <button onClick={() => handleNavClick('/friends')} className="mobile-dropdown-item">
               Friends
+            </button>
+            <button onClick={() => handleNavClick('/wishlist')} className="mobile-dropdown-item">
+              Wishlist
             </button>
             <button onClick={() => handleNavClick('/help')} className="mobile-dropdown-item">
               Help

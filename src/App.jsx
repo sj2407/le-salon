@@ -13,6 +13,7 @@ import { Friends } from './pages/Friends'
 import { FindFriends } from './pages/FindFriends'
 import { FriendCard } from './pages/FriendCard'
 import { Profile } from './pages/Profile'
+import { Wishlist } from './pages/Wishlist'
 import { AdminFeedback } from './pages/AdminFeedback'
 import { Help } from './pages/Help'
 
@@ -143,6 +144,14 @@ function AppRoutes() {
             element={
               <ProtectedRoute>
                 <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/wishlist"
+            element={
+              <ProtectedRoute>
+                <Wishlist />
               </ProtectedRoute>
             }
           />
