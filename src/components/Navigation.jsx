@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import salonIcon from '../assets/salon-icon.jpeg'
 import { NotificationBell } from './NotificationBell'
+import { NewsletterBell } from './NewsletterBell'
 
 export const Navigation = () => {
   const { user, profile, signOut } = useAuth()
@@ -75,9 +76,10 @@ export const Navigation = () => {
             <span className="nav-brand">Le Salon</span>
           </Link>
 
-          {/* Right side: Bell + Hamburger */}
+          {/* Right side: Bell + Newsletter + Hamburger */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <NotificationBell />
+            <NewsletterBell />
 
             {/* Hamburger Button (All Screens) */}
             <button
@@ -113,6 +115,9 @@ export const Navigation = () => {
             </button>
             <button onClick={() => handleNavClick('/notifications')} className="mobile-dropdown-item">
               Notifications
+            </button>
+            <button onClick={() => handleNavClick('/newsletter')} className="mobile-dropdown-item">
+              Newsletter
             </button>
             <button onClick={() => handleNavClick('/help')} className="mobile-dropdown-item">
               Help

@@ -11,6 +11,7 @@ import { Friends } from './pages/Friends'
 import { FindFriends } from './pages/FindFriends'
 import { FriendCard } from './pages/FriendCard'
 import { Notifications } from './pages/Notifications'
+import { Newsletter } from './pages/Newsletter'
 import { AdminFeedback } from './pages/AdminFeedback'
 import { Help } from './pages/Help'
 
@@ -125,6 +126,14 @@ function AppRoutes() {
             element={
               <ProtectedRoute>
                 <Notifications />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/newsletter"
+            element={
+              <ProtectedRoute>
+                <Newsletter />
               </ProtectedRoute>
             }
           />
