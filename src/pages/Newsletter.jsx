@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { generateNewsletter } from '../lib/newsletterGenerator'
-import { getCurrentWeekPeriod, getWeekLabel } from '../lib/newsletterUtils'
+import { getWeekLabel } from '../lib/newsletterUtils'
 
 export const Newsletter = () => {
   const { profile } = useAuth()
@@ -19,24 +19,22 @@ export const Newsletter = () => {
 
   const checkOrGenerateNewsletter = async () => {
     try {
-      const { periodStart, periodEnd } = getCurrentWeekPeriod()
-
-      // Check if newsletter exists for this week by period_start (stable identifier)
-      const { data: existing, error: checkError } = await supabase
+      // Find the most recent newsletter to use as cutoff
+      const { data: lastNewsletter, error: lastError } = await supabase
         .from('newsletters')
-        .select('*')
+        .select('period_end')
         .eq('user_id', profile.id)
-        .eq('period_start', periodStart)
+        .order('period_end', { ascending: false })
+        .limit(1)
         .single()
 
-      if (checkError && checkError.code !== 'PGRST116') {
-        throw checkError
+      if (lastError && lastError.code !== 'PGRST116') {
+        throw lastError
       }
 
-      if (!existing) {
-        // Generate new newsletter for this period
-        await generateNewsletter(profile.id, periodStart, periodEnd)
-      }
+      // Generate newsletter with activity since last visit (or all time if first visit)
+      const cutoffTime = lastNewsletter?.period_end || null
+      await generateNewsletter(profile.id, cutoffTime)
 
       // Fetch all newsletters and mark current one as read
       await fetchNewsletters()
@@ -154,8 +152,8 @@ export const Newsletter = () => {
           padding: '48px 32px',
           textAlign: 'center'
         }}>
-          <p style={{ fontSize: '16px', color: '#666', margin: 0 }}>
-            Add friends to see their weekly updates here!
+          <p style={{ fontSize: '16px', color: '#666', margin: 0, fontStyle: 'italic' }}>
+            No updates from your friends yet. Check back later!
           </p>
         </div>
       </div>
@@ -169,9 +167,10 @@ export const Newsletter = () => {
       </h1>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '48px' }}>
-        {newsletters.map((newsletter) => {
+        {newsletters.map((newsletter, index) => {
           const items = newsletterItems[newsletter.id] || []
           const itemsByFriend = groupItemsByFriend(items)
+          const isLatest = index === 0
 
           return (
             <section key={newsletter.id}>
@@ -183,7 +182,7 @@ export const Newsletter = () => {
                 color: '#666',
                 fontWeight: 600
               }}>
-                {getWeekLabel(newsletter.period_end)}
+                {getWeekLabel(newsletter.period_end, isLatest)}
               </h2>
 
               {items.length === 0 ? (

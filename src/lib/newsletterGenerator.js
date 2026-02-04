@@ -1,13 +1,12 @@
 import { supabase } from './supabase'
 
 /**
- * Generate a newsletter showing changes since the last newsletter
+ * Generate a newsletter showing friend activity since the last newsletter
  * @param {string} userId - User's UUID
- * @param {string} periodStart - ISO timestamp (for tracking purposes)
- * @param {string} periodEnd - ISO timestamp (for tracking purposes)
+ * @param {string|null} cutoffTime - ISO timestamp to filter activity from (null = all time)
  * @returns {Object} Generated newsletter object or null
  */
-export const generateNewsletter = async (userId, periodStart, periodEnd) => {
+export const generateNewsletter = async (userId, cutoffTime = null) => {
   try {
     // Step 1: Get accepted friends
     const { data: friendships, error: friendshipsError } = await supabase
@@ -24,8 +23,8 @@ export const generateNewsletter = async (userId, periodStart, periodEnd) => {
         .from('newsletters')
         .insert({
           user_id: userId,
-          period_start: periodStart,
-          period_end: periodEnd,
+          period_start: cutoffTime || new Date().toISOString(),
+          period_end: new Date().toISOString(),
           item_count: 0
         })
         .select()
@@ -40,54 +39,29 @@ export const generateNewsletter = async (userId, periodStart, periodEnd) => {
       f.requester_id === userId ? f.recipient_id : f.requester_id
     )
 
-    // Step 2: Get previous newsletter to compare against
-    const { data: previousNewsletter } = await supabase
-      .from('newsletters')
-      .select('id, generated_at')
-      .eq('user_id', userId)
-      .order('generated_at', { ascending: false })
-      .limit(1)
-      .single()
-
-    const isFirstNewsletter = !previousNewsletter
-
-    // Get items from previous newsletter if it exists
-    let previousItemsByFriend = {}
-    if (previousNewsletter) {
-      const { data: prevItems } = await supabase
-        .from('newsletter_items')
-        .select('friend_id, item_type, description')
-        .eq('newsletter_id', previousNewsletter.id)
-
-      if (prevItems) {
-        // Group previous items by friend
-        prevItems.forEach(item => {
-          if (!previousItemsByFriend[item.friend_id]) {
-            previousItemsByFriend[item.friend_id] = []
-          }
-          previousItemsByFriend[item.friend_id].push(item.description)
-        })
-      }
-    }
-
-    // Step 3: Collect current content and detect changes
+    // Step 2: Collect friend activity since cutoff
     const items = []
 
-    // 3a. Get current cards for all friends
-    const { data: currentCards, error: cardsError } = await supabase
+    // 2a. Get card entries created since cutoff
+    let cardsQuery = supabase
       .from('cards')
       .select('id, user_id, created_at')
       .in('user_id', friendIds)
       .eq('is_current', true)
 
+    if (cutoffTime) {
+      cardsQuery = cardsQuery.gte('created_at', cutoffTime)
+    }
+
+    const { data: currentCards, error: cardsError } = await cardsQuery
+
     if (cardsError) throw cardsError
 
     if (currentCards && currentCards.length > 0) {
-      // Get entries for current cards
       const cardIds = currentCards.map(c => c.id)
       const { data: entries, error: entriesError } = await supabase
         .from('entries')
-        .select('card_id, category, content, subcategory')
+        .select('card_id, category, content, subcategory, created_at')
         .in('card_id', cardIds)
         .order('display_order')
 
@@ -104,39 +78,31 @@ export const generateNewsletter = async (userId, periodStart, periodEnd) => {
         })
       }
 
-      // Compare current card entries to previous newsletter
+      // Add card entries as items
       currentCards.forEach(card => {
         const cardEntries = entriesByCard[card.id] || []
-        const previousDescriptions = previousItemsByFriend[card.user_id] || []
-
         cardEntries.forEach(entry => {
-          const description = `Added "${entry.category}": "${entry.content}"`
-
-          // For first newsletter, show everything
-          // For subsequent newsletters, only show if not in previous newsletter
-          if (isFirstNewsletter || !previousDescriptions.includes(description)) {
-            items.push({
-              friend_id: card.user_id,
-              item_type: 'card',
-              reference_id: card.id,
-              description,
-              created_at: card.created_at
-            })
-          }
+          const subcatText = entry.subcategory ? ` (${entry.subcategory})` : ''
+          items.push({
+            friend_id: card.user_id,
+            item_type: 'card',
+            reference_id: card.id,
+            description: `Updated "${entry.category}"${subcatText}: "${entry.content}"`,
+            created_at: card.created_at
+          })
         })
       })
     }
 
-    // 3b. Get reviews
+    // 2b. Get reviews since cutoff
     let reviewQuery = supabase
       .from('reviews')
       .select('id, user_id, title, rating, created_at')
       .in('user_id', friendIds)
       .order('created_at', { ascending: false })
 
-    // For subsequent newsletters, only get reviews created after previous newsletter
-    if (previousNewsletter) {
-      reviewQuery = reviewQuery.gte('created_at', previousNewsletter.generated_at)
+    if (cutoffTime) {
+      reviewQuery = reviewQuery.gte('created_at', cutoffTime)
     }
 
     const { data: reviews, error: reviewsError } = await reviewQuery
@@ -155,7 +121,7 @@ export const generateNewsletter = async (userId, periodStart, periodEnd) => {
       })
     }
 
-    // 3c. Get activities
+    // 2c. Get activities since cutoff
     let activityQuery = supabase
       .from('activities')
       .select('id, user_id, description, city, created_at')
@@ -163,9 +129,8 @@ export const generateNewsletter = async (userId, periodStart, periodEnd) => {
       .eq('is_archived', false)
       .order('created_at', { ascending: false })
 
-    // For subsequent newsletters, only get activities created after previous newsletter
-    if (previousNewsletter) {
-      activityQuery = activityQuery.gte('created_at', previousNewsletter.generated_at)
+    if (cutoffTime) {
+      activityQuery = activityQuery.gte('created_at', cutoffTime)
     }
 
     const { data: activities, error: activitiesError } = await activityQuery
@@ -185,7 +150,7 @@ export const generateNewsletter = async (userId, periodStart, periodEnd) => {
       })
     }
 
-    // Step 4: Deduplicate items
+    // Step 3: Deduplicate items
     const uniqueItems = []
     const seen = new Set()
 
@@ -197,13 +162,18 @@ export const generateNewsletter = async (userId, periodStart, periodEnd) => {
       }
     })
 
+    // Step 4: Only create newsletter if there are new items
+    if (uniqueItems.length === 0) {
+      return null // No new activity, don't create empty newsletter
+    }
+
     // Step 5: Create newsletter record
     const { data: newsletter, error: newsletterError } = await supabase
       .from('newsletters')
       .insert({
         user_id: userId,
-        period_start: periodStart,
-        period_end: periodEnd,
+        period_start: cutoffTime || new Date().toISOString(),
+        period_end: new Date().toISOString(),
         item_count: uniqueItems.length
       })
       .select()
@@ -212,23 +182,21 @@ export const generateNewsletter = async (userId, periodStart, periodEnd) => {
     if (newsletterError) throw newsletterError
 
     // Step 6: Insert newsletter items
-    if (uniqueItems.length > 0) {
-      const newsletterItems = uniqueItems.map((item, index) => ({
-        newsletter_id: newsletter.id,
-        friend_id: item.friend_id,
-        item_type: item.item_type,
-        reference_id: item.reference_id,
-        description: item.description,
-        display_order: index,
-        created_at: item.created_at
-      }))
+    const newsletterItems = uniqueItems.map((item, index) => ({
+      newsletter_id: newsletter.id,
+      friend_id: item.friend_id,
+      item_type: item.item_type,
+      reference_id: item.reference_id,
+      description: item.description,
+      display_order: index,
+      created_at: item.created_at
+    }))
 
-      const { error: itemsError } = await supabase
-        .from('newsletter_items')
-        .insert(newsletterItems)
+    const { error: itemsError } = await supabase
+      .from('newsletter_items')
+      .insert(newsletterItems)
 
-      if (itemsError) throw itemsError
-    }
+    if (itemsError) throw itemsError
 
     return newsletter
   } catch (error) {
