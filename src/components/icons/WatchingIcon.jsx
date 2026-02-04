@@ -41,8 +41,8 @@ export const WatchingIcon = ({ className = "section-icon" }) => {
         onMouseLeave={handleMouseLeave}
         style={{
           cursor: 'pointer',
-          width: '70px',
-          height: '70px',
+          width: '91px',
+          height: '91px',
           objectFit: 'contain'
         }}
       />

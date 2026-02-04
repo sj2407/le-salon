@@ -266,7 +266,7 @@ export const FriendCard = () => {
       {friendProfile && (
         <>
           {/* Tab Navigation */}
-          <div style={{ display: 'flex', gap: '4px', marginBottom: '8px', overflowX: 'auto', paddingLeft: '20px' }}>
+          <div style={{ display: 'flex', gap: '2px', marginBottom: '8px', overflowX: 'auto', paddingLeft: '20px', scrollbarWidth: 'none', msOverflowStyle: 'none' }} className="hide-scrollbar">
             <button
               onClick={() => setActiveTab('card')}
               style={{

@@ -16,14 +16,12 @@ const TAG_OPTIONS = ['movie', 'book', 'podcast', 'show', 'album', 'other']
 export const Reviews = () => {
   const { profile } = useAuth()
   const [reviews, setReviews] = useState([])
-  const [recommendations, setRecommendations] = useState([])
   const [friends, setFriends] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingReview, setEditingReview] = useState(null)
   const [expandedReviews, setExpandedReviews] = useState(new Set())
   const [filterTag, setFilterTag] = useState('all')
-  const [activeTab, setActiveTab] = useState('myReviews')
 
   // Form state
   const [title, setTitle] = useState('')
@@ -36,7 +34,6 @@ export const Reviews = () => {
   useEffect(() => {
     if (profile) {
       fetchReviews()
-      fetchRecommendations()
       fetchFriends()
     }
   }, [profile])
@@ -56,39 +53,6 @@ export const Reviews = () => {
       console.error('Error fetching reviews:', err)
     } finally {
       setLoading(false)
-    }
-  }
-
-  const fetchRecommendations = async () => {
-    try {
-      const { data: recsData, error: recsError } = await supabase
-        .from('review_recommendations')
-        .select('review_id')
-        .eq('recommended_to_user_id', profile.id)
-
-      if (recsError) throw recsError
-
-      if (!recsData || recsData.length === 0) {
-        setRecommendations([])
-        return
-      }
-
-      const reviewIds = recsData.map(r => r.review_id)
-
-      const { data: reviewsData, error: reviewsError } = await supabase
-        .from('reviews')
-        .select(`
-          *,
-          profiles!reviews_user_id_fkey(display_name, username)
-        `)
-        .in('id', reviewIds)
-        .order('created_at', { ascending: false })
-
-      if (reviewsError) throw reviewsError
-
-      setRecommendations(reviewsData || [])
-    } catch (err) {
-      console.error('Error fetching recommendations:', err)
     }
   }
 
@@ -302,115 +266,43 @@ export const Reviews = () => {
         style={{
           position: 'absolute',
           top: '15px',
-          left: '180px',
-          width: '70px',
-          height: '70px',
-          opacity: 0.4,
+          left: '200px',
+          width: '90px',
+          height: '90px',
+          opacity: 0.3,
           pointerEvents: 'none',
           zIndex: 0,
-          animation: 'bookFloat 4.5s ease-in-out infinite',
+          animation: 'gavelSway 5s ease-in-out infinite',
           filter: 'contrast(2.5) brightness(1.35)'
         }}
       />
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', position: 'relative', zIndex: 1 }}>
-        <h1 className="handwritten" style={{ fontSize: '42px', margin: 0 }}>
-          Reviews
-        </h1>
-        <button onClick={openAddModal} style={{ background: 'none', border: 'none', fontFamily: 'Caveat, cursive', fontSize: '20px', color: '#4A7BA7', cursor: 'pointer', fontWeight: 'bold', padding: 0 }}>
-          + Add Review
-        </button>
-      </div>
-
-      {/* Tab buttons */}
-      <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
-        <button
-          onClick={() => setActiveTab('myReviews')}
-          className="tab-button"
-          data-active={activeTab === 'myReviews'}
-          style={{
-            padding: '8px 20px',
-            fontSize: '14px',
-            fontFamily: 'Caveat, cursive',
-            fontSize: '20px',
-            background: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-            color: '#2C2C2C',
-            transition: 'all 250ms ease-out'
-          }}
-        >
-          My Reviews
-        </button>
-        <button
-          onClick={() => setActiveTab('recs')}
-          className="tab-button"
-          data-active={activeTab === 'recs'}
-          style={{
-            padding: '8px 20px',
-            fontSize: '20px',
-            fontFamily: 'Caveat, cursive',
-            background: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-            color: '#2C2C2C',
-            transition: 'all 250ms ease-out',
-            position: 'relative'
-          }}
-        >
-          Recs from Friends
-          {recommendations.length > 0 && (
-            <span style={{
-              position: 'absolute',
-              top: '-6px',
-              right: '-6px',
-              background: '#E8534F',
-              color: 'white',
-              borderRadius: '10px',
-              padding: '2px 6px',
-              fontSize: '11px',
-              fontWeight: 600
-            }}>
-              {recommendations.length}
-            </span>
-          )}
-        </button>
-      </div>
-
-      {activeTab === 'myReviews' ? (
-        <>
-          {/* Filter tags */}
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
-        <button
-          onClick={() => setFilterTag('all')}
-          className="filter-pill"
-          style={{
-            padding: '6px 14px',
-            fontSize: '13px',
-            background: filterTag === 'all' ? '#2C2C2C' : '#FFFEFA',
-            color: filterTag === 'all' ? '#FFFEFA' : '#2C2C2C',
-            fontWeight: filterTag === 'all' ? 600 : 400
-          }}
-        >
-          All
-        </button>
-        {TAG_OPTIONS.map((tagOption) => (
-          <button
-            key={tagOption}
-            onClick={() => setFilterTag(tagOption)}
-            className="filter-pill"
-            style={{
-              padding: '6px 14px',
-              fontSize: '13px',
-              background: filterTag === tagOption ? '#2C2C2C' : '#FFFEFA',
-              color: filterTag === tagOption ? '#FFFEFA' : '#2C2C2C',
-              fontWeight: filterTag === tagOption ? 600 : 400
-            }}
-          >
-            {TAG_ICONS[tagOption]} {tagOption}
-          </button>
-        ))}
-      </div>
+      {/* Add Review button and Filter dropdown */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', marginTop: '4px', flexWrap: 'wrap', gap: '12px' }}>
+            <select
+              value={filterTag}
+              onChange={(e) => setFilterTag(e.target.value)}
+              style={{
+                padding: '6px 10px',
+                border: '1px solid #ccc',
+                borderRadius: '3px',
+                background: '#FFFEFA',
+                fontSize: '14px',
+                cursor: 'pointer',
+                marginTop: '12px'
+              }}
+            >
+              <option value="all">All</option>
+              {TAG_OPTIONS.map((tagOption) => (
+                <option key={tagOption} value={tagOption}>
+                  {TAG_ICONS[tagOption]} {tagOption}
+                </option>
+              ))}
+            </select>
+            <button onClick={openAddModal} style={{ background: '#DCDCDC', border: 'none', borderRadius: '50%', fontSize: '12px', color: '#333', cursor: 'pointer', width: '18px', height: '18px', minWidth: '18px', minHeight: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, marginTop: '48px', lineHeight: 1 }}>
+              +
+            </button>
+          </div>
 
       {filteredReviews.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '40px', fontStyle: 'italic', color: '#777' }}>
@@ -419,7 +311,7 @@ export const Reviews = () => {
             : `No ${filterTag} reviews yet.`}
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {filteredReviews.map((review, index) => (
             <div
               key={review.id}
@@ -429,17 +321,17 @@ export const Reviews = () => {
                 background: '#FFFEFA',
                 border: 'none',
                 borderRadius: '2px',
-                padding: '14px 16px',
+                padding: '7px 16px',
                 boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)'
               }}
             >
               {/* Single line: Icon + Title + Rating + Expand + Edit/Delete */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '18px', flexShrink: 0 }}>{TAG_ICONS[review.tag]}</span>
-                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <h3 style={{ margin: 0, fontSize: '14px', fontStyle: 'italic', fontWeight: 400, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {review.title}
                 </h3>
-                <div className="handwritten" style={{ fontSize: '28px', lineHeight: 1, color: '#2C2C2C', flexShrink: 0 }}>
+                <div className="handwritten" style={{ fontSize: '18px', lineHeight: 1, color: '#2C2C2C', flexShrink: 0 }}>
                   {review.rating}/10
                 </div>
                 {review.review_text && (
@@ -487,22 +379,13 @@ export const Reviews = () => {
                     opacity: 0.6,
                     transition: 'opacity 0.2s',
                     flexShrink: 0,
-                    display: 'flex',
-                    alignItems: 'center'
+                    fontSize: '18px'
                   }}
                   onMouseEnter={(e) => e.target.style.opacity = '1'}
                   onMouseLeave={(e) => e.target.style.opacity = '0.6'}
                   title="Delete"
                 >
-                  <img
-                    src="/images/eraser.jpeg"
-                    alt="Delete"
-                    style={{
-                      width: '24px',
-                      height: '24px',
-                      objectFit: 'contain'
-                    }}
-                  />
+                  🗑️
                 </button>
               </div>
 
@@ -515,86 +398,6 @@ export const Reviews = () => {
             </div>
           ))}
         </div>
-      )}
-        </>
-      ) : (
-        <>
-          {/* Recommendations from Friends */}
-          {recommendations.length === 0 ? (
-            <div style={{
-              background: '#FFFEFA',
-              border: 'none',
-              borderRadius: '2px',
-              padding: '48px 32px',
-              textAlign: 'center',
-              boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)'
-            }}>
-              <p style={{ fontSize: '16px', color: '#666', margin: 0 }}>
-                No recommendations yet. When friends recommend reviews to you, they'll appear here!
-              </p>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {recommendations.map((review, index) => (
-                <div
-                  key={review.id}
-                  className="review-card"
-                  data-index={index}
-                  style={{
-                    background: '#FFFEFA',
-                    border: 'none',
-                    borderRadius: '2px',
-                    padding: '20px 24px',
-                    position: 'relative',
-                    boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)'
-                  }}
-                >
-                  <div style={{ fontSize: '13px', color: '#666', marginBottom: '12px' }}>
-                    Recommended by {review.profiles?.display_name || 'a friend'}
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '20px' }}>{TAG_ICONS[review.tag] || '📌'}</span>
-                    <h3 style={{ fontSize: '18px', margin: 0, flex: 1 }}>{review.title}</h3>
-                    <span className="handwritten" style={{ fontSize: '24px', fontWeight: 600 }}>
-                      {review.rating}/10
-                    </span>
-                  </div>
-
-                  {review.review_text && (
-                    <div style={{ marginTop: '12px' }}>
-                      <p style={{
-                        fontSize: '14px',
-                        lineHeight: '1.6',
-                        margin: 0,
-                        whiteSpace: expandedReviews.has(review.id) ? 'pre-wrap' : 'nowrap',
-                        overflow: expandedReviews.has(review.id) ? 'visible' : 'hidden',
-                        textOverflow: expandedReviews.has(review.id) ? 'clip' : 'ellipsis'
-                      }}>
-                        {review.review_text}
-                      </p>
-                      <button
-                        onClick={() => toggleExpanded(review.id)}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: '#2C2C2C',
-                          fontSize: '13px',
-                          cursor: 'pointer',
-                          padding: '4px 0',
-                          marginTop: '4px',
-                          textDecoration: 'underline'
-                        }}
-                      >
-                        {expandedReviews.has(review.id) ? 'Show less' : 'Read more'}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </>
       )}
 
       {/* Add/Edit Modal */}
