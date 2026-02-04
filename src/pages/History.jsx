@@ -68,7 +68,12 @@ export const History = () => {
               const key = entry.subcategory
                 ? `${entry.category} - ${entry.subcategory}`
                 : entry.category
-              row.entries[key] = entry.content
+              // Append to existing entries with same key (for multiple songs, articles, etc.)
+              if (row.entries[key]) {
+                row.entries[key] = row.entries[key] + '\n' + entry.content
+              } else {
+                row.entries[key] = entry.content
+              }
             })
 
             return row
@@ -302,7 +307,8 @@ export const History = () => {
                         fontStyle: 'italic',
                         color: row.entries[column] ? '#2C2C2C' : '#CCC',
                         borderRight: '1px dashed #E0E0E0',
-                        lineHeight: '1.4'
+                        lineHeight: '1.4',
+                        whiteSpace: 'pre-line'
                       }}>
                         {row.entries[column] || '—'}
                       </td>

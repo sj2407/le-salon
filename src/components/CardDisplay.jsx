@@ -60,7 +60,7 @@ const linkifyText = (text) => {
   return text
 }
 
-export const CardDisplay = ({ card, entries, displayName, photoUrl, isEditable = false, onEdit }) => {
+export const CardDisplay = ({ card, entries, displayName, photoUrl, isEditable = false, onEdit, onSectionEdit }) => {
   const formatDate = (date) => {
     const d = new Date(date)
     const options = { month: 'long', day: 'numeric', year: 'numeric' }
@@ -110,6 +110,30 @@ export const CardDisplay = ({ card, entries, displayName, photoUrl, isEditable =
           <div style={{ position: 'absolute', ...iconPosition, zIndex: 10 }}>
             <Icon />
           </div>
+        )}
+        {isEditable && onSectionEdit && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onSectionEdit(categoryName)
+            }}
+            style={{
+              position: 'absolute',
+              top: '8px',
+              left: '8px',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '2px',
+              opacity: 0.4,
+              fontSize: '12px',
+              lineHeight: 1,
+              zIndex: 5
+            }}
+            title={`Edit ${categoryName}`}
+          >
+            ✏️
+          </button>
         )}
         <div className="section-header">
           <span className="section-title">{titleText}</span>

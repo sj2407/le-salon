@@ -3,12 +3,14 @@ import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { CardDisplay } from '../components/CardDisplay'
 import { CardEdit } from '../components/CardEdit'
+import { SectionEditModal } from '../components/SectionEditModal'
 
 export const MyCard = () => {
   const { profile } = useAuth()
   const [card, setCard] = useState(null)
   const [entries, setEntries] = useState([])
   const [isEditing, setIsEditing] = useState(false)
+  const [editingSection, setEditingSection] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -115,6 +117,58 @@ export const MyCard = () => {
     }
   }
 
+  const handleSectionSave = async (category, newCategoryEntries) => {
+    try {
+      setLoading(true)
+
+      // Keep entries from other categories (strip id field), replace this category's entries
+      const otherEntries = entries
+        .filter(e => e.category !== category)
+        .map(({ id, card_id, ...rest }) => rest)
+      const allEntries = [...otherEntries, ...newCategoryEntries]
+
+      // Use the same save logic as handleSave
+      const today = new Date().toDateString()
+      const cardCreatedToday = card && new Date(card.created_at).toDateString() === today
+
+      if (cardCreatedToday) {
+        await supabase
+          .from('entries')
+          .delete()
+          .eq('card_id', card.id)
+
+        if (allEntries.length > 0) {
+          const entriesWithCardId = allEntries.map((entry, index) => ({
+            ...entry,
+            card_id: card.id,
+            display_order: index
+          }))
+
+          const { data: insertedEntries, error: entriesError } = await supabase
+            .from('entries')
+            .insert(entriesWithCardId)
+            .select()
+
+          if (entriesError) throw entriesError
+          setEntries(insertedEntries)
+        } else {
+          setEntries([])
+        }
+      } else {
+        if (card) {
+          await archiveCurrentCard()
+        }
+        await createNewCard(allEntries)
+      }
+
+      setEditingSection(null)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleSave = async (newEntries) => {
     try {
       setLoading(true)
@@ -191,14 +245,25 @@ export const MyCard = () => {
           onCancel={() => setIsEditing(false)}
         />
       ) : (
-        <CardDisplay
-          card={card}
-          entries={entries}
-          displayName={profile.display_name}
-          photoUrl={profile.profile_photo_url}
-          isEditable={true}
-          onEdit={() => setIsEditing(true)}
-        />
+        <>
+          <CardDisplay
+            card={card}
+            entries={entries}
+            displayName={profile.display_name}
+            photoUrl={profile.profile_photo_url}
+            isEditable={true}
+            onEdit={() => setIsEditing(true)}
+            onSectionEdit={(category) => setEditingSection(category)}
+          />
+          {editingSection && (
+            <SectionEditModal
+              category={editingSection}
+              entries={entries}
+              onSave={handleSectionSave}
+              onClose={() => setEditingSection(null)}
+            />
+          )}
+        </>
       )}
     </div>
   )

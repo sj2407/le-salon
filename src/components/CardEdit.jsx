@@ -98,6 +98,23 @@ export const CardEdit = ({ entries, displayName, onSave, onCancel }) => {
         }
       }
     })
+
+    // If removing a music entry, shift metadata indices down
+    if (subcategory === 'music') {
+      setMusicMetadata(prev => {
+        const newMeta = {}
+        Object.keys(prev).forEach(key => {
+          const keyNum = parseInt(key)
+          if (keyNum < index) {
+            newMeta[keyNum] = prev[key]
+          } else if (keyNum > index) {
+            newMeta[keyNum - 1] = prev[key]
+          }
+          // Skip the removed index
+        })
+        return newMeta
+      })
+    }
   }
 
   const handleMusicChange = (index, value, metadata) => {
