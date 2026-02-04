@@ -8,6 +8,11 @@ export const Profile = () => {
   const [email, setEmail] = useState('')
   const [location, setLocation] = useState('')
   const [bio, setBio] = useState('')
+  const [favoriteBooks, setFavoriteBooks] = useState('')
+  const [favoriteArtists, setFavoriteArtists] = useState('')
+  const [astroSign, setAstroSign] = useState('')
+  const [spiritAnimal, setSpiritAnimal] = useState('')
+  const [favoriteQuote, setFavoriteQuote] = useState('')
   const [photoUrl, setPhotoUrl] = useState('')
   const [photoFile, setPhotoFile] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -19,6 +24,11 @@ export const Profile = () => {
       setEmail(profile.email || '')
       setLocation(profile.location || '')
       setBio(profile.bio || '')
+      setFavoriteBooks(profile.favorite_books || '')
+      setFavoriteArtists(profile.favorite_artists || '')
+      setAstroSign(profile.astro_sign || '')
+      setSpiritAnimal(profile.spirit_animal || '')
+      setFavoriteQuote(profile.favorite_quote || '')
       setPhotoUrl(profile.profile_photo_url || '')
     }
   }, [profile])
@@ -71,6 +81,11 @@ export const Profile = () => {
           display_name: displayName,
           location: location,
           bio: bio,
+          favorite_books: favoriteBooks,
+          favorite_artists: favoriteArtists,
+          astro_sign: astroSign,
+          spirit_animal: spiritAnimal,
+          favorite_quote: favoriteQuote,
           profile_photo_url: uploadedPhotoUrl
         })
         .eq('id', user.id)
@@ -198,7 +213,64 @@ export const Profile = () => {
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               placeholder="Tell friends a bit about yourself..."
-              rows={4}
+              rows={bio ? Math.max(2, Math.ceil(bio.length / 60)) : 2}
+              style={{ minHeight: '60px' }}
+            />
+          </div>
+
+          {/* Favorite Books */}
+          <div className="form-group">
+            <label className="form-label">Favorite Books</label>
+            <input
+              type="text"
+              value={favoriteBooks}
+              onChange={(e) => setFavoriteBooks(e.target.value)}
+              placeholder="e.g., To Kill a Mockingbird, 1984"
+            />
+          </div>
+
+          {/* Favorite Artists */}
+          <div className="form-group">
+            <label className="form-label">Favorite Artists</label>
+            <input
+              type="text"
+              value={favoriteArtists}
+              onChange={(e) => setFavoriteArtists(e.target.value)}
+              placeholder="e.g., Taylor Swift, The Beatles"
+            />
+          </div>
+
+          {/* Astro Sign */}
+          <div className="form-group">
+            <label className="form-label">Astro Sign</label>
+            <input
+              type="text"
+              value={astroSign}
+              onChange={(e) => setAstroSign(e.target.value)}
+              placeholder="e.g., Leo, Virgo, Aquarius"
+            />
+          </div>
+
+          {/* Spirit Animal */}
+          <div className="form-group">
+            <label className="form-label">Spirit Animal</label>
+            <input
+              type="text"
+              value={spiritAnimal}
+              onChange={(e) => setSpiritAnimal(e.target.value)}
+              placeholder="e.g., Wolf, Owl, Dolphin"
+            />
+          </div>
+
+          {/* Favorite Quote */}
+          <div className="form-group">
+            <label className="form-label">Favorite Quote or Saying</label>
+            <textarea
+              value={favoriteQuote}
+              onChange={(e) => setFavoriteQuote(e.target.value)}
+              placeholder="A quote or saying that inspires you..."
+              rows={favoriteQuote ? Math.max(2, Math.ceil(favoriteQuote.length / 60)) : 2}
+              style={{ minHeight: '60px' }}
             />
           </div>
 

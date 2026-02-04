@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { CardDisplay } from '../components/CardDisplay'
 import { FriendWishlist } from '../components/FriendWishlist'
+import { FriendProfile } from '../components/FriendProfile'
 
 const TAG_ICONS = {
   movie: '🎬',
@@ -339,6 +340,24 @@ export const FriendCard = () => {
             >
               Wishlist
             </button>
+            <button
+              onClick={() => setActiveTab('profile')}
+              style={{
+                background: 'none',
+                border: 'none',
+                boxShadow: 'none',
+                outline: 'none',
+                padding: '8px 12px',
+                fontSize: '14px',
+                fontWeight: activeTab === 'profile' ? 600 : 400,
+                color: activeTab === 'profile' ? '#2C2C2C' : '#777',
+                marginBottom: '-2px',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              Profile
+            </button>
           </div>
 
           {/* Tab Content */}
@@ -532,6 +551,10 @@ export const FriendCard = () => {
 
           {activeTab === 'wishlist' && (
             <FriendWishlist friendId={friendId} friendName={friendProfile?.display_name} />
+          )}
+
+          {activeTab === 'profile' && (
+            <FriendProfile friendId={friendId} friendName={friendProfile?.display_name} />
           )}
           </div>
         </>
