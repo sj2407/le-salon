@@ -103,13 +103,7 @@ export const Navigation = () => {
           {/* Dropdown Menu */}
           <div className="mobile-dropdown-menu">
             <button onClick={() => handleNavClick('/')} className="mobile-dropdown-item">
-              My Card
-            </button>
-            <button onClick={() => handleNavClick('/history')} className="mobile-dropdown-item">
-              History
-            </button>
-            <button onClick={() => handleNavClick('/reviews')} className="mobile-dropdown-item">
-              Reviews
+              My Corner
             </button>
             <button onClick={() => handleNavClick('/todo')} className="mobile-dropdown-item">
               Activity Board
@@ -117,17 +111,11 @@ export const Navigation = () => {
             <button onClick={() => handleNavClick('/friends')} className="mobile-dropdown-item">
               Friends
             </button>
-            <button onClick={() => handleNavClick('/wishlist')} className="mobile-dropdown-item">
-              Wishlist
-            </button>
             <button onClick={() => handleNavClick('/notifications')} className="mobile-dropdown-item">
               Notifications
             </button>
             <button onClick={() => handleNavClick('/help')} className="mobile-dropdown-item">
               Help
-            </button>
-            <button onClick={() => handleNavClick('/profile')} className="mobile-dropdown-item">
-              Profile
             </button>
             <button onClick={handleSignOut} className="mobile-dropdown-item">
               Sign Out

@@ -91,11 +91,11 @@ export const Profile = () => {
 
   return (
     <div className="container" style={{ maxWidth: '600px' }}>
-      <h1 className="handwritten" style={{ fontSize: '42px', marginBottom: '32px', textAlign: 'center' }}>
+      <h1 className="handwritten" style={{ fontSize: '42px', marginBottom: '12px', textAlign: 'center' }}>
         My Profile
       </h1>
 
-      <div className="card">
+      <div className="card" style={{ border: 'none', boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)', transform: 'rotate(0.5deg)', animation: 'gentleSway1 5s ease-in-out infinite' }}>
         <form onSubmit={handleSave}>
           {/* Profile Photo */}
           <div style={{ textAlign: 'center', marginBottom: '32px' }}>

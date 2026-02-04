@@ -140,7 +140,7 @@ export const Wishlist = () => {
       />
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px', position: 'relative', zIndex: 1 }}>
-        <h1 className="handwritten" style={{ fontSize: '42px', margin: 0 }}>
+        <h1 className="handwritten" style={{ fontSize: '42px', margin: 0, marginLeft: '20px' }}>
           Wishlist
         </h1>
         <button onClick={openAddModal} style={{
@@ -156,6 +156,10 @@ export const Wishlist = () => {
           + Add Item
         </button>
       </div>
+
+      <p style={{ fontSize: '15px', color: '#666', fontStyle: 'italic', marginBottom: '24px', textAlign: 'center' }}>
+        Add items you'd like, and friends can anonymously claim them as gifts for you.
+      </p>
 
       {items.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '40px', fontStyle: 'italic', color: '#777' }}>
@@ -268,7 +272,8 @@ export const Wishlist = () => {
                     style={{
                       width: '24px',
                       height: '24px',
-                      objectFit: 'contain'
+                      objectFit: 'contain',
+                      transform: 'rotate(-35deg)'
                     }}
                   />
                 </button>

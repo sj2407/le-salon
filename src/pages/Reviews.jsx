@@ -523,10 +523,11 @@ export const Reviews = () => {
           {recommendations.length === 0 ? (
             <div style={{
               background: '#FFFEFA',
-              border: '1.5px solid #2C2C2C',
-              borderRadius: '3px',
+              border: 'none',
+              borderRadius: '2px',
               padding: '48px 32px',
-              textAlign: 'center'
+              textAlign: 'center',
+              boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)'
             }}>
               <p style={{ fontSize: '16px', color: '#666', margin: 0 }}>
                 No recommendations yet. When friends recommend reviews to you, they'll appear here!

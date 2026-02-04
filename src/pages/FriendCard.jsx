@@ -260,23 +260,24 @@ export const FriendCard = () => {
   return (
     <div className="container">
       <div style={{ marginBottom: '20px' }}>
-        <button onClick={() => navigate('/friends')}>← Back to Friends</button>
+        <button onClick={() => navigate('/friends')} style={{ border: 'none' }}>← Back to Friends</button>
       </div>
 
       {friendProfile && (
         <>
           {/* Tab Navigation */}
-          <div style={{ display: 'flex', gap: '16px', marginBottom: '32px', borderBottom: '2px solid #E8E8E8' }}>
+          <div style={{ display: 'flex', gap: '4px', marginBottom: '8px', overflowX: 'auto', paddingLeft: '20px' }}>
             <button
               onClick={() => setActiveTab('card')}
               style={{
                 background: 'none',
                 border: 'none',
-                padding: '12px 24px',
-                fontSize: '16px',
+                boxShadow: 'none',
+                outline: 'none',
+                padding: '8px 12px',
+                fontSize: '14px',
                 fontWeight: activeTab === 'card' ? 600 : 400,
                 color: activeTab === 'card' ? '#2C2C2C' : '#777',
-                borderBottom: activeTab === 'card' ? '3px solid #2C2C2C' : '3px solid transparent',
                 marginBottom: '-2px',
                 cursor: 'pointer',
                 transition: 'all 0.2s'
@@ -289,11 +290,12 @@ export const FriendCard = () => {
               style={{
                 background: 'none',
                 border: 'none',
-                padding: '12px 24px',
-                fontSize: '16px',
+                boxShadow: 'none',
+                outline: 'none',
+                padding: '8px 12px',
+                fontSize: '14px',
                 fontWeight: activeTab === 'reviews' ? 600 : 400,
                 color: activeTab === 'reviews' ? '#2C2C2C' : '#777',
-                borderBottom: activeTab === 'reviews' ? '3px solid #2C2C2C' : '3px solid transparent',
                 marginBottom: '-2px',
                 cursor: 'pointer',
                 transition: 'all 0.2s'
@@ -306,11 +308,12 @@ export const FriendCard = () => {
               style={{
                 background: 'none',
                 border: 'none',
-                padding: '12px 24px',
-                fontSize: '16px',
+                boxShadow: 'none',
+                outline: 'none',
+                padding: '8px 12px',
+                fontSize: '14px',
                 fontWeight: activeTab === 'overlap' ? 600 : 400,
                 color: activeTab === 'overlap' ? '#2C2C2C' : '#777',
-                borderBottom: activeTab === 'overlap' ? '3px solid #2C2C2C' : '3px solid transparent',
                 marginBottom: '-2px',
                 cursor: 'pointer',
                 transition: 'all 0.2s'
@@ -323,11 +326,12 @@ export const FriendCard = () => {
               style={{
                 background: 'none',
                 border: 'none',
-                padding: '12px 24px',
-                fontSize: '16px',
+                boxShadow: 'none',
+                outline: 'none',
+                padding: '8px 12px',
+                fontSize: '14px',
                 fontWeight: activeTab === 'wishlist' ? 600 : 400,
                 color: activeTab === 'wishlist' ? '#2C2C2C' : '#777',
-                borderBottom: activeTab === 'wishlist' ? '3px solid #2C2C2C' : '3px solid transparent',
                 marginBottom: '-2px',
                 cursor: 'pointer',
                 transition: 'all 0.2s'
@@ -338,6 +342,7 @@ export const FriendCard = () => {
           </div>
 
           {/* Tab Content */}
+          <div style={{ marginTop: '-20px' }}>
           {activeTab === 'card' && (
             <CardDisplay
               card={card}
@@ -361,10 +366,10 @@ export const FriendCard = () => {
                 key={review.id}
                 style={{
                   background: '#FFFEFA',
-                  border: '1px solid #D0D0D0',
-                  borderRadius: '4px',
+                  border: 'none',
+                  borderRadius: '2px',
                   padding: '14px 16px',
-                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.06)'
+                  boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)'
                 }}
               >
                 {/* Single line: Icon + Title + Rating + Expand */}
@@ -384,7 +389,7 @@ export const FriendCard = () => {
                         border: 'none',
                         cursor: 'pointer',
                         padding: '4px',
-                        fontSize: '16px',
+                        fontSize: '14px',
                         color: '#4A7BA7',
                         fontWeight: 600,
                         flexShrink: 0
@@ -409,14 +414,33 @@ export const FriendCard = () => {
           )}
 
           {activeTab === 'overlap' && (
-            <div style={{ maxWidth: '720px', marginLeft: 'auto', marginRight: 'auto' }}>
-              <h2 className="handwritten" style={{ fontSize: '32px', marginBottom: '32px' }}>
+            <div style={{ maxWidth: '720px', marginLeft: 'auto', marginRight: 'auto', paddingLeft: '40px' }}>
+              <h2 className="handwritten" style={{ fontSize: '32px', marginTop: '24px', marginBottom: '16px' }}>
                 What you have in common
               </h2>
 
               {/* Section 1: Currently Matching Cards */}
               {cardOverlaps.length > 0 && (
-                <div style={{ marginBottom: '48px' }}>
+                <div style={{ marginBottom: '48px', marginLeft: '-20px', background: '#FFFEFA', border: 'none', borderRadius: '2px', padding: '24px', boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)', transform: 'rotate(0.7deg)', animation: 'gentleSway1 5s ease-in-out infinite', position: 'relative' }}>
+                  {/* SVG Pushpin at -45deg */}
+                  <svg
+                    width="50"
+                    height="50"
+                    viewBox="0 0 50 50"
+                    style={{
+                      position: 'absolute',
+                      top: '-35px',
+                      left: '-35px',
+                      zIndex: 10,
+                      transform: 'rotate(-45deg)'
+                    }}
+                  >
+                    <ellipse cx="25" cy="8" rx="8" ry="6" fill="#C41E3A"/>
+                    <path d="M 20 8 L 22 25 L 28 25 L 30 8 Z" fill="#8B1A2D"/>
+                    <circle cx="25" cy="8" r="4" fill="#E63946"/>
+                    <line x1="25" y1="25" x2="25" y2="38" stroke="#A0A0A0" strokeWidth="1.5"/>
+                    <path d="M 23 37 L 25 42 L 27 37 Z" fill="#808080"/>
+                  </svg>
                   <h3 style={{ fontSize: '20px', marginBottom: '16px', fontWeight: 600 }}>
                     Currently Matching
                   </h3>
@@ -509,6 +533,7 @@ export const FriendCard = () => {
           {activeTab === 'wishlist' && (
             <FriendWishlist friendId={friendId} friendName={friendProfile?.display_name} />
           )}
+          </div>
         </>
       )}
     </div>
