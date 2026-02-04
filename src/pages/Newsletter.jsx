@@ -161,8 +161,26 @@ export const Newsletter = () => {
   }
 
   return (
-    <div className="container" style={{ maxWidth: '720px' }}>
-      <h1 className="handwritten" style={{ fontSize: '42px', marginBottom: '32px' }}>
+    <div className="container" style={{ maxWidth: '720px', position: 'relative' }}>
+      {/* Cactus collage */}
+      <img
+        src="/images/cactus-ready.png"
+        alt=""
+        style={{
+          position: 'absolute',
+          top: '-10px',
+          right: '80px',
+          width: '75px',
+          height: 'auto',
+          opacity: 0.85,
+          pointerEvents: 'none',
+          zIndex: 0,
+          animation: 'bookFloat 5s ease-in-out infinite',
+          transformOrigin: 'bottom center'
+        }}
+      />
+
+      <h1 className="handwritten" style={{ fontSize: '42px', marginBottom: '32px', position: 'relative', zIndex: 1 }}>
         Newsletter
       </h1>
 
