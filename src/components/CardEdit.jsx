@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { MusicEntryInput } from './music/MusicEntryInput'
 import { ReadingIcon } from './icons/ReadingIcon'
 import { ListeningIcon } from './icons/ListeningIcon'
 import { WatchingIcon } from './icons/WatchingIcon'
@@ -17,9 +18,11 @@ const CATEGORY_CONFIG = {
 
 export const CardEdit = ({ entries, displayName, onSave, onCancel }) => {
   const [formData, setFormData] = useState({})
+  const [musicMetadata, setMusicMetadata] = useState({}) // iTunes metadata keyed by index
 
   useEffect(() => {
     const data = {}
+    const metadata = {}
     Object.keys(CATEGORY_CONFIG).forEach(category => {
       const config = CATEGORY_CONFIG[category]
       const categoryEntries = entries.filter(e => e.category === category)
@@ -31,12 +34,27 @@ export const CardEdit = ({ entries, displayName, onSave, onCancel }) => {
           data[category][sub] = subEntries.length > 0
             ? subEntries.map(e => e.content)
             : ['']
+          // Store iTunes metadata for music entries
+          if (sub === 'music') {
+            subEntries.forEach((e, idx) => {
+              if (e.itunes_preview_url) {
+                metadata[idx] = {
+                  itunes_track_id: e.itunes_track_id,
+                  itunes_preview_url: e.itunes_preview_url,
+                  itunes_artist_name: e.itunes_artist_name,
+                  itunes_album_name: e.itunes_album_name,
+                  itunes_artwork_url: e.itunes_artwork_url
+                }
+              }
+            })
+          }
         })
       } else {
         data[category] = categoryEntries[0]?.content || ''
       }
     })
     setFormData(data)
+    setMusicMetadata(metadata)
   }, [entries])
 
   const handleChange = (category, subcategory, index, value) => {
@@ -82,6 +100,19 @@ export const CardEdit = ({ entries, displayName, onSave, onCancel }) => {
     })
   }
 
+  const handleMusicChange = (index, value, metadata) => {
+    handleChange('Listening', 'music', index, value)
+    setMusicMetadata(prev => {
+      if (metadata) {
+        return { ...prev, [index]: metadata }
+      } else {
+        const newMeta = { ...prev }
+        delete newMeta[index]
+        return newMeta
+      }
+    })
+  }
+
   const handleSave = () => {
     const newEntries = []
 
@@ -91,13 +122,18 @@ export const CardEdit = ({ entries, displayName, onSave, onCancel }) => {
       if (config.subcategories.length > 0) {
         Object.keys(formData[category]).forEach(subcategory => {
           const contents = formData[category][subcategory]
-          contents.forEach(content => {
+          contents.forEach((content, index) => {
             if (content.trim()) {
-              newEntries.push({
+              const entry = {
                 category,
                 subcategory,
                 content: content.trim()
-              })
+              }
+              // Add iTunes metadata for music entries
+              if (subcategory === 'music' && musicMetadata[index]) {
+                Object.assign(entry, musicMetadata[index])
+              }
+              newEntries.push(entry)
             }
           })
         })
@@ -157,40 +193,51 @@ export const CardEdit = ({ entries, displayName, onSave, onCancel }) => {
                 </div>
                 {formData[categoryName]?.[sub]?.map((content, index) => (
                   <div key={index} style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-                    <input
-                      type="text"
-                      className="edit-input"
-                      value={content}
-                      onChange={(e) => handleChange(categoryName, sub, index, e.target.value)}
-                      placeholder={`e.g., ${
-                        sub === 'book' ? 'Book Title' :
-                        sub === 'article' ? 'Article Title URL' :
-                        sub === 'music' ? 'Song/Artist' :
-                        sub === 'podcast' ? 'Podcast Name' :
-                        sub === 'audiobook' ? 'Audiobook Title' :
-                        sub === 'tv' ? 'Show Title' :
-                        sub === 'movie' ? 'Movie Title' :
-                        'Title'
-                      }`}
-                      style={{ flex: 1 }}
-                    />
-                    {formData[categoryName][sub].length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeEntry(categoryName, sub, index)}
-                        style={{
-                          padding: '8px 12px',
-                          fontSize: '14px',
-                          background: '#FFE5E5',
-                          border: '1.5px solid #C75D5D',
-                          borderRadius: '3px',
-                          cursor: 'pointer',
-                          color: '#C75D5D'
-                        }}
-                        title="Remove"
-                      >
-                        ×
-                      </button>
+                    {sub === 'music' ? (
+                      <MusicEntryInput
+                        value={content}
+                        metadata={musicMetadata[index]}
+                        onChange={(value, meta) => handleMusicChange(index, value, meta)}
+                        onRemove={formData[categoryName][sub].length > 1 ? () => removeEntry(categoryName, sub, index) : null}
+                        placeholder="Song/Artist"
+                      />
+                    ) : (
+                      <>
+                        <input
+                          type="text"
+                          className="edit-input"
+                          value={content}
+                          onChange={(e) => handleChange(categoryName, sub, index, e.target.value)}
+                          placeholder={`e.g., ${
+                            sub === 'book' ? 'Book Title' :
+                            sub === 'article' ? 'Article Title URL' :
+                            sub === 'podcast' ? 'Podcast Name' :
+                            sub === 'audiobook' ? 'Audiobook Title' :
+                            sub === 'tv' ? 'Show Title' :
+                            sub === 'movie' ? 'Movie Title' :
+                            'Title'
+                          }`}
+                          style={{ flex: 1 }}
+                        />
+                        {formData[categoryName][sub].length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeEntry(categoryName, sub, index)}
+                            style={{
+                              padding: '8px 12px',
+                              fontSize: '14px',
+                              background: '#FFE5E5',
+                              border: '1.5px solid #C75D5D',
+                              borderRadius: '3px',
+                              cursor: 'pointer',
+                              color: '#C75D5D'
+                            }}
+                            title="Remove"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </>
                     )}
                   </div>
                 ))}

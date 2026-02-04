@@ -1,5 +1,6 @@
 import { ReadingIcon } from './icons/ReadingIcon'
 import { VinylIcon } from './icons/VinylIcon'
+import { MusicEntryDisplay } from './music/MusicEntryDisplay'
 import { WatchingIcon } from './icons/WatchingIcon'
 import { LookingForwardIcon } from './icons/LookingForwardIcon'
 import { ObsessingIcon } from './icons/ObsessingIcon'
@@ -120,7 +121,11 @@ export const CardDisplay = ({ card, entries, displayName, photoUrl, isEditable =
               categoryEntries.map(entry => (
                 <div key={entry.id} className="item">
                   {entry.subcategory && <p className="item-label">{entry.subcategory}</p>}
-                  <p className="item-text">{linkifyText(entry.content)}</p>
+                  {entry.subcategory === 'music' && entry.itunes_preview_url ? (
+                    <MusicEntryDisplay entry={entry} />
+                  ) : (
+                    <p className="item-text">{linkifyText(entry.content)}</p>
+                  )}
                 </div>
               ))
             ) : (
