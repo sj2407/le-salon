@@ -103,6 +103,26 @@ export const Help = () => {
           </ul>
         </div>
 
+        {/* Wishlist Section */}
+        <div style={{ marginBottom: '32px', borderTop: '1px dashed #E0E0E0', paddingTop: '24px' }}>
+          <h2 className="handwritten" style={{ fontSize: '32px', marginBottom: '16px', color: '#2C2C2C' }}>
+            🎁 Wishlist
+          </h2>
+          <p style={{ fontSize: '15px', lineHeight: '1.6', marginBottom: '12px' }}>
+            Create a wishlist of items you'd love to receive, and friends can anonymously claim items to avoid duplicate gifts!
+          </p>
+          <ul style={{ fontSize: '15px', lineHeight: '1.8', marginLeft: '24px', marginBottom: '12px' }}>
+            <li>Add items with name, type (Book, Movie, etc.), and optional link</li>
+            <li>See if items are claimed (but not by whom)</li>
+            <li>View friends' wishlists and claim items you plan to gift</li>
+            <li>Unclaim items if your plans change</li>
+            <li>Keep the surprise—owners never see who claimed their items</li>
+          </ul>
+          <p style={{ fontSize: '14px', fontStyle: 'italic', color: '#666' }}>
+            💡 Tip: Click the Wishlist tab on a friend's profile to see what they'd love!
+          </p>
+        </div>
+
         {/* Getting Started */}
         <div style={{
           background: '#FFF9E6',
@@ -118,7 +138,7 @@ export const Help = () => {
             <li>Fill out your profile with a display name and bio</li>
             <li>Create your first card with what you're currently into</li>
             <li>Add some friends to share with</li>
-            <li>Start posting reviews and activities</li>
+            <li>Start posting reviews, activities, and wishlist items</li>
             <li>Check back weekly to update your card!</li>
           </ol>
         </div>
