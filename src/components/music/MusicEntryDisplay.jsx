@@ -134,7 +134,7 @@ export const MusicEntryDisplay = ({ entry }) => {
       <audio
         ref={audioRef}
         src={entry.itunes_preview_url}
-        preload="metadata"
+        preload="none"
         playsInline
       />
     </div>
