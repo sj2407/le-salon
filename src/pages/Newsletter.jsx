@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { generateNewsletter } from '../lib/newsletterGenerator'
@@ -10,9 +10,11 @@ export const Newsletter = () => {
   const [newsletterItems, setNewsletterItems] = useState({})
   const [friendProfiles, setFriendProfiles] = useState({})
   const [loading, setLoading] = useState(true)
+  const hasGenerated = useRef(false)
 
   useEffect(() => {
-    if (profile) {
+    if (profile && !hasGenerated.current) {
+      hasGenerated.current = true
       checkOrGenerateNewsletter()
     }
   }, [profile])
@@ -21,13 +23,11 @@ export const Newsletter = () => {
     try {
       // Generate newsletter if needed (handles all logic internally)
       await generateNewsletter(profile.id)
-
-      // Fetch all newsletters and mark current one as read
-      await fetchNewsletters()
     } catch (err) {
-      console.error('Error checking/generating newsletter:', err)
-      setLoading(false)
+      console.error('Error generating newsletter:', err)
     }
+    // Always fetch newsletters, even if generation failed
+    await fetchNewsletters()
   }
 
   const fetchNewsletters = async () => {
@@ -48,8 +48,6 @@ export const Newsletter = () => {
         setLoading(false)
         return
       }
-
-      setNewsletters(newslettersData)
 
       // Mark the most recent newsletter as read
       const latestNewsletter = newslettersData[0]
@@ -81,6 +79,12 @@ export const Newsletter = () => {
         })
       }
 
+      // Filter out newsletters with no items
+      const newslettersWithItems = newslettersData.filter(n =>
+        itemsByNewsletter[n.id] && itemsByNewsletter[n.id].length > 0
+      )
+
+      setNewsletters(newslettersWithItems)
       setNewsletterItems(itemsByNewsletter)
 
       // Fetch friend profiles

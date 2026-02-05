@@ -316,7 +316,7 @@ Position at TOP-LEFT EDGE of content boxes (overlapping corner):
   fontSize: '14px',
   zIndex: 15
 }}>
-  <span style={{ display: 'inline-block', transform: 'scale(-1.2, 1.2)' }}>🖋️</span>
+  <span style={{ display: 'inline-block', transform: 'scale(-1.44, 1.44)', filter: 'sepia(1) saturate(3) hue-rotate(320deg) brightness(0.7)' }}>🖋️</span>
 </button>
 ```
 Parent element MUST have `position: 'relative'`.

@@ -132,7 +132,7 @@ export const CardDisplay = ({ card, entries, displayName, photoUrl, isEditable =
             }}
             title={`Edit ${categoryName}`}
           >
-            <span style={{ display: 'inline-block', transform: 'scale(-1.2, 1.2)' }}>🖋️</span>
+            <span style={{ display: 'inline-block', transform: 'scale(-1.44, 1.44)', filter: 'sepia(1) saturate(8) hue-rotate(320deg) brightness(1.1) contrast(1.5)' }}>🖋️</span>
           </button>
         )}
         <div className="section-header">
