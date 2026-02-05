@@ -19,22 +19,8 @@ export const Newsletter = () => {
 
   const checkOrGenerateNewsletter = async () => {
     try {
-      // Find the most recent newsletter to use as cutoff
-      const { data: lastNewsletter, error: lastError } = await supabase
-        .from('newsletters')
-        .select('period_end')
-        .eq('user_id', profile.id)
-        .order('period_end', { ascending: false })
-        .limit(1)
-        .single()
-
-      if (lastError && lastError.code !== 'PGRST116') {
-        throw lastError
-      }
-
-      // Generate newsletter with activity since last visit (or all time if first visit)
-      const cutoffTime = lastNewsletter?.period_end || null
-      await generateNewsletter(profile.id, cutoffTime)
+      // Generate newsletter if needed (handles all logic internally)
+      await generateNewsletter(profile.id)
 
       // Fetch all newsletters and mark current one as read
       await fetchNewsletters()
@@ -150,9 +136,9 @@ export const Newsletter = () => {
             position: 'absolute',
             top: '8px',
             right: '15%',
-            width: '75px',
+            width: '50px',
             height: 'auto',
-            opacity: 0.85,
+            opacity: 0.7,
             pointerEvents: 'none',
             zIndex: 0,
             animation: 'bookFloat 5s ease-in-out infinite',
@@ -187,9 +173,9 @@ export const Newsletter = () => {
           position: 'absolute',
           top: '8px',
           right: '15%',
-          width: '75px',
+          width: '50px',
           height: 'auto',
-          opacity: 0.85,
+          opacity: 0.7,
           pointerEvents: 'none',
           zIndex: 0,
           animation: 'bookFloat 5s ease-in-out infinite',
