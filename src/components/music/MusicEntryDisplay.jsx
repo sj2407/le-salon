@@ -5,6 +5,7 @@ let currentlyPlayingAudio = null
 
 export const MusicEntryDisplay = ({ entry }) => {
   const [isPlaying, setIsPlaying] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const [hasError, setHasError] = useState(false)
   const audioRef = useRef(null)
 
@@ -16,6 +17,7 @@ export const MusicEntryDisplay = ({ entry }) => {
     const handleError = () => {
       setHasError(true)
       setIsPlaying(false)
+      setIsLoading(false)
     }
 
     audio.addEventListener('ended', handleEnded)
@@ -27,9 +29,47 @@ export const MusicEntryDisplay = ({ entry }) => {
     }
   }, [])
 
-  const togglePlay = () => {
+  // Fetch fresh preview URL from Deezer using track ID
+  const fetchFreshPreviewUrl = (trackId) => {
+    return new Promise((resolve, reject) => {
+      const callbackName = `deezer_track_${Date.now()}_${Math.random().toString(36).slice(2)}`
+      const script = document.createElement('script')
+      script.src = `https://api.deezer.com/track/${trackId}?output=jsonp&callback=${callbackName}`
+
+      const timeout = setTimeout(() => {
+        if (window[callbackName]) {
+          delete window[callbackName]
+          if (script.parentNode) script.parentNode.removeChild(script)
+          reject(new Error('Timeout'))
+        }
+      }, 5000)
+
+      window[callbackName] = (data) => {
+        clearTimeout(timeout)
+        delete window[callbackName]
+        if (script.parentNode) script.parentNode.removeChild(script)
+
+        if (data && data.preview) {
+          resolve(data.preview)
+        } else {
+          reject(new Error('No preview available'))
+        }
+      }
+
+      script.onerror = () => {
+        clearTimeout(timeout)
+        delete window[callbackName]
+        if (script.parentNode) script.parentNode.removeChild(script)
+        reject(new Error('Failed to fetch'))
+      }
+
+      document.body.appendChild(script)
+    })
+  }
+
+  const togglePlay = async () => {
     const audio = audioRef.current
-    if (!audio || hasError) return
+    if (!audio || hasError || isLoading) return
 
     if (isPlaying) {
       audio.pause()
@@ -39,14 +79,32 @@ export const MusicEntryDisplay = ({ entry }) => {
       if (currentlyPlayingAudio && currentlyPlayingAudio !== audio) {
         currentlyPlayingAudio.pause()
       }
-      currentlyPlayingAudio = audio
-      audio.play().catch(() => setHasError(true))
-      setIsPlaying(true)
+
+      // If we have a track ID, fetch fresh URL
+      if (entry.itunes_track_id) {
+        setIsLoading(true)
+        try {
+          const freshUrl = await fetchFreshPreviewUrl(entry.itunes_track_id)
+          audio.src = freshUrl
+          currentlyPlayingAudio = audio
+          await audio.play()
+          setIsPlaying(true)
+        } catch (err) {
+          setHasError(true)
+        } finally {
+          setIsLoading(false)
+        }
+      } else {
+        // Fallback to stored URL
+        currentlyPlayingAudio = audio
+        audio.play().catch(() => setHasError(true))
+        setIsPlaying(true)
+      }
     }
   }
 
-  // Fallback to text display if no preview URL
-  if (!entry.itunes_preview_url) {
+  // Fallback to text display if no track ID and no preview URL
+  if (!entry.itunes_track_id && !entry.itunes_preview_url) {
     return <span>{entry.content}</span>
   }
 
@@ -107,7 +165,7 @@ export const MusicEntryDisplay = ({ entry }) => {
       {/* Play button */}
       <button
         onClick={togglePlay}
-        disabled={hasError}
+        disabled={hasError || isLoading}
         style={{
           width: '22px',
           height: '22px',
@@ -115,7 +173,7 @@ export const MusicEntryDisplay = ({ entry }) => {
           border: '1px solid #2C2C2C',
           background: isPlaying ? '#2C2C2C' : '#FFFEFA',
           color: isPlaying ? '#FFFEFA' : '#2C2C2C',
-          cursor: hasError ? 'not-allowed' : 'pointer',
+          cursor: (hasError || isLoading) ? 'not-allowed' : 'pointer',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -125,9 +183,9 @@ export const MusicEntryDisplay = ({ entry }) => {
           flexShrink: 0,
           padding: 0
         }}
-        title={hasError ? 'Preview unavailable' : (isPlaying ? 'Pause' : 'Play preview')}
+        title={hasError ? 'Preview unavailable' : (isLoading ? 'Loading...' : (isPlaying ? 'Pause' : 'Play preview'))}
       >
-        {hasError ? '!' : (isPlaying ? '⏸' : '▶')}
+        {hasError ? '!' : (isLoading ? '...' : (isPlaying ? '⏸' : '▶'))}
       </button>
 
       {/* Hidden audio element */}
