@@ -61,7 +61,7 @@ export const generateNewsletter = async (userId, cutoffTime = null) => {
       const cardIds = currentCards.map(c => c.id)
       const { data: entries, error: entriesError } = await supabase
         .from('entries')
-        .select('card_id, category, content, subcategory, created_at')
+        .select('card_id, category, content, subcategory')
         .in('card_id', cardIds)
         .order('display_order')
 
