@@ -441,25 +441,6 @@ export const FriendCard = () => {
               {/* Section 1: Currently Matching Cards */}
               {cardOverlaps.length > 0 && (
                 <div style={{ marginBottom: '48px', marginLeft: '-20px', background: '#FFFEFA', border: 'none', borderRadius: '2px', padding: '24px', boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)', transform: 'rotate(0.7deg)', animation: 'gentleSway1 5s ease-in-out infinite', position: 'relative' }}>
-                  {/* SVG Pushpin at -45deg */}
-                  <svg
-                    width="50"
-                    height="50"
-                    viewBox="0 0 50 50"
-                    style={{
-                      position: 'absolute',
-                      top: '-35px',
-                      left: '-35px',
-                      zIndex: 10,
-                      transform: 'rotate(-45deg)'
-                    }}
-                  >
-                    <ellipse cx="25" cy="8" rx="8" ry="6" fill="#C41E3A"/>
-                    <path d="M 20 8 L 22 25 L 28 25 L 30 8 Z" fill="#8B1A2D"/>
-                    <circle cx="25" cy="8" r="4" fill="#E63946"/>
-                    <line x1="25" y1="25" x2="25" y2="38" stroke="#A0A0A0" strokeWidth="1.5"/>
-                    <path d="M 23 37 L 25 42 L 27 37 Z" fill="#808080"/>
-                  </svg>
                   <h3 style={{ fontSize: '20px', marginBottom: '16px', fontWeight: 600 }}>
                     Currently Matching
                   </h3>

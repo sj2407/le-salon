@@ -195,9 +195,9 @@ export const History = () => {
         alt=""
         style={{
           position: 'absolute',
-          top: '0px',
-          left: '280px',
-          width: '120px',
+          top: '8px',
+          right: '15%',
+          width: '100px',
           height: 'auto',
           opacity: 0.75,
           pointerEvents: 'none',
@@ -207,7 +207,7 @@ export const History = () => {
         }}
       />
 
-      <h1 className="handwritten" style={{ fontSize: '42px', marginBottom: '32px', textAlign: 'left', marginLeft: '30px', position: 'relative', zIndex: 1 }}>
+      <h1 className="handwritten" style={{ fontSize: '42px', marginBottom: '24px', marginTop: '8px', textAlign: 'left', marginLeft: '10px', position: 'relative', zIndex: 1 }}>
         My History
       </h1>
 
@@ -217,25 +217,6 @@ export const History = () => {
         </div>
       ) : (
         <div className="activity-board-note" style={{ position: 'relative' }}>
-          {/* SVG Pushpin at -45deg */}
-          <svg
-            width="50"
-            height="50"
-            viewBox="0 0 50 50"
-            style={{
-              position: 'absolute',
-              top: '-20px',
-              left: '-5px',
-              zIndex: 10,
-              transform: 'rotate(-45deg)'
-            }}
-          >
-            <ellipse cx="25" cy="8" rx="8" ry="6" fill="#C41E3A"/>
-            <path d="M 20 8 L 22 25 L 28 25 L 30 8 Z" fill="#8B1A2D"/>
-            <circle cx="25" cy="8" r="4" fill="#E63946"/>
-            <line x1="25" y1="25" x2="25" y2="38" stroke="#A0A0A0" strokeWidth="1.5"/>
-            <path d="M 23 37 L 25 42 L 27 37 Z" fill="#808080"/>
-          </svg>
 
           <div style={{ overflowX: 'auto' }}>
             <table style={{

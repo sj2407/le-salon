@@ -238,13 +238,13 @@ src/
 
 ### Colors
 - Background: `#F5F1EB` (warm cream)
-- Card: `#FFFEFA` (off-white)
+- Card/Content boxes: `#FFFEFA` (off-white)
 - Text: `#2C2C2C` (near-black)
-- Borders: `#D0D0D0` (light gray) for subtle elements
-- Card Shadow: `4px 4px 0 #2C2C2C` (bold) or `0 1px 2px rgba(0,0,0,0.06)` (subtle)
+- Muted text: `#666`, `#777`, `#999`
+- Links: `#4A7BA7`
 
 ### Typography
-- Headers: Caveat (handwritten)
+- Headers: Caveat (handwritten) via `className="handwritten"`
 - Body: Source Serif 4 (serif)
 
 ### Review Tags
@@ -254,6 +254,87 @@ src/
 - Show: 📺 `#D0D8E8` (soft blue)
 - Album: 💿 `#E0D8E8` (lavender)
 - Other: ✨ `#E0E0E0` (gray)
+
+### Layout Rules
+
+#### Page Headers (Tab Content Titles)
+All page/tab titles MUST use consistent alignment:
+```jsx
+<h1 className="handwritten" style={{
+  fontSize: '42px',
+  marginBottom: '24px',
+  marginTop: '8px',
+  marginLeft: '10px'  // Aligns with "Card" in tab menu
+}}>
+  Page Title
+</h1>
+```
+**Naming**: Use "My [X]" format for personal pages (My History, My Wishlist).
+
+#### Content Boxes - NO BORDERS
+Never use `border` on content boxes. Use `boxShadow` instead:
+```jsx
+// WRONG
+style={{ border: '1.5px solid #2C2C2C' }}
+
+// CORRECT
+style={{
+  background: '#FFFEFA',
+  borderRadius: '3px',
+  boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)'
+}}
+```
+
+#### Decorative Icons/Images
+Position in the right quartile of the screen:
+```jsx
+<img
+  src="/images/[name]-ready.png"
+  style={{
+    position: 'absolute',
+    top: '8px',
+    right: '15%',  // Centers in right quartile
+    width: '[size]px',
+    opacity: 0.6-0.85,
+    pointerEvents: 'none',
+    zIndex: 0,
+    animation: 'bookFloat 4.5s ease-in-out infinite'
+  }}
+/>
+```
+
+#### Edit Buttons (Fountain Pen)
+Position at TOP-LEFT EDGE of content boxes (overlapping corner):
+```jsx
+<button style={{
+  position: 'absolute',
+  top: '-6px',
+  left: '-6px',
+  background: 'none',
+  border: 'none',
+  opacity: 0.4,
+  fontSize: '14px',
+  zIndex: 15
+}}>
+  <span style={{ display: 'inline-block', transform: 'scale(-1.2, 1.2)' }}>🖋️</span>
+</button>
+```
+Parent element MUST have `position: 'relative'`.
+
+### Spacing Reference
+| Element | Value |
+|---------|-------|
+| Title marginTop | `8px` |
+| Title marginBottom | `24px` |
+| Title marginLeft | `10px` |
+| Decorative icon top | `8px` |
+| Decorative icon right | `15%` |
+| Content gap | `16px` or `24px` |
+
+### Animations (defined in index.css)
+- `bookFloat` - gentle floating for decorative images
+- `reviewSway1/2/3` - subtle swaying for cards
+- `gavelSway` - gavel icon specific
 
 ## Security
 

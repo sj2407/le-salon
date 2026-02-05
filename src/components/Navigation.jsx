@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import salonIcon from '../assets/salon-icon.jpeg'
 import { NotificationBell } from './NotificationBell'
 import { NewsletterBell } from './NewsletterBell'
 
@@ -60,30 +59,20 @@ export const Navigation = () => {
   return (
     <>
       <nav>
-        <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Link to="/" style={{ textDecoration: 'none', color: '#2C2C2C', display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <img
-              src={salonIcon}
-              alt="Le Salon"
-              style={{
-                height: '48px',
-                width: 'auto',
-                borderRadius: '3px',
-                border: '1.5px solid #2C2C2C',
-                boxShadow: '2px 2px 0 rgba(44, 44, 44, 0.3)'
-              }}
-            />
+        <div className="container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
+          {/* Centered title */}
+          <Link to="/" style={{ textDecoration: 'none', color: '#2C2C2C', display: 'flex', alignItems: 'center' }}>
             <span className="nav-brand">Le Salon</span>
           </Link>
 
-          {/* Right side: Bell + Newsletter + Hamburger */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {/* Right side: Bell + Newsletter + Hamburger - absolutely positioned */}
+          <div style={{ position: 'absolute', right: '0', display: 'flex', alignItems: 'center', gap: '4px' }}>
             <NotificationBell />
             <NewsletterBell />
 
             {/* Hamburger Button (All Screens) */}
             <button
-              className="hamburger-button"
+              className="hamburger-button hamburger-small"
               onClick={() => setIsMenuOpen(true)}
               aria-label="Toggle menu"
               style={{ display: 'flex' }}

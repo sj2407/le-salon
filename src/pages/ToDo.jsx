@@ -317,8 +317,8 @@ export const ToDo = () => {
         alt=""
         style={{
           position: 'absolute',
-          top: '0px',
-          right: '20px',
+          top: '8px',
+          right: '15%',
           width: '180px',
           height: 'auto',
           opacity: 0.75,
@@ -329,7 +329,7 @@ export const ToDo = () => {
         }}
       />
 
-      <div style={{ marginBottom: '24px', position: 'relative', zIndex: 1, marginLeft: '40px' }}>
+      <div style={{ marginBottom: '24px', position: 'relative', zIndex: 1, marginLeft: '10px' }}>
         <div className="handwritten" style={{ fontSize: '32px', marginBottom: '16px' }}>
           {getTodayFormatted()}
         </div>
@@ -389,43 +389,6 @@ export const ToDo = () => {
         </div>
       ) : (
         <div className="activity-board-note" style={{ position: 'relative' }}>
-          {/* Pushpin - SVG without background */}
-          <svg
-            width="50"
-            height="50"
-            viewBox="0 0 100 100"
-            style={{
-              position: 'absolute',
-              top: '-20px',
-              left: '-5px',
-              zIndex: 10,
-              pointerEvents: 'none',
-              filter: 'drop-shadow(2px 2px 3px rgba(0,0,0,0.2))',
-              transform: 'rotate(-45deg)'
-            }}
-          >
-            {/* Pin body */}
-            <ellipse cx="40" cy="35" rx="28" ry="32" fill="#E74C3C" />
-            <ellipse cx="40" cy="35" rx="28" ry="32" fill="url(#pinGradient)" />
-
-            {/* Highlight */}
-            <ellipse cx="30" cy="25" rx="12" ry="15" fill="rgba(255,255,255,0.3)" />
-
-            {/* Pin needle */}
-            <path d="M 40 65 L 38 95 L 42 95 Z" fill="#C0C0C0" />
-            <path d="M 38 95 L 40 100 L 42 95 Z" fill="#A0A0A0" />
-
-            {/* Shadow on pin */}
-            <ellipse cx="50" cy="40" rx="8" ry="12" fill="rgba(0,0,0,0.15)" />
-
-            <defs>
-              <radialGradient id="pinGradient" cx="30%" cy="30%">
-                <stop offset="0%" stopColor="rgba(255,255,255,0.4)" />
-                <stop offset="70%" stopColor="rgba(0,0,0,0)" />
-                <stop offset="100%" stopColor="rgba(0,0,0,0.2)" />
-              </radialGradient>
-            </defs>
-          </svg>
 
           <div style={{ overflowX: 'auto' }}>
             <table className="activity-table">
@@ -493,7 +456,7 @@ export const ToDo = () => {
                                 onMouseEnter={(e) => e.target.style.opacity = '1'}
                                 onMouseLeave={(e) => e.target.style.opacity = '0.5'}
                               >
-                                ✏️
+                                <span style={{ display: 'inline-block', transform: 'scale(-1.2, 1.2)' }}>🖋️</span>
                               </button>
                               <button
                                 onClick={() => handleDelete(activity.id)}

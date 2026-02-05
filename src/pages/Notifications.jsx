@@ -115,17 +115,17 @@ export const Notifications = () => {
 
   return (
     <div className="container" style={{ maxWidth: '720px' }}>
-      <h1 className="handwritten" style={{ fontSize: '42px', marginBottom: '32px' }}>
+      <h1 className="handwritten" style={{ fontSize: '42px', marginBottom: '24px', marginTop: '8px', marginLeft: '10px' }}>
         Notifications
       </h1>
 
       {notifications.length === 0 ? (
         <div style={{
           background: '#FFFEFA',
-          border: '1.5px solid #2C2C2C',
           borderRadius: '3px',
           padding: '48px 32px',
-          textAlign: 'center'
+          textAlign: 'center',
+          boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)'
         }}>
           <p style={{ fontSize: '16px', color: '#666', margin: 0 }}>
             No notifications yet. When friends interact with your content, you'll see it here!

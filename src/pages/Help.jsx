@@ -1,7 +1,7 @@
 export const Help = () => {
   return (
     <div className="container" style={{ maxWidth: '800px', position: 'relative' }}>
-      <h1 className="handwritten" style={{ fontSize: '42px', marginBottom: '32px', textAlign: 'left', marginLeft: '60px' }}>
+      <h1 className="handwritten" style={{ fontSize: '42px', marginBottom: '24px', marginTop: '8px', textAlign: 'left', marginLeft: '10px' }}>
         Welcome to Le Salon
       </h1>
 

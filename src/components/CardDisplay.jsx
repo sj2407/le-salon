@@ -105,7 +105,7 @@ export const CardDisplay = ({ card, entries, displayName, photoUrl, isEditable =
     }
 
     return (
-      <div key={categoryName} className={sectionClass} style={hasFloatingIcon ? { position: 'relative', overflow: 'visible' } : {}}>
+      <div key={categoryName} className={sectionClass} style={{ position: 'relative', overflow: 'visible' }}>
         {hasFloatingIcon && (
           <div style={{ position: 'absolute', ...iconPosition, zIndex: 10 }}>
             <Icon />
@@ -119,20 +119,20 @@ export const CardDisplay = ({ card, entries, displayName, photoUrl, isEditable =
             }}
             style={{
               position: 'absolute',
-              top: '8px',
-              left: '8px',
+              top: '-6px',
+              left: '-6px',
               background: 'none',
               border: 'none',
               cursor: 'pointer',
               padding: '2px',
               opacity: 0.4,
-              fontSize: '12px',
+              fontSize: '14px',
               lineHeight: 1,
-              zIndex: 5
+              zIndex: 15
             }}
             title={`Edit ${categoryName}`}
           >
-            ✏️
+            <span style={{ display: 'inline-block', transform: 'scale(-1.2, 1.2)' }}>🖋️</span>
           </button>
         )}
         <div className="section-header">
@@ -187,8 +187,8 @@ export const CardDisplay = ({ card, entries, displayName, photoUrl, isEditable =
               src={photoUrl}
               alt={displayName}
               style={{
-                width: '160px',
-                height: '160px',
+                width: '128px',
+                height: '128px',
                 borderRadius: '50%',
                 objectFit: 'cover',
                 border: '4px solid #2C2C2C',

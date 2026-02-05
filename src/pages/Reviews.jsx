@@ -269,8 +269,8 @@ export const Reviews = () => {
         alt=""
         style={{
           position: 'absolute',
-          top: '15px',
-          left: '200px',
+          top: '8px',
+          right: '15%',
           width: '90px',
           height: '90px',
           opacity: 0.3,
@@ -371,7 +371,7 @@ export const Reviews = () => {
                   onMouseLeave={(e) => e.target.style.opacity = '0.4'}
                   title="Edit"
                 >
-                  ✏️
+                  <span style={{ display: 'inline-block', transform: 'scale(-1.2, 1.2)' }}>🖋️</span>
                 </button>
                 <button
                   onClick={() => handleDelete(review.id)}

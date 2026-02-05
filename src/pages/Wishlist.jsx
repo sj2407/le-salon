@@ -133,8 +133,8 @@ export const Wishlist = () => {
         alt=""
         style={{
           position: 'absolute',
-          top: '25px',
-          left: '200px',
+          top: '8px',
+          right: '15%',
           width: '80px',
           height: 'auto',
           opacity: 0.6,
@@ -145,11 +145,9 @@ export const Wishlist = () => {
         }}
       />
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px', position: 'relative', zIndex: 1 }}>
-        <h1 className="handwritten" style={{ fontSize: '42px', margin: 0, marginLeft: '20px' }}>
-          Wishlist
-        </h1>
-      </div>
+      <h1 className="handwritten" style={{ fontSize: '42px', marginBottom: '24px', marginTop: '8px', marginLeft: '10px', position: 'relative', zIndex: 1 }}>
+        My Wishlist
+      </h1>
 
       <button onClick={openAddModal} style={{
         position: 'absolute',
@@ -267,7 +265,7 @@ export const Wishlist = () => {
                   onMouseLeave={(e) => e.target.style.opacity = '0.4'}
                   title="Edit"
                 >
-                  ✏️
+                  <span style={{ display: 'inline-block', transform: 'scale(-1.2, 1.2)' }}>🖋️</span>
                 </button>
                 <button
                   onClick={() => handleDelete(item.id)}

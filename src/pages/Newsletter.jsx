@@ -142,15 +142,15 @@ export const Newsletter = () => {
   if (newsletters.length === 0) {
     return (
       <div className="container" style={{ maxWidth: '720px' }}>
-        <h1 className="handwritten" style={{ fontSize: '42px', marginBottom: '32px' }}>
+        <h1 className="handwritten" style={{ fontSize: '42px', marginBottom: '24px', marginTop: '8px', marginLeft: '10px' }}>
           Newsletter
         </h1>
         <div style={{
           background: '#FFFEFA',
-          border: '1.5px solid #2C2C2C',
           borderRadius: '3px',
           padding: '48px 32px',
-          textAlign: 'center'
+          textAlign: 'center',
+          boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)'
         }}>
           <p style={{ fontSize: '16px', color: '#666', margin: 0, fontStyle: 'italic' }}>
             No updates from your friends yet. Check back later!
@@ -168,8 +168,8 @@ export const Newsletter = () => {
         alt=""
         style={{
           position: 'absolute',
-          top: '-10px',
-          right: '80px',
+          top: '8px',
+          right: '15%',
           width: '75px',
           height: 'auto',
           opacity: 0.85,
@@ -180,7 +180,7 @@ export const Newsletter = () => {
         }}
       />
 
-      <h1 className="handwritten" style={{ fontSize: '42px', marginBottom: '32px', position: 'relative', zIndex: 1 }}>
+      <h1 className="handwritten" style={{ fontSize: '42px', marginBottom: '24px', marginTop: '8px', marginLeft: '10px', position: 'relative', zIndex: 1 }}>
         Newsletter
       </h1>
 

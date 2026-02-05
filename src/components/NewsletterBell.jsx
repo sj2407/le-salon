@@ -40,7 +40,7 @@ export const NewsletterBell = () => {
         background: 'none',
         border: 'none',
         cursor: 'pointer',
-        padding: '8px',
+        padding: '2px',
         position: 'relative',
         display: 'flex',
         alignItems: 'center'
@@ -49,12 +49,12 @@ export const NewsletterBell = () => {
     >
       {/* Letter/Envelope Icon SVG */}
       <svg
-        width="24"
-        height="24"
+        width="18"
+        height="18"
         viewBox="0 0 24 24"
         fill="none"
         stroke="#2C2C2C"
-        strokeWidth="2"
+        strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
       >
@@ -67,16 +67,16 @@ export const NewsletterBell = () => {
         <span
           style={{
             position: 'absolute',
-            top: '4px',
-            right: '4px',
+            top: '2px',
+            right: '2px',
             background: '#E8534F',
             color: 'white',
-            borderRadius: '10px',
-            padding: '2px 6px',
-            fontSize: '11px',
+            borderRadius: '8px',
+            padding: '1px 4px',
+            fontSize: '9px',
             fontWeight: 600,
             lineHeight: 1,
-            minWidth: '18px',
+            minWidth: '14px',
             textAlign: 'center'
           }}
         >
