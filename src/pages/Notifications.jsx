@@ -51,6 +51,9 @@ export const Notifications = () => {
       case 'wishlist_claimed':
         navigate('/wishlist')
         break
+      case 'card_note':
+        navigate('/') // Go to own card to see notes
+        break
       default:
         break
     }

@@ -15,6 +15,7 @@ export const FriendCard = () => {
   const [card, setCard] = useState(null)
   const [entries, setEntries] = useState([])
   const [reviews, setReviews] = useState([])
+  const [myNotes, setMyNotes] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [activeTab, setActiveTab] = useState('card')
@@ -80,6 +81,9 @@ export const FriendCard = () => {
 
         if (entriesError) throw entriesError
         setEntries(entriesData || [])
+
+        // Fetch my notes on this card
+        await fetchMyNotes(cardData.id)
       }
 
       // Get friend's reviews
@@ -96,6 +100,123 @@ export const FriendCard = () => {
       setError(err.message)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchMyNotes = async (cardId) => {
+    try {
+      const { data, error } = await supabase
+        .from('card_notes')
+        .select('*')
+        .eq('card_id', cardId)
+        .eq('from_user_id', profile.id)
+
+      if (error) {
+        // Table might not exist yet, just log and continue
+        console.log('Notes fetch error (table may not exist):', error.message)
+        setMyNotes([])
+        return
+      }
+
+      setMyNotes(data || [])
+    } catch (err) {
+      console.log('Error fetching my notes:', err)
+      setMyNotes([])
+    }
+  }
+
+  const handleLeaveNote = async (sectionName, content) => {
+    if (!card || !friendProfile) return
+
+    try {
+      const { error } = await supabase
+        .from('card_notes')
+        .insert({
+          card_id: card.id,
+          card_section: sectionName,
+          from_user_id: profile.id,
+          to_user_id: friendProfile.id,
+          content
+        })
+
+      if (error) {
+        console.error('Error saving note:', error)
+        alert('Could not save note. Please try again.')
+        return
+      }
+
+      // Create notification for the friend
+      const { error: notifError } = await supabase.from('notifications').insert({
+        user_id: friendProfile.id,
+        type: 'card_note',
+        actor_id: profile.id,
+        message: `${profile.display_name} left you a note`,
+        reference_id: card.id
+      })
+
+      if (notifError) {
+        console.error('Error creating notification:', notifError)
+      }
+
+      // Refresh notes
+      await fetchMyNotes(card.id)
+    } catch (err) {
+      console.error('Error leaving note:', err)
+      alert('Could not save note. Please try again.')
+    }
+  }
+
+  const handleUpdateNote = async (noteId, content) => {
+    try {
+      const { error } = await supabase
+        .from('card_notes')
+        .update({
+          content,
+          updated_at: new Date().toISOString(),
+          is_read: false,
+          read_at: null
+        })
+        .eq('id', noteId)
+        .eq('from_user_id', profile.id)
+
+      if (error) throw error
+
+      // Create notification for the update
+      if (friendProfile) {
+        await supabase.from('notifications').insert({
+          user_id: friendProfile.id,
+          type: 'card_note',
+          actor_id: profile.id,
+          message: `${profile.display_name} updated their note`,
+          reference_id: card?.id
+        })
+      }
+
+      // Refresh notes
+      if (card) {
+        await fetchMyNotes(card.id)
+      }
+    } catch (err) {
+      console.error('Error updating note:', err)
+    }
+  }
+
+  const handleDeleteNote = async (noteId) => {
+    try {
+      const { error } = await supabase
+        .from('card_notes')
+        .delete()
+        .eq('id', noteId)
+        .eq('from_user_id', profile.id)
+
+      if (error) throw error
+
+      // Refresh notes
+      if (card) {
+        await fetchMyNotes(card.id)
+      }
+    } catch (err) {
+      console.error('Error deleting note:', err)
     }
   }
 
@@ -369,6 +490,12 @@ export const FriendCard = () => {
               displayName={friendProfile.display_name}
               photoUrl={friendProfile.profile_photo_url}
               isEditable={false}
+              isFriendView={true}
+              notes={myNotes}
+              currentUserId={profile.id}
+              onLeaveNote={handleLeaveNote}
+              onUpdateNote={handleUpdateNote}
+              onDeleteNote={handleDeleteNote}
             />
           )}
 

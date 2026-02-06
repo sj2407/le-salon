@@ -9,6 +9,7 @@ export const MyCard = () => {
   const { profile } = useAuth()
   const [card, setCard] = useState(null)
   const [entries, setEntries] = useState([])
+  const [notes, setNotes] = useState([])
   const [isEditing, setIsEditing] = useState(false)
   const [editingSection, setEditingSection] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -48,6 +49,9 @@ export const MyCard = () => {
 
         if (entriesError) throw entriesError
         setEntries(entriesData || [])
+
+        // Fetch notes for this card
+        await fetchNotes(cardData.id)
       } else {
         // No current card exists, create one
         await createNewCard([])
@@ -57,6 +61,49 @@ export const MyCard = () => {
       setError(err.message)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchNotes = async (cardId) => {
+    try {
+      const { data, error } = await supabase
+        .from('card_notes')
+        .select('*, from_user:profiles!card_notes_from_user_id_fkey(display_name)')
+        .eq('card_id', cardId)
+        .eq('to_user_id', profile.id)
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        // Table might not exist yet, just log and continue
+        console.log('Notes fetch error (table may not exist):', error.message)
+        setNotes([])
+        return
+      }
+
+      setNotes(data || [])
+    } catch (err) {
+      console.log('Error fetching notes:', err)
+      setNotes([])
+    }
+  }
+
+  const handleMarkNotesRead = async (sectionName) => {
+    if (!card) return
+
+    try {
+      const { error } = await supabase
+        .from('card_notes')
+        .update({ is_read: true, read_at: new Date().toISOString() })
+        .eq('card_id', card.id)
+        .eq('card_section', sectionName)
+        .eq('to_user_id', profile.id)
+
+      if (error) throw error
+
+      // Refresh notes
+      await fetchNotes(card.id)
+    } catch (err) {
+      console.error('Error marking notes as read:', err)
     }
   }
 
@@ -94,6 +141,7 @@ export const MyCard = () => {
       }
 
       setCard(newCard)
+      setNotes([]) // New card has no notes
     } catch (err) {
       console.error('Error creating card:', err)
       setError(err.message)
@@ -254,6 +302,9 @@ export const MyCard = () => {
             isEditable={true}
             onEdit={() => setIsEditing(true)}
             onSectionEdit={(category) => setEditingSection(category)}
+            notes={notes}
+            currentUserId={profile.id}
+            onMarkNotesRead={handleMarkNotesRead}
           />
           {editingSection && (
             <SectionEditModal

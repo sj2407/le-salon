@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { ReadingIcon } from './icons/ReadingIcon'
 import { VinylIcon } from './icons/VinylIcon'
 import { MusicEntryDisplay } from './music/MusicEntryDisplay'
@@ -6,6 +7,9 @@ import { LookingForwardIcon } from './icons/LookingForwardIcon'
 import { PerformingArtsIcon } from './icons/PerformingArtsIcon'
 import { ObsessingIcon } from './icons/ObsessingIcon'
 import { AIPromptIcon } from './icons/AIPromptIcon'
+import { FlippableSection } from './marginalia/FlippableSection'
+import { CardBack } from './marginalia/CardBack'
+import { CardFold } from './marginalia/CardFold'
 
 const CATEGORY_CONFIG = {
   'Reading': { icon: ReadingIcon, subcategories: ['book', 'article'] },
@@ -62,7 +66,25 @@ const linkifyText = (text) => {
   return text
 }
 
-export const CardDisplay = ({ card, entries, displayName, photoUrl, isEditable = false, onEdit, onSectionEdit }) => {
+export const CardDisplay = ({
+  card,
+  entries,
+  displayName,
+  photoUrl,
+  isEditable = false,
+  onEdit,
+  onSectionEdit,
+  // Marginalia props
+  notes = [],
+  isFriendView = false,
+  currentUserId,
+  onMarkNotesRead,
+  onLeaveNote,
+  onUpdateNote,
+  onDeleteNote
+}) => {
+  const [flippedSections, setFlippedSections] = useState({})
+
   const formatDate = (date) => {
     const d = new Date(date)
     const options = { month: 'long', day: 'numeric', year: 'numeric' }
@@ -73,12 +95,39 @@ export const CardDisplay = ({ card, entries, displayName, photoUrl, isEditable =
     return entries.filter(e => e.category === category)
   }
 
+  const getNotesForSection = (sectionName) => {
+    return notes.filter(n => n.card_section === sectionName)
+  }
+
+  const getUnreadNotesForSection = (sectionName) => {
+    return notes.filter(n => n.card_section === sectionName && !n.is_read)
+  }
+
+  const handleFlipSection = (sectionName) => {
+    setFlippedSections(prev => ({
+      ...prev,
+      [sectionName]: !prev[sectionName]
+    }))
+  }
+
+  const handleQuillClick = (e, categoryName) => {
+    e.stopPropagation()
+    if (isFriendView) {
+      // On friend's card: quill flips to leave/view note
+      handleFlipSection(categoryName)
+    } else if (onSectionEdit) {
+      // On own card: quill triggers edit
+      onSectionEdit(categoryName)
+    }
+  }
+
   const renderCategorySection = (categoryName, isFullWidth = false) => {
     const config = CATEGORY_CONFIG[categoryName]
     const Icon = config.icon
     const categoryEntries = getEntriesForCategory(categoryName)
-
-    const sectionClass = isFullWidth ? 'full-width-section' : 'section-box'
+    const sectionNotes = getNotesForSection(categoryName)
+    const unreadNotes = getUnreadNotesForSection(categoryName)
+    const isFlipped = flippedSections[categoryName] || false
 
     // Special cases for title formatting
     let titleText
@@ -113,36 +162,53 @@ export const CardDisplay = ({ card, entries, displayName, photoUrl, isEditable =
       iconPosition = { top: '-10px', right: '5px' }
     }
 
-    return (
-      <div key={categoryName} className={sectionClass} style={{ position: 'relative', overflow: 'visible' }}>
-        {hasFloatingIcon && (
-          <div style={{ position: 'absolute', ...iconPosition, zIndex: 10 }}>
+    // Show quill on own card if editable, or on friend's card for notes
+    const showQuill = isEditable || isFriendView
+
+    const sectionContent = (
+      <div className={isFullWidth ? 'full-width-section' : 'section-box'} style={{ position: 'relative', overflow: 'visible' }}>
+        {hasFloatingIcon && !isFlipped && (
+          <div style={{
+            position: 'absolute',
+            ...iconPosition,
+            zIndex: 10,
+            opacity: isFlipped ? 0 : 1,
+            transition: 'opacity 0.2s ease'
+          }}>
             <Icon />
           </div>
         )}
-        {isEditable && onSectionEdit && (
+        {showQuill && (
           <button
-            onClick={(e) => {
-              e.stopPropagation()
-              onSectionEdit(categoryName)
-            }}
+            type="button"
+            onClick={(e) => handleQuillClick(e, categoryName)}
             style={{
               position: 'absolute',
-              top: '-6px',
-              left: '-6px',
+              top: '-10px',
+              left: '-10px',
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              padding: '2px',
-              opacity: 0.4,
+              padding: '10px',
+              opacity: isFriendView ? 0.7 : 0.4,
               fontSize: '14px',
               lineHeight: 1,
-              zIndex: 15
+              zIndex: 15,
+              WebkitTapHighlightColor: 'transparent',
+              touchAction: 'manipulation'
             }}
-            title={`Edit ${categoryName}`}
+            title={isFriendView ? 'Leave a note' : `Edit ${categoryName}`}
           >
-            <span style={{ display: 'inline-block', transform: 'scale(-1.44, 1.44)', filter: 'sepia(1) saturate(10) hue-rotate(350deg) brightness(0.9) contrast(1.2)' }}>🖋️</span>
+            <img src="/images/quill-ready.png" alt={isFriendView ? 'Leave note' : 'Edit'} style={{ width: '29px', height: '29px', objectFit: 'contain', pointerEvents: 'none' }} />
           </button>
+        )}
+        {/* Fold indicator for unread notes on own card */}
+        {!isFriendView && unreadNotes.length > 0 && (
+          <CardFold
+            hasUnread={true}
+            unreadCount={unreadNotes.length}
+            onClick={() => handleFlipSection(categoryName)}
+          />
         )}
         <div className="section-header">
           <span className="section-title">{titleText}</span>
@@ -183,6 +249,32 @@ export const CardDisplay = ({ card, entries, displayName, photoUrl, isEditable =
           )}
         </div>
       </div>
+    )
+
+    const backContent = (
+      <CardBack
+        sectionName={categoryName}
+        notes={sectionNotes}
+        isOwner={!isFriendView}
+        currentUserId={currentUserId}
+        onFlipBack={() => handleFlipSection(categoryName)}
+        onMarkRead={onMarkNotesRead}
+        onLeaveNote={onLeaveNote}
+        onUpdateNote={onUpdateNote}
+        onDeleteNote={onDeleteNote}
+      />
+    )
+
+    return (
+      <FlippableSection
+        key={categoryName}
+        isFlipped={isFlipped}
+        onFlip={() => handleFlipSection(categoryName)}
+        backContent={backContent}
+        sectionClass={isFullWidth ? 'full-width-section' : 'section-box'}
+      >
+        {sectionContent}
+      </FlippableSection>
     )
   }
 

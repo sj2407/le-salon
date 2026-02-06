@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { NotificationBell } from './NotificationBell'
 import { NewsletterBell } from './NewsletterBell'
+import { FriendSearch } from './FriendSearch'
 
 export const Navigation = () => {
   const { user, profile, signOut } = useAuth()
@@ -65,8 +66,9 @@ export const Navigation = () => {
             <span className="nav-brand">Le Salon</span>
           </Link>
 
-          {/* Right side: Bell + Newsletter + Hamburger - absolutely positioned */}
-          <div style={{ position: 'absolute', right: '0', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          {/* Right side: Search + Bell + Newsletter + Hamburger - absolutely positioned */}
+          <div style={{ position: 'absolute', right: '0', display: 'flex', alignItems: 'center', gap: '2px' }}>
+            <FriendSearch />
             <NotificationBell />
             <NewsletterBell />
 
