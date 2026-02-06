@@ -3,6 +3,7 @@ import { VinylIcon } from './icons/VinylIcon'
 import { MusicEntryDisplay } from './music/MusicEntryDisplay'
 import { WatchingIcon } from './icons/WatchingIcon'
 import { LookingForwardIcon } from './icons/LookingForwardIcon'
+import { PerformingArtsIcon } from './icons/PerformingArtsIcon'
 import { ObsessingIcon } from './icons/ObsessingIcon'
 import { AIPromptIcon } from './icons/AIPromptIcon'
 
@@ -11,6 +12,7 @@ const CATEGORY_CONFIG = {
   'Listening': { icon: VinylIcon, subcategories: ['music', 'podcast', 'audiobook'] },
   'Watching': { icon: WatchingIcon, subcategories: ['tv', 'movie'] },
   'Looking Forward To': { icon: LookingForwardIcon, subcategories: [] },
+  'Performing Arts and Exhibits': { icon: PerformingArtsIcon, subcategories: ['musical theatre', 'exhibits'] },
   'Obsessing Over': { icon: ObsessingIcon, subcategories: [] },
   'My latest AI prompt': { icon: AIPromptIcon, subcategories: [] }
 }
@@ -84,24 +86,31 @@ export const CardDisplay = ({ card, entries, displayName, photoUrl, isEditable =
       titleText = `What I'm ${categoryName.toLowerCase()} to`
     } else if (categoryName === 'My latest AI prompt') {
       titleText = categoryName // Keep as is, don't add "What I'm"
+    } else if (categoryName === 'Performing Arts and Exhibits') {
+      titleText = 'Performing arts and exhibits'
     } else {
       titleText = `What I'm ${categoryName.toLowerCase()}`
     }
 
     // Categories with floating top-right corner icons
-    const hasFloatingIcon = ['Reading', 'Listening', 'Watching', 'Looking Forward To', 'Obsessing Over', 'My latest AI prompt'].includes(categoryName)
+    const hasFloatingIcon = ['Reading', 'Listening', 'Watching', 'Looking Forward To', 'Performing Arts and Exhibits', 'Obsessing Over', 'My latest AI prompt'].includes(categoryName)
 
     // Different positioning for different icons
     let iconPosition = { top: '-10px', right: '5px' }
-    if (categoryName === 'Reading' || categoryName === 'Watching' || categoryName === 'Obsessing Over') {
+    if (categoryName === 'Reading') {
       iconPosition = { top: '-10px', right: '45px' }
     }
-    // Move TV and agenda icons to the right
     if (categoryName === 'Watching') {
       iconPosition = { top: '-10px', right: '30px' }
     }
     if (categoryName === 'Looking Forward To') {
       iconPosition = { top: '-10px', right: '-20px' }
+    }
+    if (categoryName === 'Obsessing Over') {
+      iconPosition = { top: '-10px', right: '25px' }
+    }
+    if (categoryName === 'Performing Arts and Exhibits') {
+      iconPosition = { top: '-10px', right: '5px' }
     }
 
     return (
@@ -132,12 +141,12 @@ export const CardDisplay = ({ card, entries, displayName, photoUrl, isEditable =
             }}
             title={`Edit ${categoryName}`}
           >
-            <span style={{ display: 'inline-block', transform: 'scale(-1.44, 1.44)', filter: 'sepia(1) saturate(8) hue-rotate(320deg) brightness(1.1) contrast(1.5)' }}>🖋️</span>
+            <span style={{ display: 'inline-block', transform: 'scale(-1.44, 1.44)', filter: 'sepia(1) saturate(10) hue-rotate(350deg) brightness(0.9) contrast(1.2)' }}>🖋️</span>
           </button>
         )}
         <div className="section-header">
           <span className="section-title">{titleText}</span>
-          {!hasFloatingIcon && <Icon />}
+          {!hasFloatingIcon && Icon && <Icon />}
         </div>
         <div className="section-content">
           {config.subcategories.length > 0 ? (
@@ -206,9 +215,10 @@ export const CardDisplay = ({ card, entries, displayName, photoUrl, isEditable =
         {renderCategorySection('Listening')}
         {renderCategorySection('Watching')}
         {renderCategorySection('Looking Forward To')}
+        {renderCategorySection('Performing Arts and Exhibits')}
+        {renderCategorySection('Obsessing Over')}
       </div>
 
-      {renderCategorySection('Obsessing Over', true)}
       <div style={{ marginTop: '16px' }}>
         {renderCategorySection('My latest AI prompt', true)}
       </div>

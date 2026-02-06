@@ -4,6 +4,7 @@ import { ReadingIcon } from './icons/ReadingIcon'
 import { ListeningIcon } from './icons/ListeningIcon'
 import { WatchingIcon } from './icons/WatchingIcon'
 import { LookingForwardIcon } from './icons/LookingForwardIcon'
+import { PerformingArtsIcon } from './icons/PerformingArtsIcon'
 import { ObsessingIcon } from './icons/ObsessingIcon'
 import { AIPromptIcon } from './icons/AIPromptIcon'
 
@@ -12,6 +13,7 @@ const CATEGORY_CONFIG = {
   'Listening': { icon: ListeningIcon, subcategories: ['music', 'podcast', 'audiobook'] },
   'Watching': { icon: WatchingIcon, subcategories: ['tv', 'movie'] },
   'Looking Forward To': { icon: LookingForwardIcon, subcategories: [] },
+  'Performing Arts and Exhibits': { icon: PerformingArtsIcon, subcategories: ['musical theatre', 'exhibits'] },
   'Obsessing Over': { icon: ObsessingIcon, subcategories: [] },
   'My latest AI prompt': { icon: AIPromptIcon, subcategories: [] }
 }
@@ -183,7 +185,7 @@ export const CardEdit = ({ entries, displayName, onSave, onCancel }) => {
       <div key={categoryName} className={sectionClass}>
         <div className="section-header">
           <span className="section-title">{titleText}</span>
-          <Icon />
+          {Icon && <Icon />}
         </div>
         <div className="section-content">
           {config.subcategories.length > 0 ? (
@@ -289,9 +291,10 @@ export const CardEdit = ({ entries, displayName, onSave, onCancel }) => {
         {renderCategoryEdit('Listening')}
         {renderCategoryEdit('Watching')}
         {renderCategoryEdit('Looking Forward To')}
+        {renderCategoryEdit('Performing Arts and Exhibits')}
+        {renderCategoryEdit('Obsessing Over')}
       </div>
 
-      {renderCategoryEdit('Obsessing Over', true)}
       {renderCategoryEdit('My latest AI prompt', true)}
 
       <div style={{ marginTop: '20px', display: 'flex', gap: '12px' }}>

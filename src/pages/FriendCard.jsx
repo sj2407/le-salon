@@ -421,9 +421,9 @@ export const FriendCard = () => {
                         key={index}
                         style={{
                           background: '#FFFEFA',
-                          border: '1.5px solid #2C2C2C',
                           borderRadius: '3px',
-                          padding: '16px'
+                          padding: '16px',
+                          boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)'
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>

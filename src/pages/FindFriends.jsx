@@ -130,12 +130,12 @@ export const FindFriends = () => {
           {searchResults.map((user) => (
             <div key={user.id} style={{
               padding: '16px',
-              border: '1.5px solid #2C2C2C',
               borderRadius: '3px',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              background: '#FFFEFA'
+              background: '#FFFEFA',
+              boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)'
             }}>
               <div>
                 <div style={{ fontWeight: 600 }}>{user.display_name}</div>

@@ -18,7 +18,6 @@ export const ProfileDisplay = ({ profile, title }) => {
   const fieldStyle = {
     padding: '10px 12px',
     background: '#F5F1EB',
-    border: '1.5px solid #2C2C2C',
     borderRadius: '3px',
     fontSize: '15px'
   }
@@ -77,14 +76,6 @@ export const ProfileDisplay = ({ profile, title }) => {
           <label className="form-label">Name</label>
           <div style={fieldStyle}>
             {profile.display_name || 'Not provided'}
-          </div>
-        </div>
-
-        {/* Email */}
-        <div className="form-group">
-          <label className="form-label">Email</label>
-          <div style={fieldStyle}>
-            {profile.email || 'Not provided'}
           </div>
         </div>
 
