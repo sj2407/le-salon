@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
+import { WishlistDisplay } from '../components/WishlistDisplay'
 
 export const Wishlist = () => {
   const { profile } = useAuth()
@@ -61,10 +62,8 @@ export const Wishlist = () => {
 
     try {
       const trimmedLink = link.trim() || null
-      let savedItemId = editingItem?.id
 
       if (editingItem) {
-        // Update existing item
         const { error } = await supabase
           .from('wishlist_items')
           .update({
@@ -77,8 +76,7 @@ export const Wishlist = () => {
 
         if (error) throw error
       } else {
-        // Create new item
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('wishlist_items')
           .insert({
             user_id: profile.id,
@@ -86,11 +84,8 @@ export const Wishlist = () => {
             type: type.trim() || null,
             link: trimmedLink
           })
-          .select()
-          .single()
 
         if (error) throw error
-        savedItemId = data.id
       }
 
       setShowModal(false)
@@ -126,169 +121,93 @@ export const Wishlist = () => {
   }
 
   return (
-    <div className="container" style={{ maxWidth: '720px', position: 'relative' }}>
-      {/* Gift box collage */}
-      <img
-        src="/images/gift-ready.png"
-        alt=""
-        style={{
-          position: 'absolute',
-          top: '8px',
-          right: '15%',
-          width: '80px',
-          height: 'auto',
-          opacity: 0.6,
-          pointerEvents: 'none',
-          zIndex: 0,
-          animation: 'bookFloat 4.5s ease-in-out infinite',
-          filter: 'contrast(1.3) brightness(1.1)'
-        }}
-      />
-
-      <h1 className="handwritten" style={{ fontSize: '42px', marginBottom: '24px', marginTop: '8px', marginLeft: '10px', position: 'relative', zIndex: 1 }}>
-        My Wishlist
-      </h1>
-
-      <button onClick={openAddModal} style={{
-        position: 'absolute',
-        top: '140px',
-        right: '0',
-        background: '#DCDCDC',
-        border: 'none',
-        borderRadius: '50%',
-        fontSize: '12px',
-        color: '#333',
-        cursor: 'pointer',
-        width: '18px',
-        height: '18px',
-        minWidth: '18px',
-        minHeight: '18px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 0,
-        lineHeight: 1,
-        zIndex: 1
-      }}>
-        +
-      </button>
-
-      <p style={{ fontSize: '15px', color: '#666', fontStyle: 'italic', marginBottom: '24px', textAlign: 'center' }}>
-        Add items you'd like, and friends can anonymously claim them as gifts for you.
-      </p>
-
-      {items.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '40px', fontStyle: 'italic', color: '#777' }}>
-          Nothing on your wishlist yet...
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {items.map((item, index) => (
-            <div
-              key={item.id}
+    <>
+      <WishlistDisplay
+        items={items}
+        title="My Wishlist"
+        emptyMessage="Nothing on your wishlist yet..."
+        description="Add items you'd like, and friends can anonymously claim them as gifts for you."
+        renderHeaderActions={() => (
+          <button onClick={openAddModal} style={{
+            position: 'absolute',
+            top: '140px',
+            right: '0',
+            background: '#DCDCDC',
+            border: 'none',
+            borderRadius: '50%',
+            fontSize: '12px',
+            color: '#333',
+            cursor: 'pointer',
+            width: '18px',
+            height: '18px',
+            minWidth: '18px',
+            minHeight: '18px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 0,
+            lineHeight: 1,
+            zIndex: 1
+          }}>
+            +
+          </button>
+        )}
+        renderItemStatus={(item) => (
+          <span style={{ fontSize: '13px' }}>
+            {item.claimed_by ? (
+              <span style={{
+                color: '#4CAF50',
+                fontWeight: 600,
+                background: 'rgba(76, 175, 80, 0.1)',
+                padding: '2px 8px',
+                borderRadius: '10px'
+              }}>
+                Claimed ✓
+              </span>
+            ) : (
+              <span style={{ color: '#999' }}>Available</span>
+            )}
+          </span>
+        )}
+        renderItemActions={(item) => (
+          <>
+            <button
+              onClick={() => openEditModal(item)}
               style={{
-                background: '#FFFEFA',
+                background: 'none',
                 border: 'none',
-                borderRadius: '2px',
-                padding: '16px',
-                boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)',
-                transform: `rotate(${index % 2 === 0 ? '-0.3' : '0.3'}deg)`,
-                animation: `reviewSway${(index % 3) + 1} ${5 + index % 2}s ease-in-out infinite`,
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
+                cursor: 'pointer',
+                padding: '4px',
+                fontSize: '16px',
+                opacity: 0.4,
+                transition: 'opacity 0.2s'
               }}
+              onMouseEnter={(e) => e.target.style.opacity = '0.8'}
+              onMouseLeave={(e) => e.target.style.opacity = '0.4'}
+              title="Edit"
             >
-              <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                    {item.type && (
-                      <span style={{
-                        fontSize: '12px',
-                        color: '#666',
-                        background: '#F5F1EB',
-                        padding: '2px 8px',
-                        borderRadius: '10px',
-                        fontWeight: 500
-                      }}>
-                        {item.type}
-                      </span>
-                    )}
-                    <span style={{ fontSize: '13px' }}>
-                      {item.claimed_by ? (
-                        <span style={{
-                          color: '#4CAF50',
-                          fontWeight: 600,
-                          background: 'rgba(76, 175, 80, 0.1)',
-                          padding: '2px 8px',
-                          borderRadius: '10px'
-                        }}>
-                          Claimed ✓
-                        </span>
-                      ) : (
-                        <span style={{ color: '#999' }}>Available</span>
-                      )}
-                    </span>
-                  </div>
-                  {item.link ? (
-                    <a
-                      href={item.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        fontSize: '14px',
-                        fontStyle: 'italic',
-                        fontWeight: 400,
-                        color: '#4A7BA7',
-                        textDecoration: 'underline'
-                      }}
-                    >
-                      {item.name}
-                    </a>
-                  ) : (
-                    <div style={{ fontSize: '14px', fontStyle: 'italic', fontWeight: 400 }}>{item.name}</div>
-                  )}
-              </div>
-
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <button
-                  onClick={() => openEditModal(item)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: '4px',
-                    fontSize: '16px',
-                    opacity: 0.4,
-                    transition: 'opacity 0.2s'
-                  }}
-                  onMouseEnter={(e) => e.target.style.opacity = '0.8'}
-                  onMouseLeave={(e) => e.target.style.opacity = '0.4'}
-                  title="Edit"
-                >
-                  <span style={{ display: 'inline-block', transform: 'scale(-1.44, 1.44)', filter: 'sepia(1) saturate(8) hue-rotate(320deg) brightness(1.1) contrast(1.5)' }}>🖋️</span>
-                </button>
-                <button
-                  onClick={() => handleDelete(item.id)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: '4px',
-                    opacity: 0.6,
-                    transition: 'opacity 0.2s',
-                    fontSize: '18px'
-                  }}
-                  onMouseEnter={(e) => e.target.style.opacity = '1'}
-                  onMouseLeave={(e) => e.target.style.opacity = '0.6'}
-                  title="Delete"
-                >
-                  🗑️
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+              <span style={{ display: 'inline-block', transform: 'scale(-1.44, 1.44)', filter: 'sepia(1) saturate(8) hue-rotate(320deg) brightness(1.1) contrast(1.5)' }}>🖋️</span>
+            </button>
+            <button
+              onClick={() => handleDelete(item.id)}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '4px',
+                opacity: 0.6,
+                transition: 'opacity 0.2s',
+                fontSize: '18px'
+              }}
+              onMouseEnter={(e) => e.target.style.opacity = '1'}
+              onMouseLeave={(e) => e.target.style.opacity = '0.6'}
+              title="Delete"
+            >
+              🗑️
+            </button>
+          </>
+        )}
+      />
 
       {/* Add/Edit Modal */}
       {showModal && (
@@ -375,6 +294,6 @@ export const Wishlist = () => {
           </div>
         </div>
       )}
-    </div>
+    </>
   )
 }

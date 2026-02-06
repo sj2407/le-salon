@@ -1,17 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
-
-export const TAG_ICONS = {
-  movie: '🎬',
-  book: '📖',
-  podcast: '🎧',
-  show: '📺',
-  album: '💿',
-  other: '✨'
-}
+import { ReviewsDisplay, TAG_ICONS } from '../components/ReviewsDisplay'
 
 const TAG_OPTIONS = ['movie', 'book', 'podcast', 'show', 'album', 'other']
+
+export { TAG_ICONS }
 
 export const Reviews = () => {
   const { profile } = useAuth()
@@ -20,8 +14,6 @@ export const Reviews = () => {
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingReview, setEditingReview] = useState(null)
-  const [expandedReviews, setExpandedReviews] = useState(new Set())
-  const [filterTag, setFilterTag] = useState('all')
 
   // Form state
   const [title, setTitle] = useState('')
@@ -58,7 +50,6 @@ export const Reviews = () => {
 
   const fetchFriends = async () => {
     try {
-      // Get accepted friendships
       const { data: friendshipsData, error: friendshipsError } = await supabase
         .from('friendships')
         .select('*')
@@ -67,7 +58,6 @@ export const Reviews = () => {
 
       if (friendshipsError) throw friendshipsError
 
-      // Get friend IDs
       const friendIds = friendshipsData.map(f =>
         f.requester_id === profile.id ? f.recipient_id : f.requester_id
       )
@@ -105,7 +95,6 @@ export const Reviews = () => {
     setReviewText(review.review_text || '')
     setError('')
 
-    // Load existing recommendations for this review
     try {
       const { data, error } = await supabase
         .from('review_recommendations')
@@ -130,7 +119,6 @@ export const Reviews = () => {
       let reviewId = editingReview?.id
 
       if (editingReview) {
-        // Update existing review
         const { error } = await supabase
           .from('reviews')
           .update({
@@ -144,7 +132,6 @@ export const Reviews = () => {
 
         if (error) throw error
       } else {
-        // Create new review
         const { data, error } = await supabase
           .from('reviews')
           .insert({
@@ -161,9 +148,7 @@ export const Reviews = () => {
         reviewId = data.id
       }
 
-      // Save recommendations
       if (reviewId && recommendToFriends.length > 0) {
-        // Get existing recommendations to determine which are new
         const { data: existingRecs } = await supabase
           .from('review_recommendations')
           .select('recommended_to_user_id')
@@ -172,13 +157,11 @@ export const Reviews = () => {
         const existingFriendIds = existingRecs?.map(r => r.recommended_to_user_id) || []
         const newFriendIds = recommendToFriends.filter(id => !existingFriendIds.includes(id))
 
-        // Delete existing recommendations
         await supabase
           .from('review_recommendations')
           .delete()
           .eq('review_id', reviewId)
 
-        // Insert new recommendations
         const recommendations = recommendToFriends.map(friendId => ({
           review_id: reviewId,
           recommended_to_user_id: friendId
@@ -190,7 +173,6 @@ export const Reviews = () => {
 
         if (recsError) throw recsError
 
-        // Create notifications for NEW recommendations only
         for (const friendId of newFriendIds) {
           const { error: notifError } = await supabase
             .from('notifications')
@@ -208,7 +190,6 @@ export const Reviews = () => {
           }
         }
       } else if (reviewId) {
-        // Clear all recommendations if none selected
         await supabase
           .from('review_recommendations')
           .delete()
@@ -239,16 +220,6 @@ export const Reviews = () => {
     }
   }
 
-  const toggleExpanded = (reviewId) => {
-    const newExpanded = new Set(expandedReviews)
-    if (newExpanded.has(reviewId)) {
-      newExpanded.delete(reviewId)
-    } else {
-      newExpanded.add(reviewId)
-    }
-    setExpandedReviews(newExpanded)
-  }
-
   if (loading) {
     return (
       <div className="container">
@@ -257,152 +228,76 @@ export const Reviews = () => {
     )
   }
 
-  const filteredReviews = filterTag === 'all'
-    ? reviews
-    : reviews.filter(review => review.tag === filterTag)
-
   return (
-    <div className="container" style={{ maxWidth: '720px', position: 'relative' }}>
-      {/* Collage element - gavel peeking from corner */}
-      <img
-        src="/images/gavel-ready.png"
-        alt=""
-        style={{
-          position: 'absolute',
-          top: '8px',
-          right: '15%',
-          width: '90px',
-          height: '90px',
-          opacity: 0.3,
-          pointerEvents: 'none',
-          zIndex: 0,
-          animation: 'gavelSway 5s ease-in-out infinite',
-          filter: 'contrast(2.5) brightness(1.35)'
-        }}
-      />
-
-      {/* Add Review button and Filter dropdown */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', marginTop: '4px', flexWrap: 'wrap', gap: '12px' }}>
-            <select
-              value={filterTag}
-              onChange={(e) => setFilterTag(e.target.value)}
+    <>
+      <ReviewsDisplay
+        reviews={reviews}
+        emptyMessage="No reviews yet. Share your thoughts on movies, books, and more!"
+        renderHeaderActions={() => (
+          <button
+            onClick={openAddModal}
+            style={{
+              background: '#DCDCDC',
+              border: 'none',
+              borderRadius: '50%',
+              fontSize: '12px',
+              color: '#333',
+              cursor: 'pointer',
+              width: '18px',
+              height: '18px',
+              minWidth: '18px',
+              minHeight: '18px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 0,
+              lineHeight: 1
+            }}
+          >
+            +
+          </button>
+        )}
+        renderActions={(review) => (
+          <>
+            <button
+              onClick={() => openEditModal(review)}
               style={{
-                padding: '6px 10px',
-                border: '1px solid #ccc',
-                borderRadius: '3px',
-                background: '#FFFEFA',
-                fontSize: '14px',
-                cursor: 'pointer',
-                marginTop: '12px'
-              }}
-            >
-              <option value="all">All</option>
-              {TAG_OPTIONS.map((tagOption) => (
-                <option key={tagOption} value={tagOption}>
-                  {TAG_ICONS[tagOption]} {tagOption}
-                </option>
-              ))}
-            </select>
-            <button onClick={openAddModal} style={{ background: '#DCDCDC', border: 'none', borderRadius: '50%', fontSize: '12px', color: '#333', cursor: 'pointer', width: '18px', height: '18px', minWidth: '18px', minHeight: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, marginTop: '48px', lineHeight: 1 }}>
-              +
-            </button>
-          </div>
-
-      {filteredReviews.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '40px', fontStyle: 'italic', color: '#777' }}>
-          {reviews.length === 0
-            ? 'No reviews yet. Share your thoughts on movies, books, and more!'
-            : `No ${filterTag} reviews yet.`}
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {filteredReviews.map((review, index) => (
-            <div
-              key={review.id}
-              className="review-card"
-              data-index={index}
-              style={{
-                background: '#FFFEFA',
+                background: 'none',
                 border: 'none',
-                borderRadius: '2px',
-                padding: '7px 16px',
-                boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)'
+                cursor: 'pointer',
+                padding: '4px',
+                fontSize: '16px',
+                opacity: 0.4,
+                transition: 'opacity 0.2s',
+                flexShrink: 0
               }}
+              onMouseEnter={(e) => e.target.style.opacity = '0.8'}
+              onMouseLeave={(e) => e.target.style.opacity = '0.4'}
+              title="Edit"
             >
-              {/* Single line: Icon + Title + Rating + Expand + Edit/Delete */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '18px', flexShrink: 0 }}>{TAG_ICONS[review.tag]}</span>
-                <h3 style={{ margin: 0, fontSize: '14px', fontStyle: 'italic', fontWeight: 400, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {review.title}
-                </h3>
-                <div className="handwritten" style={{ fontSize: '18px', lineHeight: 1, color: '#2C2C2C', flexShrink: 0 }}>
-                  {review.rating}/10
-                </div>
-                {review.review_text && (
-                  <button
-                    onClick={() => toggleExpanded(review.id)}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      padding: '4px',
-                      fontSize: '16px',
-                      color: '#4A7BA7',
-                      fontWeight: 600,
-                      flexShrink: 0
-                    }}
-                  >
-                    {expandedReviews.has(review.id) ? '−' : '+'}
-                  </button>
-                )}
-                <button
-                  onClick={() => openEditModal(review)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: '4px',
-                    fontSize: '16px',
-                    opacity: 0.4,
-                    transition: 'opacity 0.2s',
-                    flexShrink: 0
-                  }}
-                  onMouseEnter={(e) => e.target.style.opacity = '0.8'}
-                  onMouseLeave={(e) => e.target.style.opacity = '0.4'}
-                  title="Edit"
-                >
-                  <span style={{ display: 'inline-block', transform: 'scale(-1.44, 1.44)', filter: 'sepia(1) saturate(8) hue-rotate(320deg) brightness(1.1) contrast(1.5)' }}>🖋️</span>
-                </button>
-                <button
-                  onClick={() => handleDelete(review.id)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: '4px',
-                    opacity: 0.6,
-                    transition: 'opacity 0.2s',
-                    flexShrink: 0,
-                    fontSize: '18px'
-                  }}
-                  onMouseEnter={(e) => e.target.style.opacity = '1'}
-                  onMouseLeave={(e) => e.target.style.opacity = '0.6'}
-                  title="Delete"
-                >
-                  🗑️
-                </button>
-              </div>
-
-              {/* Expanded review text appears below */}
-              {review.review_text && expandedReviews.has(review.id) && (
-                <div style={{ marginTop: '12px', fontSize: '14px', lineHeight: 1.6, color: '#2C2C2C', fontStyle: 'italic' }}>
-                  {review.review_text}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+              <span style={{ display: 'inline-block', transform: 'scale(-1.44, 1.44)', filter: 'sepia(1) saturate(8) hue-rotate(320deg) brightness(1.1) contrast(1.5)' }}>🖋️</span>
+            </button>
+            <button
+              onClick={() => handleDelete(review.id)}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '4px',
+                opacity: 0.6,
+                transition: 'opacity 0.2s',
+                flexShrink: 0,
+                fontSize: '18px'
+              }}
+              onMouseEnter={(e) => e.target.style.opacity = '1'}
+              onMouseLeave={(e) => e.target.style.opacity = '0.6'}
+              title="Delete"
+            >
+              🗑️
+            </button>
+          </>
+        )}
+      />
 
       {/* Add/Edit Modal */}
       {showModal && (
@@ -553,6 +448,6 @@ export const Reviews = () => {
           </div>
         </div>
       )}
-    </div>
+    </>
   )
 }

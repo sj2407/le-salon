@@ -336,6 +336,28 @@ Parent element MUST have `position: 'relative'`.
 - `reviewSway1/2/3` - subtle swaying for cards
 - `gavelSway` - gavel icon specific
 
+### Code Architecture Principle
+
+When the same functionality appears in multiple places, it MUST be consolidated into a shared module (component, hook, or utility). This enables:
+- Consistent behavior across views
+- Single point of change for enhancements
+- Easier addition of future features (analytics, AI recommendations, exports)
+
+### Shared Display Components
+Views that exist in both My Corner and Friend view use shared components:
+
+| View | Shared Component | My Corner | Friend View |
+|------|------------------|-----------|-------------|
+| Reviews | `ReviewsDisplay.jsx` | Reviews.jsx | FriendCard.jsx |
+| Wishlist | `WishlistDisplay.jsx` | Wishlist.jsx | FriendWishlist.jsx |
+| Profile | `ProfileDisplay.jsx` | (edit form) | FriendProfile.jsx |
+
+**Rules for shared components:**
+1. **My Corner is the benchmark** - shared component styling matches My Corner
+2. **Action buttons are absolute overlays** - +, edit, delete use `position: absolute`
+3. **No container class nesting** - shared components don't have `className="container"`
+4. **Use transform for single moves** - `transform: translateY()` moves one element without affecting siblings
+
 ## Security
 
 - Row Level Security (RLS) enabled on all tables
