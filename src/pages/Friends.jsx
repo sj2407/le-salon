@@ -28,6 +28,21 @@ export const Friends = () => {
 
       if (friendshipsError) throw friendshipsError
 
+      // Collect all friend IDs and batch-fetch profiles
+      const friendIds = friendshipsData.map(f =>
+        f.requester_id === profile.id ? f.recipient_id : f.requester_id
+      )
+
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('*')
+        .in('id', friendIds)
+
+      if (profilesError) throw profilesError
+
+      const profilesMap = {}
+      profilesData.forEach(p => { profilesMap[p.id] = p })
+
       // Separate into categories
       const accepted = []
       const pending = []
@@ -38,14 +53,8 @@ export const Friends = () => {
           ? friendship.recipient_id
           : friendship.requester_id
 
-        // Fetch friend profile
-        const { data: friendProfile, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', friendId)
-          .single()
-
-        if (profileError) continue
+        const friendProfile = profilesMap[friendId]
+        if (!friendProfile) continue
 
         const friendshipWithProfile = { ...friendship, friendProfile }
 

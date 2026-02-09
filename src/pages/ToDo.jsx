@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { Link } from 'react-router-dom'
@@ -58,6 +58,9 @@ export const ToDo = () => {
   const [price, setPrice] = useState('')
   const [error, setError] = useState('')
 
+  // Track initial form values to detect dirty state
+  const initialFormRef = useRef(null)
+
   useEffect(() => {
     if (profile) {
       autoArchiveActivities().then(() => {
@@ -65,6 +68,22 @@ export const ToDo = () => {
       })
     }
   }, [profile])
+
+  const isFormDirty = () => {
+    if (!initialFormRef.current) return false
+    const init = initialFormRef.current
+    return description !== init.description || dateText !== init.dateText ||
+      city !== init.city || location !== init.location || price !== init.price
+  }
+
+  // Escape key handler for modal - only close if form is clean
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && showModal && !isFormDirty()) setShowModal(false)
+    }
+    window.addEventListener('keydown', handleEscape)
+    return () => window.removeEventListener('keydown', handleEscape)
+  }, [showModal, description, dateText, city, location, price])
 
   const autoArchiveActivities = async () => {
     try {
@@ -148,6 +167,7 @@ export const ToDo = () => {
     setLocation('')
     setPrice('')
     setError('')
+    initialFormRef.current = { description: '', dateText: '', city: '', location: '', price: '' }
     setShowModal(true)
   }
 
@@ -159,6 +179,13 @@ export const ToDo = () => {
     setLocation(activity.location || '')
     setPrice(activity.price || '')
     setError('')
+    initialFormRef.current = {
+      description: activity.description,
+      dateText: activity.date_text || '',
+      city: activity.city || '',
+      location: activity.location || '',
+      price: activity.price || ''
+    }
     setShowModal(true)
   }
 
@@ -456,7 +483,7 @@ export const ToDo = () => {
                                 onMouseEnter={(e) => e.target.style.opacity = '1'}
                                 onMouseLeave={(e) => e.target.style.opacity = '0.5'}
                               >
-                                <span style={{ display: 'inline-block', transform: 'scale(-1.44, 1.44)', filter: 'sepia(1) saturate(8) hue-rotate(320deg) brightness(1.1) contrast(1.5)' }}>🖋️</span>
+                                <img src="/images/quill-ready.png" alt="Edit" style={{ width: '29px', height: '29px', objectFit: 'contain' }} />
                               </button>
                               <button
                                 onClick={() => handleDelete(activity.id)}
@@ -507,7 +534,7 @@ export const ToDo = () => {
             justifyContent: 'center',
             zIndex: 1000
           }}
-          onClick={() => setShowModal(false)}
+          onClick={() => { if (!isFormDirty()) setShowModal(false) }}
         >
           <div
             style={{

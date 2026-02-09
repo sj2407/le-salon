@@ -167,7 +167,8 @@ export const MyCard = () => {
 
   const handleSectionSave = async (category, newCategoryEntries) => {
     try {
-      setLoading(true)
+      // Don't set loading=true here - it causes the page to flash blank
+      // The save happens quickly and we update state directly after
 
       // Keep entries from other categories (strip id field), replace this category's entries
       const otherEntries = entries
@@ -212,8 +213,6 @@ export const MyCard = () => {
       setEditingSection(null)
     } catch (err) {
       setError(err.message)
-    } finally {
-      setLoading(false)
     }
   }
 

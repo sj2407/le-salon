@@ -27,19 +27,23 @@ export const FindFriends = () => {
 
       if (error) throw error
 
-      // Filter out users who are already friends or have pending requests
-      const filteredResults = []
-      for (const user of data) {
-        const { data: existingFriendship } = await supabase
-          .from('friendships')
-          .select('*')
-          .or(`and(requester_id.eq.${profile.id},recipient_id.eq.${user.id}),and(requester_id.eq.${user.id},recipient_id.eq.${profile.id})`)
-          .single()
+      // Batch-check existing friendships instead of N+1 queries
+      const userIds = data.map(u => u.id)
+      const { data: existingFriendships } = await supabase
+        .from('friendships')
+        .select('requester_id, recipient_id')
+        .or(`requester_id.eq.${profile.id},recipient_id.eq.${profile.id}`)
+        .or(`requester_id.in.(${userIds.join(',')}),recipient_id.in.(${userIds.join(',')})`)
 
-        if (!existingFriendship) {
-          filteredResults.push(user)
-        }
+      const friendedIds = new Set()
+      if (existingFriendships) {
+        existingFriendships.forEach(f => {
+          if (f.requester_id === profile.id) friendedIds.add(f.recipient_id)
+          if (f.recipient_id === profile.id) friendedIds.add(f.requester_id)
+        })
       }
+
+      const filteredResults = data.filter(user => !friendedIds.has(user.id))
 
       setSearchResults(filteredResults)
 

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 
@@ -8,6 +8,15 @@ export const FeedbackModal = ({ onClose }) => {
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState('')
+
+  // Escape key handler
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && !submitting) onClose()
+    }
+    window.addEventListener('keydown', handleEscape)
+    return () => window.removeEventListener('keydown', handleEscape)
+  }, [onClose, submitting])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -49,7 +58,7 @@ export const FeedbackModal = ({ onClose }) => {
         justifyContent: 'center',
         zIndex: 1000
       }}
-      onClick={onClose}
+      onClick={() => !submitting && onClose()}
     >
       <div
         style={{

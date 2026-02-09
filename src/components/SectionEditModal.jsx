@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { MusicEntryInput } from './music/MusicEntryInput'
 
@@ -6,47 +6,65 @@ const CATEGORY_CONFIG = {
   'Reading': { subcategories: ['book', 'article'] },
   'Listening': { subcategories: ['music', 'podcast', 'audiobook'] },
   'Watching': { subcategories: ['tv', 'movie'] },
+  'Performing Arts and Exhibits': { subcategories: ['theater', 'concert', 'exhibit'] },
   'Looking Forward To': { subcategories: [] },
   'Obsessing Over': { subcategories: [] },
   'My latest AI prompt': { subcategories: [] }
 }
 
 export const SectionEditModal = ({ category, entries, onSave, onClose }) => {
-  const [formData, setFormData] = useState({})
-  const [musicMetadata, setMusicMetadata] = useState({})
-
   const config = CATEGORY_CONFIG[category]
+  const backdropRef = useRef(null)
+  const initialFormDataRef = useRef(null)
 
-  useEffect(() => {
+  // Initialize form data ONCE on mount using initializer function (not useEffect)
+  // This avoids any dependency issues and guarantees single initialization
+  const [formData, setFormData] = useState(() => {
     const categoryEntries = entries.filter(e => e.category === category)
-
+    let data
     if (config.subcategories.length > 0) {
-      const data = {}
-      const metadata = {}
+      data = {}
       config.subcategories.forEach(sub => {
         const subEntries = categoryEntries.filter(e => e.subcategory === sub)
         data[sub] = subEntries.length > 0 ? subEntries.map(e => e.content) : ['']
+      })
+    } else {
+      data = { content: categoryEntries[0]?.content || '' }
+    }
+    initialFormDataRef.current = JSON.stringify(data)
+    return data
+  })
 
-        if (sub === 'music') {
-          subEntries.forEach((e, idx) => {
-            if (e.itunes_preview_url) {
-              metadata[idx] = {
-                itunes_track_id: e.itunes_track_id,
-                itunes_preview_url: e.itunes_preview_url,
-                itunes_artist_name: e.itunes_artist_name,
-                itunes_album_name: e.itunes_album_name,
-                itunes_artwork_url: e.itunes_artwork_url
-              }
-            }
-          })
+  const [musicMetadata, setMusicMetadata] = useState(() => {
+    const categoryEntries = entries.filter(e => e.category === category)
+    const metadata = {}
+    if (config.subcategories.includes('music')) {
+      const musicEntries = categoryEntries.filter(e => e.subcategory === 'music')
+      musicEntries.forEach((e, idx) => {
+        if (e.itunes_preview_url) {
+          metadata[idx] = {
+            itunes_track_id: e.itunes_track_id,
+            itunes_preview_url: e.itunes_preview_url,
+            itunes_artist_name: e.itunes_artist_name,
+            itunes_album_name: e.itunes_album_name,
+            itunes_artwork_url: e.itunes_artwork_url
+          }
         }
       })
-      setFormData(data)
-      setMusicMetadata(metadata)
-    } else {
-      setFormData({ content: categoryEntries[0]?.content || '' })
     }
-  }, [category, entries])
+    return metadata
+  })
+
+  const isDirty = JSON.stringify(formData) !== initialFormDataRef.current
+
+  // Escape key handler - only close if form is clean
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && !isDirty) onClose()
+    }
+    window.addEventListener('keydown', handleEscape)
+    return () => window.removeEventListener('keydown', handleEscape)
+  }, [onClose, isDirty])
 
   const handleChange = (subcategory, index, value) => {
     if (config.subcategories.length > 0) {
@@ -137,12 +155,22 @@ export const SectionEditModal = ({ category, entries, onSave, onClose }) => {
     titleText = `What I'm ${category.toLowerCase()} to`
   } else if (category === 'My latest AI prompt') {
     titleText = category
+  } else if (category === 'Performing Arts and Exhibits') {
+    titleText = 'What I saw live'
   } else {
     titleText = `What I'm ${category.toLowerCase()}`
   }
 
+  // Handle backdrop click - only close if clicking directly on backdrop AND form is clean
+  const handleBackdropClick = (e) => {
+    if (e.target === backdropRef.current && !isDirty) {
+      onClose()
+    }
+  }
+
   return createPortal(
     <div
+      ref={backdropRef}
       style={{
         position: 'fixed',
         top: 0,
@@ -155,7 +183,7 @@ export const SectionEditModal = ({ category, entries, onSave, onClose }) => {
         justifyContent: 'center',
         zIndex: 9999
       }}
-      onClick={onClose}
+      onClick={handleBackdropClick}
     >
       <div
         style={{
@@ -169,7 +197,6 @@ export const SectionEditModal = ({ category, entries, onSave, onClose }) => {
           overflow: 'auto',
           boxShadow: '4px 4px 0 #2C2C2C'
         }}
-        onClick={(e) => e.stopPropagation()}
       >
         <h3 className="handwritten" style={{ fontSize: '24px', marginBottom: '20px', marginTop: 0 }}>
           {titleText}

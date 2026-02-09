@@ -66,17 +66,23 @@ export const AuthProvider = ({ children }) => {
 
     if (authError) throw authError
 
-    // Create profile
+    // Create profile and get it back
+    const profileData = {
+      id: authData.user.id,
+      email,
+      display_name: displayName,
+      username,
+    }
+
     const { error: profileError } = await supabase
       .from('profiles')
-      .insert({
-        id: authData.user.id,
-        email,
-        display_name: displayName,
-        username,
-      })
+      .insert(profileData)
 
     if (profileError) throw profileError
+
+    // Set profile immediately to avoid race condition with onAuthStateChange
+    setProfile(profileData)
+    setLoading(false)
 
     return authData
   }
@@ -96,6 +102,12 @@ export const AuthProvider = ({ children }) => {
     if (error) throw error
   }
 
+  const refreshProfile = async () => {
+    if (user) {
+      await fetchProfile(user.id)
+    }
+  }
+
   const value = {
     user,
     profile,
@@ -103,6 +115,7 @@ export const AuthProvider = ({ children }) => {
     signUp,
     signIn,
     signOut,
+    refreshProfile,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

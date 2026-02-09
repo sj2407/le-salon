@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { WishlistDisplay } from '../components/WishlistDisplay'
@@ -14,11 +14,29 @@ export const Wishlist = () => {
   const [link, setLink] = useState('')
   const [error, setError] = useState('')
 
+  // Track initial form values to detect dirty state
+  const initialFormRef = useRef(null)
+
   useEffect(() => {
     if (profile) {
       fetchWishlistItems()
     }
   }, [profile])
+
+  const isFormDirty = () => {
+    if (!initialFormRef.current) return false
+    const init = initialFormRef.current
+    return name !== init.name || type !== init.type || link !== init.link
+  }
+
+  // Escape key handler for modal - only close if form is clean
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && showModal && !isFormDirty()) setShowModal(false)
+    }
+    window.addEventListener('keydown', handleEscape)
+    return () => window.removeEventListener('keydown', handleEscape)
+  }, [showModal, name, type, link])
 
   const fetchWishlistItems = async () => {
     try {
@@ -44,6 +62,7 @@ export const Wishlist = () => {
     setType('')
     setLink('')
     setError('')
+    initialFormRef.current = { name: '', type: '', link: '' }
     setShowModal(true)
   }
 
@@ -53,6 +72,7 @@ export const Wishlist = () => {
     setType(item.type || '')
     setLink(item.link || '')
     setError('')
+    initialFormRef.current = { name: item.name, type: item.type || '', link: item.link || '' }
     setShowModal(true)
   }
 
@@ -186,7 +206,7 @@ export const Wishlist = () => {
               onMouseLeave={(e) => e.target.style.opacity = '0.4'}
               title="Edit"
             >
-              <span style={{ display: 'inline-block', transform: 'scale(-1.44, 1.44)', filter: 'sepia(1) saturate(8) hue-rotate(320deg) brightness(1.1) contrast(1.5)' }}>🖋️</span>
+              <img src="/images/quill-ready.png" alt="Edit" style={{ width: '29px', height: '29px', objectFit: 'contain' }} />
             </button>
             <button
               onClick={() => handleDelete(item.id)}
@@ -224,7 +244,7 @@ export const Wishlist = () => {
             justifyContent: 'center',
             zIndex: 1000
           }}
-          onClick={() => setShowModal(false)}
+          onClick={() => { if (!isFormDirty()) setShowModal(false) }}
         >
           <div
             style={{

@@ -70,3 +70,26 @@ When views exist in both My Corner and Friend view (Reviews, Wishlist, Profile):
 3. **Action buttons (+, edit, delete) must be absolutely positioned overlays** - they should NEVER affect the base structure
 4. **Don't nest container classes** - shared components should NOT have `className="container"` since parents already provide it
 5. **Use render props for customization** (`renderActions`, `renderHeaderActions`) - these are overlays, not structural elements
+
+## UI Development Guidelines
+
+When implementing new UI features, always include cancel/close functionality and test all interaction states (hover, click, focus, escape key) before considering the feature complete.
+
+**Interactive Component Checklist** - For any interactive component (modals, flip cards, overlays), verify these states work:
+1. Open/activate
+2. Cancel/close
+3. Submit/confirm
+4. Escape key dismissal
+5. Click-outside behavior
+
+## Session Guidelines
+
+After implementing features, run a quick manual interaction test and report any edge cases before marking complete. If session may be interrupted, note remaining work in a TODO comment.
+
+## Development Rules
+
+### Be Proactive, Not Just Reactive
+- If a solution requires credentials, environment variables, or external service access — check if there's an MCP server or existing config that can handle it automatically before asking me to do it manually
+- If you create something that needs setup (like test credentials), complete the setup yourself instead of giving me instructions
+- If you notice a pattern where I'm acting as middleman between you and a service, suggest or implement the automation
+- Think one step ahead: don't just complete the task, complete the workflow around the task

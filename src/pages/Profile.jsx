@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 
 export const Profile = () => {
-  const { profile, user } = useAuth()
+  const { profile, user, refreshProfile } = useAuth()
   const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
   const [location, setLocation] = useState('')
@@ -94,8 +94,8 @@ export const Profile = () => {
 
       setMessage('Profile updated successfully!')
 
-      // Reload to update context
-      window.location.reload()
+      // Refresh profile in context without hard reload
+      await refreshProfile()
     } catch (err) {
       console.error('Error updating profile:', err)
       setMessage(err.message || 'Failed to update profile')

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { ReviewsDisplay, TAG_ICONS } from '../components/ReviewsDisplay'
@@ -23,12 +23,33 @@ export const Reviews = () => {
   const [recommendToFriends, setRecommendToFriends] = useState([])
   const [error, setError] = useState('')
 
+  // Track initial form values to detect dirty state
+  const initialFormRef = useRef(null)
+
   useEffect(() => {
     if (profile) {
       fetchReviews()
       fetchFriends()
     }
   }, [profile])
+
+  const isFormDirty = () => {
+    if (!initialFormRef.current) return false
+    const init = initialFormRef.current
+    return title !== init.title || tag !== init.tag ||
+      parseFloat(rating) !== parseFloat(init.rating) ||
+      reviewText !== init.reviewText ||
+      JSON.stringify(recommendToFriends) !== JSON.stringify(init.recommendToFriends)
+  }
+
+  // Escape key handler for modal - only close if form is clean
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && showModal && !isFormDirty()) setShowModal(false)
+    }
+    window.addEventListener('keydown', handleEscape)
+    return () => window.removeEventListener('keydown', handleEscape)
+  }, [showModal, title, tag, rating, reviewText, recommendToFriends])
 
   const fetchReviews = async () => {
     try {
@@ -84,6 +105,7 @@ export const Reviews = () => {
     setReviewText('')
     setRecommendToFriends([])
     setError('')
+    initialFormRef.current = { title: '', tag: 'other', rating: 7.0, reviewText: '', recommendToFriends: [] }
     setShowModal(true)
   }
 
@@ -108,8 +130,19 @@ export const Reviews = () => {
       setRecommendToFriends([])
     }
 
+    // initialFormRef is set after recommendations load (below)
     setShowModal(true)
   }
+
+  // Set initial form ref after recommendations finish loading for edit modal
+  useEffect(() => {
+    if (showModal && editingReview) {
+      initialFormRef.current = {
+        title, tag, rating: parseFloat(rating), reviewText,
+        recommendToFriends: [...recommendToFriends]
+      }
+    }
+  }, [showModal, editingReview?.id])
 
   const handleSave = async (e) => {
     e.preventDefault()
@@ -275,7 +308,7 @@ export const Reviews = () => {
               onMouseLeave={(e) => e.target.style.opacity = '0.4'}
               title="Edit"
             >
-              <span style={{ display: 'inline-block', transform: 'scale(-1.44, 1.44)', filter: 'sepia(1) saturate(8) hue-rotate(320deg) brightness(1.1) contrast(1.5)' }}>🖋️</span>
+              <img src="/images/quill-ready.png" alt="Edit" style={{ width: '29px', height: '29px', objectFit: 'contain' }} />
             </button>
             <button
               onClick={() => handleDelete(review.id)}
@@ -314,7 +347,7 @@ export const Reviews = () => {
             justifyContent: 'center',
             zIndex: 1000
           }}
-          onClick={() => setShowModal(false)}
+          onClick={() => { if (!isFormDirty()) setShowModal(false) }}
         >
           <div
             style={{

@@ -22,7 +22,7 @@ export const SignUp = () => {
       // Generate username from display name (lowercase, no spaces)
       const username = displayName.toLowerCase().replace(/\s+/g, '_')
       await signUp(email, password, displayName, username)
-      navigate('/')
+      navigate('/?tab=profile')
     } catch (err) {
       console.error('Signup error:', err)
       setError(err.message || 'Failed to create account')
