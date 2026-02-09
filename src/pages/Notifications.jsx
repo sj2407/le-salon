@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
+import { getRelativeTime } from '../lib/timeUtils'
 
 export const Notifications = () => {
   const { profile } = useAuth()
@@ -52,27 +53,15 @@ export const Notifications = () => {
         navigate('/wishlist')
         break
       case 'card_note':
-        navigate('/') // Go to own card to see notes
+        if (notification.reference_name === 'reply') {
+          navigate(`/friend/${notification.actor_id}`)
+        } else {
+          navigate('/my-corner')
+        }
         break
       default:
         break
     }
-  }
-
-  const getRelativeTime = (timestamp) => {
-    const now = new Date()
-    const then = new Date(timestamp)
-    const diffMs = now - then
-    const diffMins = Math.floor(diffMs / 60000)
-    const diffHours = Math.floor(diffMs / 3600000)
-    const diffDays = Math.floor(diffMs / 86400000)
-
-    if (diffMins < 1) return 'Just now'
-    if (diffMins < 60) return `${diffMins}m ago`
-    if (diffHours < 24) return `${diffHours}h ago`
-    if (diffDays === 1) return 'Yesterday'
-    if (diffDays < 7) return `${diffDays}d ago`
-    return new Date(timestamp).toLocaleDateString()
   }
 
   const groupByDate = (notifications) => {

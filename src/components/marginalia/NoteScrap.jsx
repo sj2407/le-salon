@@ -1,4 +1,4 @@
-export const NoteScrap = ({ note, friendName, timestamp }) => {
+export const NoteScrap = ({ note, friendName, timestamp, replyAuthor }) => {
   const formatTime = (date) => {
     const d = new Date(date)
     const now = new Date()
@@ -28,6 +28,33 @@ export const NoteScrap = ({ note, friendName, timestamp }) => {
       <div style={{ fontSize: '12px', color: '#888' }}>
         — {friendName}, {formatTime(timestamp || note.created_at)}
       </div>
+
+      {/* Reply from card owner */}
+      {note.reply && (
+        <div style={{
+          marginTop: '8px',
+          marginLeft: '16px',
+          paddingLeft: '12px',
+          borderLeft: '2px solid #D0D0D0'
+        }}>
+          <p
+            className="handwritten"
+            style={{
+              fontSize: '17px',
+              lineHeight: 1.5,
+              margin: 0,
+              marginBottom: '4px',
+              color: '#4A4A4A',
+              fontStyle: 'italic'
+            }}
+          >
+            {note.reply}
+          </p>
+          <div style={{ fontSize: '11px', color: '#999' }}>
+            — {replyAuthor || 'Owner'}, {formatTime(note.replied_at)}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

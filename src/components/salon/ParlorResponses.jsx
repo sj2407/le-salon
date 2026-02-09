@@ -1,0 +1,189 @@
+import { useState, useRef, useEffect } from 'react'
+import { AnimatePresence, motion as Motion } from 'framer-motion'
+import { ResponseEntry } from './ResponseEntry'
+
+/**
+ * "Vos reflexions" — collapsible response section below the Parlor text.
+ * Collapsed by default. Shows count when friends have responded.
+ */
+export const ParlorResponses = ({ responses, userId, onSubmit, onEdit, onDelete }) => {
+  const [isExpanded, setIsExpanded] = useState(false)
+  const [inputText, setInputText] = useState('')
+  const [editingId, setEditingId] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
+  const textareaRef = useRef(null)
+
+  useEffect(() => {
+    if (editingId && textareaRef.current) {
+      textareaRef.current.focus()
+    }
+  }, [editingId])
+
+  const handleSubmit = async () => {
+    const trimmed = inputText.trim()
+    if (!trimmed || submitting) return
+
+    setSubmitting(true)
+    try {
+      if (editingId) {
+        await onEdit(editingId, trimmed)
+        setEditingId(null)
+      } else {
+        await onSubmit(trimmed)
+      }
+      setInputText('')
+    } catch (err) {
+      console.error('Error submitting response:', err)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleEdit = (entry) => {
+    setInputText(entry.text)
+    setEditingId(entry.id)
+    setIsExpanded(true)
+  }
+
+  const handleCancelEdit = () => {
+    setInputText('')
+    setEditingId(null)
+  }
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      handleSubmit()
+    }
+  }
+
+  const count = responses.length
+
+  return (
+    <div style={{ maxWidth: '640px', margin: '40px auto 60px' }}>
+      {/* Collapsible label */}
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        style={{
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          padding: '8px 0',
+          fontFamily: "'Caveat', cursive",
+          fontSize: '24px',
+          color: '#4A7BA7',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          transition: 'transform 0.15s ease'
+        }}
+        onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-1px)'}
+        onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+      >
+        Vos r&eacute;flexions{count > 0 ? ` (${count})` : ''}
+        <span style={{
+          fontSize: '14px',
+          transition: 'transform 0.2s ease',
+          transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+          display: 'inline-block'
+        }}>
+          ▸
+        </span>
+      </button>
+
+      {/* Expandable content */}
+      <AnimatePresence>
+        {isExpanded && (
+          <Motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: 'easeInOut' }}
+            style={{ overflow: 'hidden' }}
+          >
+            <div style={{ paddingTop: '16px' }}>
+              {/* Input area */}
+              <div style={{ marginBottom: '20px' }}>
+                <textarea
+                  ref={textareaRef}
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Write your response..."
+                  style={{
+                    width: '100%',
+                    minHeight: '80px',
+                    padding: '12px',
+                    border: '1px solid #ccc',
+                    borderRadius: '3px',
+                    fontSize: '15px',
+                    fontFamily: "'Source Serif 4', Georgia, serif",
+                    fontStyle: 'italic',
+                    resize: 'vertical',
+                    background: '#FFFEFA',
+                    color: '#2C2C2C',
+                    boxSizing: 'border-box'
+                  }}
+                />
+                <div style={{ display: 'flex', gap: '8px', marginTop: '8px', alignItems: 'center' }}>
+                  <button
+                    onClick={handleSubmit}
+                    disabled={!inputText.trim() || submitting}
+                    style={{
+                      padding: '8px 20px',
+                      background: inputText.trim() ? '#2C2C2C' : '#ccc',
+                      color: '#FFFEFA',
+                      border: 'none',
+                      borderRadius: '3px',
+                      cursor: inputText.trim() ? 'pointer' : 'default',
+                      fontSize: '14px'
+                    }}
+                  >
+                    {submitting ? '...' : editingId ? 'Update' : 'Share'}
+                  </button>
+                  {editingId && (
+                    <button
+                      onClick={handleCancelEdit}
+                      style={{
+                        padding: '8px 16px',
+                        background: 'none',
+                        border: '1px solid #ccc',
+                        borderRadius: '3px',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        color: '#777'
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  )}
+                  <span style={{ fontSize: '11px', color: '#999', marginLeft: 'auto' }}>
+                    {navigator.platform?.includes('Mac') ? '⌘' : 'Ctrl'}+Enter to submit
+                  </span>
+                </div>
+              </div>
+
+              {/* Responses list — chronological (oldest first) */}
+              {responses.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {responses.map((response) => (
+                    <ResponseEntry
+                      key={response.id}
+                      entry={response}
+                      isOwn={response.user_id === userId}
+                      onEdit={handleEdit}
+                      onDelete={onDelete}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '20px', color: '#999', fontStyle: 'italic', fontSize: '14px' }}>
+                  {/* Empty state: just the input is the invitation */}
+                </div>
+              )}
+            </div>
+          </Motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}

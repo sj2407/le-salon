@@ -96,6 +96,9 @@ export const Navigation = () => {
           {/* Dropdown Menu */}
           <div className="mobile-dropdown-menu">
             <button onClick={() => handleNavClick('/')} className="mobile-dropdown-item">
+              The Salon
+            </button>
+            <button onClick={() => handleNavClick('/my-corner')} className="mobile-dropdown-item">
               My Corner
             </button>
             <button onClick={() => handleNavClick('/todo')} className="mobile-dropdown-item">

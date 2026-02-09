@@ -496,6 +496,7 @@ export const FriendCard = () => {
               onLeaveNote={handleLeaveNote}
               onUpdateNote={handleUpdateNote}
               onDeleteNote={handleDeleteNote}
+              cardOwnerName={friendProfile.display_name}
             />
           )}
 

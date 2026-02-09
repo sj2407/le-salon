@@ -4,6 +4,7 @@ import { Navigation } from './components/Navigation'
 import { Footer } from './components/Footer'
 import { SignUp } from './pages/SignUp'
 import { SignIn } from './pages/SignIn'
+import { Salon } from './pages/Salon'
 import { MyCorner } from './pages/MyCorner'
 import { ToDo } from './pages/ToDo'
 import { PastActivities } from './pages/PastActivities'
@@ -75,6 +76,14 @@ function AppRoutes() {
           />
           <Route
             path="/"
+            element={
+              <ProtectedRoute>
+                <Salon />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/my-corner"
             element={
               <ProtectedRoute>
                 <MyCorner />

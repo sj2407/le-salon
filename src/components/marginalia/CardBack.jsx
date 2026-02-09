@@ -11,10 +11,14 @@ export const CardBack = ({
   onMarkRead,
   onLeaveNote,
   onUpdateNote,
-  onDeleteNote
+  onDeleteNote,
+  onReplyToNote,
+  ownerName,
+  cardOwnerName
 }) => {
   const [isEditing, setIsEditing] = useState(false)
   const [editingNote, setEditingNote] = useState(null)
+  const [replyingToNoteId, setReplyingToNoteId] = useState(null)
 
   // For owner: show all notes from friends
   // For friend: show only their note (if any)
@@ -50,6 +54,13 @@ export const CardBack = ({
     onFlipBack?.()
   }
 
+  const handleSubmitReply = async (replyText) => {
+    if (replyingToNoteId) {
+      await onReplyToNote?.(replyingToNoteId, replyText)
+      setReplyingToNoteId(null)
+    }
+  }
+
   // Owner view: show notes from friends
   if (isOwner) {
     return (
@@ -73,12 +84,44 @@ export const CardBack = ({
         {displayNotes.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {displayNotes.map(note => (
-              <NoteScrap
-                key={note.id}
-                note={note}
-                friendName={note.from_user?.display_name || 'A friend'}
-                timestamp={note.created_at}
-              />
+              <div key={note.id}>
+                <NoteScrap
+                  note={note}
+                  friendName={note.from_user?.display_name || 'A friend'}
+                  timestamp={note.created_at}
+                  replyAuthor={ownerName || 'You'}
+                />
+
+                {/* Reply button or inline input */}
+                {!note.reply && replyingToNoteId !== note.id && (
+                  <button
+                    type="button"
+                    onClick={() => setReplyingToNoteId(note.id)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      fontSize: '12px',
+                      color: '#4A7BA7',
+                      cursor: 'pointer',
+                      textDecoration: 'underline',
+                      padding: '2px 0',
+                      marginLeft: '16px'
+                    }}
+                  >
+                    Reply
+                  </button>
+                )}
+
+                {replyingToNoteId === note.id && (
+                  <div style={{ marginLeft: '16px', marginTop: '8px' }}>
+                    <NoteInput
+                      onSubmit={handleSubmitReply}
+                      onCancel={() => setReplyingToNoteId(null)}
+                      submitLabel="Reply"
+                    />
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         ) : (
@@ -150,6 +193,7 @@ export const CardBack = ({
             note={myNote}
             friendName="You"
             timestamp={myNote.created_at}
+            replyAuthor={cardOwnerName}
           />
           <div style={{
             display: 'flex',

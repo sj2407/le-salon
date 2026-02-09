@@ -81,7 +81,9 @@ export const CardDisplay = ({
   onMarkNotesRead,
   onLeaveNote,
   onUpdateNote,
-  onDeleteNote
+  onDeleteNote,
+  onReplyToNote,
+  cardOwnerName
 }) => {
   const [flippedSections, setFlippedSections] = useState({})
 
@@ -262,6 +264,9 @@ export const CardDisplay = ({
         onLeaveNote={onLeaveNote}
         onUpdateNote={onUpdateNote}
         onDeleteNote={onDeleteNote}
+        onReplyToNote={onReplyToNote}
+        ownerName={displayName}
+        cardOwnerName={cardOwnerName}
       />
     )
 

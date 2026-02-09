@@ -107,6 +107,41 @@ export const MyCard = () => {
     }
   }
 
+  const handleReplyToNote = async (noteId, replyText) => {
+    if (!card) return
+
+    try {
+      // Find the note to get the author's info
+      const note = notes.find(n => n.id === noteId)
+      if (!note) return
+
+      const { error } = await supabase
+        .from('card_notes')
+        .update({
+          reply: replyText,
+          replied_at: new Date().toISOString()
+        })
+        .eq('id', noteId)
+
+      if (error) throw error
+
+      // Create notification for the note author
+      await supabase.from('notifications').insert({
+        user_id: note.from_user_id,
+        type: 'card_note',
+        actor_id: profile.id,
+        message: `${profile.display_name} replied to your note`,
+        reference_id: card.id,
+        reference_name: 'reply'
+      })
+
+      // Refresh notes
+      await fetchNotes(card.id)
+    } catch (err) {
+      console.error('Error replying to note:', err)
+    }
+  }
+
   const createNewCard = async (newEntries) => {
     try {
       // Create new card
@@ -304,6 +339,7 @@ export const MyCard = () => {
             notes={notes}
             currentUserId={profile.id}
             onMarkNotesRead={handleMarkNotesRead}
+            onReplyToNote={handleReplyToNote}
           />
           {editingSection && (
             <SectionEditModal
