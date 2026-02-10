@@ -147,7 +147,7 @@ export const ReviewsDisplay = ({
 
               {/* Expanded review text */}
               {review.review_text && expandedReviews.has(review.id) && (
-                <div style={{ marginTop: '12px', fontSize: '14px', lineHeight: 1.6, color: '#2C2C2C', fontStyle: 'italic' }}>
+                <div style={{ marginTop: '12px', fontSize: '14px', lineHeight: 1.6, color: '#2C2C2C', fontStyle: 'italic', whiteSpace: 'pre-wrap' }}>
                   {review.review_text}
                 </div>
               )}
