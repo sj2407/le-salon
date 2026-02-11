@@ -22,7 +22,7 @@ export const MyCorner = () => {
   return (
     <div className="container">
       {/* Tab Navigation */}
-      <div style={{ display: 'flex', gap: '1px', marginBottom: '8px', overflowX: 'auto', paddingLeft: '20px', scrollbarWidth: 'none', msOverflowStyle: 'none' }} className="hide-scrollbar">
+      <div style={{ display: 'flex', gap: '1px', marginBottom: '8px', overflowX: 'auto', paddingLeft: '10px', scrollbarWidth: 'none', msOverflowStyle: 'none' }} className="hide-scrollbar">
         <button
           onClick={() => setActiveTab('card')}
           style={{
@@ -30,7 +30,7 @@ export const MyCorner = () => {
             border: 'none',
             boxShadow: 'none',
             outline: 'none',
-            padding: '8px 10px',
+            padding: '8px 6px',
             fontSize: '13px',
             fontWeight: activeTab === 'card' ? 600 : 400,
             color: activeTab === 'card' ? '#2C2C2C' : '#777',
@@ -49,7 +49,7 @@ export const MyCorner = () => {
             border: 'none',
             boxShadow: 'none',
             outline: 'none',
-            padding: '8px 10px',
+            padding: '8px 6px',
             fontSize: '13px',
             fontWeight: activeTab === 'history' ? 600 : 400,
             color: activeTab === 'history' ? '#2C2C2C' : '#777',
@@ -68,7 +68,7 @@ export const MyCorner = () => {
             border: 'none',
             boxShadow: 'none',
             outline: 'none',
-            padding: '8px 10px',
+            padding: '8px 6px',
             fontSize: '13px',
             fontWeight: activeTab === 'reviews' ? 600 : 400,
             color: activeTab === 'reviews' ? '#2C2C2C' : '#777',
@@ -87,7 +87,7 @@ export const MyCorner = () => {
             border: 'none',
             boxShadow: 'none',
             outline: 'none',
-            padding: '8px 10px',
+            padding: '8px 6px',
             fontSize: '13px',
             fontWeight: activeTab === 'liste' ? 600 : 400,
             color: activeTab === 'liste' ? '#2C2C2C' : '#777',
@@ -106,7 +106,7 @@ export const MyCorner = () => {
             border: 'none',
             boxShadow: 'none',
             outline: 'none',
-            padding: '8px 10px',
+            padding: '8px 6px',
             fontSize: '13px',
             fontWeight: activeTab === 'wishlist' ? 600 : 400,
             color: activeTab === 'wishlist' ? '#2C2C2C' : '#777',
@@ -125,7 +125,7 @@ export const MyCorner = () => {
             border: 'none',
             boxShadow: 'none',
             outline: 'none',
-            padding: '8px 10px',
+            padding: '8px 6px',
             fontSize: '13px',
             fontWeight: activeTab === 'profile' ? 600 : 400,
             color: activeTab === 'profile' ? '#2C2C2C' : '#777',
