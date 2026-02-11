@@ -113,6 +113,9 @@ export const Navigation = () => {
             <button onClick={() => handleNavClick('/newsletter')} className="mobile-dropdown-item">
               Newsletter
             </button>
+            <button onClick={() => handleNavClick('/account')} className="mobile-dropdown-item">
+              Account Settings
+            </button>
             <button onClick={() => handleNavClick('/help')} className="mobile-dropdown-item">
               Help
             </button>

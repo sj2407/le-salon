@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { supabase } from '../lib/supabase'
 
 export const SignIn = () => {
   const [email, setEmail] = useState('')
@@ -8,6 +9,8 @@ export const SignIn = () => {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [forgotLoading, setForgotLoading] = useState(false)
+  const [forgotMessage, setForgotMessage] = useState('')
 
   const { signIn} = useAuth()
   const navigate = useNavigate()
@@ -81,6 +84,55 @@ export const SignIn = () => {
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
+
+        <div style={{ textAlign: 'center', marginTop: '16px' }}>
+          <button
+            onClick={async () => {
+              const resetEmail = email.trim()
+              if (!resetEmail) {
+                setError('Enter your email above, then click Forgot password')
+                return
+              }
+              setForgotLoading(true)
+              setForgotMessage('')
+              setError('')
+              try {
+                await supabase.auth.resetPasswordForEmail(resetEmail, {
+                  redirectTo: `${window.location.origin}/reset-password`
+                })
+              } catch {
+                // Ignore errors to prevent email enumeration
+              }
+              setForgotMessage('If an account exists for this email, a reset link has been sent. Check your inbox and spam.')
+              setForgotLoading(false)
+            }}
+            disabled={forgotLoading}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#4A7BA7',
+              fontSize: '13px',
+              cursor: 'pointer',
+              textDecoration: 'underline'
+            }}
+          >
+            {forgotLoading ? 'Sending...' : 'Forgot password?'}
+          </button>
+        </div>
+
+        {forgotMessage && (
+          <p style={{
+            fontSize: '13px',
+            marginTop: '12px',
+            textAlign: 'center',
+            color: '#4A7BA7',
+            padding: '12px 16px',
+            background: '#F9F7F3',
+            borderRadius: '3px'
+          }}>
+            {forgotMessage}
+          </p>
+        )}
 
         <p style={{ textAlign: 'center', marginTop: '20px', fontSize: '14px' }}>
           Don't have an account? <Link to="/signup">Sign up</Link>

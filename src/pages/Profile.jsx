@@ -18,6 +18,7 @@ export const Profile = () => {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
 
+
   useEffect(() => {
     if (profile) {
       setDisplayName(profile.display_name || '')
@@ -190,9 +191,6 @@ export const Profile = () => {
               disabled
               style={{ background: '#F5F1EB', cursor: 'not-allowed' }}
             />
-            <p style={{ fontSize: '12px', color: '#999', marginTop: '4px' }}>
-              Email cannot be changed
-            </p>
           </div>
 
           {/* Location */}

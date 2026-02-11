@@ -4,6 +4,7 @@ import { Navigation } from './components/Navigation'
 import { Footer } from './components/Footer'
 import { SignUp } from './pages/SignUp'
 import { SignIn } from './pages/SignIn'
+import { ResetPassword } from './pages/ResetPassword'
 import { Salon } from './pages/Salon'
 import { MyCorner } from './pages/MyCorner'
 import { ToDo } from './pages/ToDo'
@@ -15,6 +16,7 @@ import { Notifications } from './pages/Notifications'
 import { Newsletter } from './pages/Newsletter'
 import { AdminFeedback } from './pages/AdminFeedback'
 import { Help } from './pages/Help'
+import { AccountSettings } from './pages/AccountSettings'
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth()
@@ -73,6 +75,10 @@ function AppRoutes() {
                 <SignIn />
               </PublicRoute>
             }
+          />
+          <Route
+            path="/reset-password"
+            element={<ResetPassword />}
           />
           <Route
             path="/"
@@ -143,6 +149,14 @@ function AppRoutes() {
             element={
               <ProtectedRoute>
                 <Newsletter />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/account"
+            element={
+              <ProtectedRoute>
+                <AccountSettings />
               </ProtectedRoute>
             }
           />
