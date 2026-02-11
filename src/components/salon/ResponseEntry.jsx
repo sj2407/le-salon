@@ -132,7 +132,7 @@ export const ResponseEntry = ({ entry, isOwn, onEdit, onDelete }) => {
       </div>
 
       {/* Entry text */}
-      <div style={{ fontSize: '15px', lineHeight: 1.6, color: '#2C2C2C' }}>
+      <div style={{ fontSize: '15px', lineHeight: 1.6, color: '#2C2C2C', whiteSpace: 'pre-wrap' }}>
         {entry.text}
       </div>
     </div>

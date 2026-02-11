@@ -125,31 +125,68 @@ export const ReviewsDisplay = ({
                 <div className="handwritten" style={{ fontSize: '18px', lineHeight: 1, color: '#2C2C2C', flexShrink: 0 }}>
                   {review.rating}/10
                 </div>
-                {review.review_text && (
+                {renderActions && renderActions(review)}
+              </div>
+
+              {/* Review text: one-line preview or full expanded */}
+              {review.review_text && (
+                expandedReviews.has(review.id) ? (
+                  <div>
+                    <div style={{ marginTop: '10px', fontSize: '14px', lineHeight: 1.6, color: '#2C2C2C', fontStyle: 'italic', whiteSpace: 'pre-wrap' }}>
+                      {review.review_text}
+                    </div>
+                    <button
+                      onClick={() => toggleExpanded(review.id)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: '4px 0',
+                        fontSize: '12px',
+                        color: '#4A7BA7',
+                        marginTop: '4px'
+                      }}
+                    >
+                      Show less
+                    </button>
+                  </div>
+                ) : (
                   <button
                     onClick={() => toggleExpanded(review.id)}
                     style={{
                       background: 'none',
                       border: 'none',
                       cursor: 'pointer',
-                      padding: '4px',
-                      fontSize: '16px',
-                      color: '#4A7BA7',
-                      fontWeight: 600,
-                      flexShrink: 0
+                      padding: '4px 0',
+                      marginTop: '6px',
+                      width: '100%',
+                      textAlign: 'left',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
                     }}
                   >
-                    {expandedReviews.has(review.id) ? '−' : '+'}
+                    <span style={{
+                      fontSize: '13px',
+                      color: '#666',
+                      fontStyle: 'italic',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      flex: 1,
+                      minWidth: 0
+                    }}>
+                      {review.review_text}
+                    </span>
+                    <span style={{
+                      fontSize: '12px',
+                      color: '#4A7BA7',
+                      flexShrink: 0
+                    }}>
+                      Read more
+                    </span>
                   </button>
-                )}
-                {renderActions && renderActions(review)}
-              </div>
-
-              {/* Expanded review text */}
-              {review.review_text && expandedReviews.has(review.id) && (
-                <div style={{ marginTop: '12px', fontSize: '14px', lineHeight: 1.6, color: '#2C2C2C', fontStyle: 'italic', whiteSpace: 'pre-wrap' }}>
-                  {review.review_text}
-                </div>
+                )
               )}
             </div>
           ))}
