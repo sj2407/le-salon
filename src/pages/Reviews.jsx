@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { ReviewsDisplay, TAG_ICONS } from '../components/ReviewsDisplay'
+import { ExpandedReviewText } from '../components/review-comments/ExpandedReviewText'
 
 const TAG_OPTIONS = ['movie', 'book', 'podcast', 'show', 'album', 'other']
 
@@ -22,6 +23,7 @@ export const Reviews = () => {
   const [reviewText, setReviewText] = useState('')
   const [recommendToFriends, setRecommendToFriends] = useState([])
   const [error, setError] = useState('')
+  const [reviewComments, setReviewComments] = useState([])
 
   // Track initial form values to detect dirty state
   const initialFormRef = useRef(null)
@@ -30,6 +32,7 @@ export const Reviews = () => {
     if (profile) {
       fetchReviews()
       fetchFriends()
+      fetchReviewComments()
     }
   }, [profile])
 
@@ -94,6 +97,59 @@ export const Reviews = () => {
       }
     } catch (err) {
       console.error('Error fetching friends:', err)
+    }
+  }
+
+  const fetchReviewComments = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('review_comments')
+        .select('*, from_user:profiles!review_comments_from_user_id_fkey(display_name)')
+        .eq('to_user_id', profile.id)
+        .order('created_at', { ascending: true })
+
+      if (error) {
+        console.log('Review comments fetch error:', error.message)
+        setReviewComments([])
+        return
+      }
+      // Flatten the join for easier use
+      setReviewComments((data || []).map(c => ({
+        ...c,
+        commenter_name: c.from_user?.display_name || 'Friend'
+      })))
+    } catch (err) {
+      console.log('Error fetching review comments:', err)
+      setReviewComments([])
+    }
+  }
+
+  const handleReplyToComment = async (commentId, replyText) => {
+    try {
+      const comment = reviewComments.find(c => c.id === commentId)
+      if (!comment) return
+
+      const { error } = await supabase
+        .from('review_comments')
+        .update({ reply: replyText, replied_at: new Date().toISOString() })
+        .eq('id', commentId)
+
+      if (error) throw error
+
+      // Notify the commenter
+      const review = reviews.find(r => r.id === comment.review_id)
+      await supabase.from('notifications').insert({
+        user_id: comment.from_user_id,
+        type: 'review_comment',
+        actor_id: profile.id,
+        message: `${profile.display_name} replied to your comment on ${review?.title || 'a review'}`,
+        reference_id: comment.review_id,
+        reference_name: 'reply'
+      })
+
+      await fetchReviewComments()
+    } catch (err) {
+      console.error('Error replying to comment:', err)
     }
   }
 
@@ -266,6 +322,20 @@ export const Reviews = () => {
       <ReviewsDisplay
         reviews={reviews}
         emptyMessage="No reviews yet. Share your thoughts on movies, books, and more!"
+        renderExpandedText={(review) => {
+          const commentsForReview = reviewComments.filter(c => c.review_id === review.id)
+          if (commentsForReview.length === 0) return null
+          return (
+            <ExpandedReviewText
+              review={review}
+              comments={commentsForReview}
+              isOwner={true}
+              currentUserId={profile.id}
+              ownerName={profile.display_name}
+              onReplyToComment={handleReplyToComment}
+            />
+          )
+        }}
         renderHeaderActions={() => (
           <button
             onClick={openAddModal}

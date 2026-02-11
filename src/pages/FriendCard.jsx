@@ -6,6 +6,7 @@ import { CardDisplay } from '../components/CardDisplay'
 import { FriendWishlist } from '../components/FriendWishlist'
 import { FriendProfile } from '../components/FriendProfile'
 import { ReviewsDisplay, TAG_ICONS } from '../components/ReviewsDisplay'
+import { ExpandedReviewText } from '../components/review-comments/ExpandedReviewText'
 
 export const FriendCard = () => {
   const { friendId } = useParams()
@@ -16,6 +17,7 @@ export const FriendCard = () => {
   const [entries, setEntries] = useState([])
   const [reviews, setReviews] = useState([])
   const [myNotes, setMyNotes] = useState([])
+  const [reviewComments, setReviewComments] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [activeTab, setActiveTab] = useState('card')
@@ -95,6 +97,9 @@ export const FriendCard = () => {
 
       if (reviewsError) throw reviewsError
       setReviews(reviewsData || [])
+
+      // Fetch my comments on this friend's reviews
+      await fetchReviewComments(friendId)
     } catch (err) {
       console.error('Error fetching friend card:', err)
       setError(err.message)
@@ -217,6 +222,93 @@ export const FriendCard = () => {
       }
     } catch (err) {
       console.error('Error deleting note:', err)
+    }
+  }
+
+  const fetchReviewComments = async (friendUserId) => {
+    try {
+      const { data, error } = await supabase
+        .from('review_comments')
+        .select('*')
+        .eq('from_user_id', profile.id)
+        .eq('to_user_id', friendUserId)
+
+      if (error) {
+        console.log('Review comments fetch error:', error.message)
+        setReviewComments([])
+        return
+      }
+      setReviewComments(data || [])
+    } catch (err) {
+      console.log('Error fetching review comments:', err)
+      setReviewComments([])
+    }
+  }
+
+  const handleLeaveReviewComment = async (reviewId, paragraphIndex, content) => {
+    if (!friendProfile) return
+
+    try {
+      const { error } = await supabase
+        .from('review_comments')
+        .insert({
+          review_id: reviewId,
+          paragraph_index: paragraphIndex,
+          from_user_id: profile.id,
+          to_user_id: friendProfile.id,
+          content
+        })
+
+      if (error) {
+        console.error('Error saving comment:', error)
+        alert('Could not save comment. Please try again.')
+        return
+      }
+
+      // Notify review owner
+      const review = reviews.find(r => r.id === reviewId)
+      await supabase.from('notifications').insert({
+        user_id: friendProfile.id,
+        type: 'review_comment',
+        actor_id: profile.id,
+        message: `${profile.display_name} commented on your review of ${review?.title || 'a review'}`,
+        reference_id: reviewId
+      })
+
+      await fetchReviewComments(friendProfile.id)
+    } catch (err) {
+      console.error('Error leaving review comment:', err)
+      alert('Could not save comment. Please try again.')
+    }
+  }
+
+  const handleUpdateReviewComment = async (commentId, content) => {
+    try {
+      const { error } = await supabase
+        .from('review_comments')
+        .update({ content, updated_at: new Date().toISOString() })
+        .eq('id', commentId)
+        .eq('from_user_id', profile.id)
+
+      if (error) throw error
+      await fetchReviewComments(friendProfile.id)
+    } catch (err) {
+      console.error('Error updating review comment:', err)
+    }
+  }
+
+  const handleDeleteReviewComment = async (commentId) => {
+    try {
+      const { error } = await supabase
+        .from('review_comments')
+        .delete()
+        .eq('id', commentId)
+        .eq('from_user_id', profile.id)
+
+      if (error) throw error
+      await fetchReviewComments(friendProfile.id)
+    } catch (err) {
+      console.error('Error deleting review comment:', err)
     }
   }
 
@@ -504,6 +596,19 @@ export const FriendCard = () => {
             <ReviewsDisplay
               reviews={reviews}
               emptyMessage={`${friendProfile.display_name} hasn't added any reviews yet.`}
+              renderExpandedText={(review) => (
+                <ExpandedReviewText
+                  review={review}
+                  comments={reviewComments.filter(c => c.review_id === review.id)}
+                  isOwner={false}
+                  currentUserId={profile.id}
+                  ownerName={friendProfile.display_name}
+                  commenterName={profile.display_name}
+                  onLeaveComment={handleLeaveReviewComment}
+                  onUpdateComment={handleUpdateReviewComment}
+                  onDeleteComment={handleDeleteReviewComment}
+                />
+              )}
             />
           )}
 

@@ -23,7 +23,8 @@ export const ReviewsDisplay = ({
   emptyMessage = 'No reviews yet.',
   emptyFilteredMessage,
   renderActions,
-  renderHeaderActions
+  renderHeaderActions,
+  renderExpandedText
 }) => {
   const [filterTag, setFilterTag] = useState('all')
   const [expandedReviews, setExpandedReviews] = useState(new Set())
@@ -132,9 +133,18 @@ export const ReviewsDisplay = ({
               {review.review_text && (
                 expandedReviews.has(review.id) ? (
                   <div>
-                    <div style={{ marginTop: '10px', fontSize: '14px', lineHeight: 1.6, color: '#2C2C2C', fontStyle: 'italic', whiteSpace: 'pre-wrap' }}>
-                      {review.review_text}
-                    </div>
+                    {renderExpandedText
+                      ? (renderExpandedText(review) || (
+                          <div style={{ marginTop: '10px', fontSize: '14px', lineHeight: 1.6, color: '#2C2C2C', fontStyle: 'italic', whiteSpace: 'pre-wrap' }}>
+                            {review.review_text}
+                          </div>
+                        ))
+                      : (
+                          <div style={{ marginTop: '10px', fontSize: '14px', lineHeight: 1.6, color: '#2C2C2C', fontStyle: 'italic', whiteSpace: 'pre-wrap' }}>
+                            {review.review_text}
+                          </div>
+                        )
+                    }
                     <button
                       onClick={() => toggleExpanded(review.id)}
                       style={{

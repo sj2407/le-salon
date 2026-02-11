@@ -59,6 +59,13 @@ export const Notifications = () => {
           navigate('/my-corner')
         }
         break
+      case 'review_comment':
+        if (notification.reference_name === 'reply') {
+          navigate(`/friend/${notification.actor_id}`)
+        } else {
+          navigate('/my-corner')
+        }
+        break
       default:
         break
     }

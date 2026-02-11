@@ -7,7 +7,8 @@ export const NoteInput = ({
   onCancel,
   maxLength = 280,
   submitLabel = 'Leave note',
-  isEditing = false
+  isEditing = false,
+  placeholder = 'Write a note for this section...'
 }) => {
   const [localValue, setLocalValue] = useState(value)
   const charCount = localValue.length
@@ -31,7 +32,7 @@ export const NoteInput = ({
       <textarea
         value={localValue}
         onChange={handleChange}
-        placeholder="Write a note for this section..."
+        placeholder={placeholder}
         style={{
           width: '100%',
           minHeight: '80px',
