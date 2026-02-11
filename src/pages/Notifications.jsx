@@ -47,7 +47,7 @@ export const Notifications = () => {
         navigate('/todo')
         break
       case 'recommendation':
-        navigate('/reviews')
+        navigate('/my-corner?tab=liste')
         break
       case 'wishlist_claimed':
         navigate('/wishlist')

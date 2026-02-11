@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { MyCard } from './MyCard'
 import { History } from './History'
 import { Reviews } from './Reviews'
-import { RecsFromFriends } from './RecsFromFriends'
+import { LaListe } from './LaListe'
 import { Wishlist } from './Wishlist'
 import { Profile } from './Profile'
 
@@ -81,7 +81,7 @@ export const MyCorner = () => {
           Reviews
         </button>
         <button
-          onClick={() => setActiveTab('recs')}
+          onClick={() => setActiveTab('liste')}
           style={{
             background: 'none',
             border: 'none',
@@ -89,15 +89,15 @@ export const MyCorner = () => {
             outline: 'none',
             padding: '8px 10px',
             fontSize: '13px',
-            fontWeight: activeTab === 'recs' ? 600 : 400,
-            color: activeTab === 'recs' ? '#2C2C2C' : '#777',
+            fontWeight: activeTab === 'liste' ? 600 : 400,
+            color: activeTab === 'liste' ? '#2C2C2C' : '#777',
             marginBottom: '-2px',
             cursor: 'pointer',
             transition: 'all 0.2s',
             whiteSpace: 'nowrap'
           }}
         >
-          Recs
+          La Liste
         </button>
         <button
           onClick={() => setActiveTab('wishlist')}
@@ -144,7 +144,7 @@ export const MyCorner = () => {
         {activeTab === 'card' && <div style={{ marginTop: '-40px' }}><MyCard /></div>}
         {activeTab === 'history' && <History />}
         {activeTab === 'reviews' && <Reviews />}
-        {activeTab === 'recs' && <RecsFromFriends />}
+        {activeTab === 'liste' && <LaListe />}
         {activeTab === 'wishlist' && <Wishlist />}
         {activeTab === 'profile' && <Profile />}
       </div>

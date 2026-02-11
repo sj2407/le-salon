@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { ReviewsDisplay, TAG_ICONS, TAG_OPTIONS, TAG_LABELS } from '../components/ReviewsDisplay'
@@ -10,6 +11,7 @@ export { TAG_ICONS }
 
 export const Reviews = () => {
   const { profile } = useAuth()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [reviews, setReviews] = useState([])
   const [friends, setFriends] = useState([])
   const [loading, setLoading] = useState(true)
@@ -35,6 +37,27 @@ export const Reviews = () => {
       fetchReviewComments()
     }
   }, [profile])
+
+  // Pre-fill add modal from URL params (e.g., from La Liste "Write a review?" link)
+  useEffect(() => {
+    const prefillTitle = searchParams.get('prefill_title')
+    const prefillTag = searchParams.get('prefill_tag')
+    if (prefillTitle) {
+      setEditingReview(null)
+      setTitle(prefillTitle)
+      setTag(prefillTag || 'other')
+      setRating(7.0)
+      setReviewText('')
+      setRecommendToFriends([])
+      setError('')
+      initialFormRef.current = { title: prefillTitle, tag: prefillTag || 'other', rating: 7.0, reviewText: '', recommendToFriends: [] }
+      setShowModal(true)
+      // Clear prefill params from URL
+      searchParams.delete('prefill_title')
+      searchParams.delete('prefill_tag')
+      setSearchParams(searchParams, { replace: true })
+    }
+  }, [searchParams])
 
   const isFormDirty = () => {
     if (!initialFormRef.current) return false
