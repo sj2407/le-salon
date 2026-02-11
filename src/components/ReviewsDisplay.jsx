@@ -6,10 +6,23 @@ export const TAG_ICONS = {
   podcast: '🎧',
   show: '📺',
   album: '💿',
+  performing_arts: '🎭',
+  exhibition: '🖼️',
   other: '✨'
 }
 
-const TAG_OPTIONS = ['movie', 'book', 'podcast', 'show', 'album', 'other']
+export const TAG_OPTIONS = ['movie', 'book', 'podcast', 'show', 'album', 'performing_arts', 'exhibition', 'other']
+
+export const TAG_LABELS = {
+  movie: 'movie',
+  book: 'book',
+  podcast: 'podcast',
+  show: 'show',
+  album: 'album',
+  performing_arts: 'performing arts',
+  exhibition: 'exhibition',
+  other: 'other'
+}
 
 /**
  * Shared reviews display component
@@ -88,7 +101,7 @@ export const ReviewsDisplay = ({
           <option value="all">All</option>
           {TAG_OPTIONS.map((tagOption) => (
             <option key={tagOption} value={tagOption}>
-              {TAG_ICONS[tagOption]} {tagOption}
+              {TAG_ICONS[tagOption]} {TAG_LABELS[tagOption]}
             </option>
           ))}
         </select>
@@ -99,7 +112,7 @@ export const ReviewsDisplay = ({
         <div style={{ textAlign: 'center', padding: '40px', fontStyle: 'italic', color: '#777' }}>
           {reviews.length === 0
             ? emptyMessage
-            : (emptyFilteredMessage || `No ${filterTag} reviews yet.`)}
+            : (emptyFilteredMessage || `No ${TAG_LABELS[filterTag] || filterTag} reviews yet.`)}
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>

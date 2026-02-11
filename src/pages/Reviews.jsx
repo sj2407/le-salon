@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
-import { ReviewsDisplay, TAG_ICONS } from '../components/ReviewsDisplay'
+import { ReviewsDisplay, TAG_ICONS, TAG_OPTIONS, TAG_LABELS } from '../components/ReviewsDisplay'
 import { ExpandedReviewText } from '../components/review-comments/ExpandedReviewText'
 
-const TAG_OPTIONS = ['movie', 'book', 'podcast', 'show', 'album', 'other']
+// TAG_OPTIONS imported from ReviewsDisplay
 
 export { TAG_ICONS }
 
@@ -467,7 +467,7 @@ export const Reviews = () => {
                 >
                   {TAG_OPTIONS.map((option) => (
                     <option key={option} value={option}>
-                      {option}
+                      {TAG_LABELS[option]}
                     </option>
                   ))}
                 </select>
