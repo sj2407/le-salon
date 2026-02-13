@@ -3,7 +3,6 @@ import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { ParlorText } from '../components/salon/ParlorText'
 import { ParlorResponses } from '../components/salon/ParlorResponses'
-import { TypewriterFAB } from '../components/salon/TypewriterFAB'
 import { CommonplaceBook } from '../components/salon/CommonplaceBook'
 
 const formatWeekDate = (dateStr) => {
@@ -19,6 +18,11 @@ export const Salon = () => {
   const [loading, setLoading] = useState(true)
   const [showCommonplace, setShowCommonplace] = useState(false)
   const [hasNewCommonplaceEntries, setHasNewCommonplaceEntries] = useState(false)
+  const [nextWeekTitle, setNextWeekTitle] = useState(null)
+  const [textSize, setTextSize] = useState(() => {
+    const saved = localStorage.getItem('salon_text_size')
+    return saved ? Number(saved) : 13
+  })
 
   // Ref to avoid stale closure in realtime callback
   const showCommonplaceRef = useRef(false)
@@ -65,6 +69,26 @@ export const Salon = () => {
 
     return data || null
   }, [])
+
+  const fetchNextWeek = useCallback(async (currentWeekOf) => {
+    const { data } = await supabase
+      .from('salon_weeks')
+      .select('parlor_title')
+      .gt('week_of', currentWeekOf)
+      .order('week_of', { ascending: true })
+      .limit(1)
+      .maybeSingle()
+
+    setNextWeekTitle(data?.parlor_title || null)
+  }, [])
+
+  const handleTextSize = (delta) => {
+    setTextSize(prev => {
+      const next = Math.min(22, Math.max(11, prev + delta))
+      localStorage.setItem('salon_text_size', String(next))
+      return next
+    })
+  }
 
   const fetchResponses = useCallback(async (weekId) => {
     const { data, error } = await supabase
@@ -139,14 +163,15 @@ export const Salon = () => {
         await Promise.all([
           fetchResponses(week.id),
           fetchCommonplaceEntries(week.id),
-          checkNewCommonplaceEntries(week.id)
+          checkNewCommonplaceEntries(week.id),
+          fetchNextWeek(week.week_of)
         ])
       }
       setLoading(false)
     }
 
     loadData()
-  }, [user?.id, fetchCurrentWeek, fetchResponses, fetchCommonplaceEntries, checkNewCommonplaceEntries])
+  }, [user?.id, fetchCurrentWeek, fetchResponses, fetchCommonplaceEntries, checkNewCommonplaceEntries, fetchNextWeek])
 
   // --- Realtime subscriptions ---
 
@@ -311,50 +336,180 @@ export const Salon = () => {
 
   return (
     <>
-      <div className="container">
-        {/* Decorative couch — centered, fills top space */}
-        <div style={{ textAlign: 'center', margin: '-12px 0 -10px' }}>
-          <img
-            src="/images/salon-couch-ready.png"
-            alt=""
+      <div style={{
+        height: 'calc(100dvh - 62px)',
+        display: 'flex',
+        flexDirection: 'column',
+        maxWidth: '720px',
+        margin: '0 auto',
+        padding: '0 20px',
+        overflow: 'hidden'
+      }}>
+        {/* FIXED TOP: icon + date + title */}
+        <div style={{ flexShrink: 0 }}>
+          <div style={{ textAlign: 'center', margin: '-16px 0 -40px' }}>
+            <img
+              src="/images/salon-couch-ready.png"
+              alt=""
+              style={{
+                width: '158px',
+                height: '158px',
+                objectFit: 'contain',
+                opacity: 0.85,
+                pointerEvents: 'none'
+              }}
+            />
+          </div>
+          <p style={{
+            fontSize: '10px',
+            color: '#777',
+            letterSpacing: '0.04em',
+            margin: '0 0 2px 0'
+          }}>
+            Semaine du {formatWeekDate(salonWeek.week_of)}
+          </p>
+          <h2
+            className="handwritten"
             style={{
-              width: '152px',
-              height: '152px',
-              objectFit: 'contain',
-              opacity: 0.85,
-              pointerEvents: 'none'
+              fontSize: '26px',
+              textAlign: 'left',
+              margin: '0 0 8px 0',
+              color: '#2C2C2C'
             }}
-          />
+          >
+            {salonWeek.parlor_title}
+          </h2>
         </div>
 
-        {/* Week date */}
-        <p style={{
-          fontSize: '10px',
-          color: '#777',
-          letterSpacing: '0.04em',
-          margin: '0 0 4px 0'
+        {/* SCROLLABLE MIDDLE: essay body */}
+        <div style={{
+          flex: 1,
+          overflowY: 'auto',
+          minHeight: 0,
+          WebkitOverflowScrolling: 'touch',
+          borderTop: '1px solid #eee',
+          paddingTop: '12px',
+          background: '#FFFFFF',
+          position: 'relative'
         }}>
-          Semaine du {formatWeekDate(salonWeek.week_of)}
-        </p>
+          {/* Text size slider */}
+          <div style={{
+            position: 'sticky',
+            top: 0,
+            display: 'flex',
+            justifyContent: 'flex-end',
+            padding: '0 5% 4px',
+            maxWidth: '640px',
+            margin: '0 auto',
+            zIndex: 1
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: 'rgba(255,255,255,0.92)',
+              borderRadius: '6px',
+              padding: '3px 8px'
+            }}>
+              <span style={{ fontSize: '11px', color: '#999', fontFamily: 'Georgia, serif' }}>A</span>
+              <input
+                type="range"
+                min="11"
+                max="22"
+                step="1"
+                value={textSize}
+                onChange={(e) => {
+                  const val = Number(e.target.value)
+                  setTextSize(val)
+                  localStorage.setItem('salon_text_size', String(val))
+                }}
+                style={{
+                  width: '80px',
+                  height: '2px',
+                  accentColor: '#999',
+                  cursor: 'pointer'
+                }}
+                aria-label="Text size"
+              />
+              <span style={{ fontSize: '17px', color: '#999', fontFamily: 'Georgia, serif' }}>A</span>
+            </div>
+          </div>
+          <ParlorText salonWeek={salonWeek} hideTitle textSize={textSize} />
+        </div>
 
-        {/* The Parlor */}
-        <ParlorText salonWeek={salonWeek} />
+        {/* Next week teaser */}
+        {nextWeekTitle && (
+          <div style={{
+            flexShrink: 0,
+            padding: '4px 0 0',
+            borderTop: '1px solid #eee'
+          }}>
+            <p style={{
+              fontSize: '11px',
+              color: '#999',
+              fontStyle: 'italic',
+              margin: 0,
+              letterSpacing: '0.02em'
+            }}>
+              Next week: <span style={{ color: '#666' }}>{nextWeekTitle}</span>
+            </p>
+          </div>
+        )}
 
-        {/* Vos reflexions */}
-        <ParlorResponses
-          responses={responses}
-          userId={user.id}
-          onSubmit={handleSubmitResponse}
-          onEdit={handleEditResponse}
-          onDelete={handleDeleteResponse}
-        />
+        {/* FIXED BOTTOM: responses */}
+        <div style={{
+          flexShrink: 0,
+          borderTop: nextWeekTitle ? 'none' : '1px solid #eee',
+          paddingBottom: '4px'
+        }}>
+          <ParlorResponses
+            responses={responses}
+            userId={user.id}
+            onSubmit={handleSubmitResponse}
+            onEdit={handleEditResponse}
+            onDelete={handleDeleteResponse}
+            compact
+          />
+        </div>
       </div>
 
-      {/* Typewriter FAB */}
-      <TypewriterFAB
-        hasNewEntries={hasNewCommonplaceEntries}
+      {/* Typewriter — fixed bottom-right of screen */}
+      <button
         onClick={handleOpenCommonplace}
-      />
+        style={{
+          position: 'fixed',
+          bottom: '4px',
+          right: '16px',
+          background: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+          padding: 0,
+          zIndex: 10
+        }}
+        aria-label="Open Commonplace Book"
+      >
+        <img
+          src="/images/typewriter-ready.png"
+          alt="Commonplace Book"
+          style={{
+            width: '74px',
+            height: '74px',
+            objectFit: 'contain',
+            display: 'block'
+          }}
+        />
+        {hasNewCommonplaceEntries && (
+          <span style={{
+            position: 'absolute',
+            top: '0',
+            right: '0',
+            width: '8px',
+            height: '8px',
+            borderRadius: '50%',
+            background: '#E8534F'
+          }} />
+        )}
+      </button>
 
       {/* Commonplace Book Overlay */}
       <CommonplaceBook

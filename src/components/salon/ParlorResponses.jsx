@@ -6,7 +6,7 @@ import { ResponseEntry } from './ResponseEntry'
  * "Vos reflexions" — collapsible response section below the Parlor text.
  * Collapsed by default. Shows count when friends have responded.
  */
-export const ParlorResponses = ({ responses, userId, onSubmit, onEdit, onDelete }) => {
+export const ParlorResponses = ({ responses, userId, onSubmit, onEdit, onDelete, compact = false }) => {
   const [isExpanded, setIsExpanded] = useState(false)
   const [inputText, setInputText] = useState('')
   const [editingId, setEditingId] = useState(null)
@@ -59,7 +59,7 @@ export const ParlorResponses = ({ responses, userId, onSubmit, onEdit, onDelete 
   const count = responses.length
 
   return (
-    <div style={{ maxWidth: '640px', margin: '40px auto 60px' }}>
+    <div style={{ maxWidth: '640px', margin: compact ? '0' : '40px auto 60px' }}>
       {/* Collapsible label */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
@@ -67,9 +67,9 @@ export const ParlorResponses = ({ responses, userId, onSubmit, onEdit, onDelete 
           background: 'none',
           border: 'none',
           cursor: 'pointer',
-          padding: '8px 0',
+          padding: compact ? '4px 0' : '8px 0',
           fontFamily: "'Caveat', cursive",
-          fontSize: '24px',
+          fontSize: compact ? '20px' : '24px',
           color: '#4A7BA7',
           display: 'flex',
           alignItems: 'center',
@@ -98,9 +98,12 @@ export const ParlorResponses = ({ responses, userId, onSubmit, onEdit, onDelete 
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.25, ease: 'easeInOut' }}
-            style={{ overflow: 'hidden' }}
+            style={{
+              overflow: 'hidden',
+              ...(compact ? { maxHeight: '40vh', overflowY: 'auto' } : {})
+            }}
           >
-            <div style={{ paddingTop: '16px' }}>
+            <div style={{ paddingTop: compact ? '8px' : '16px' }}>
               {/* Input area */}
               <div style={{ marginBottom: '20px' }}>
                 <textarea

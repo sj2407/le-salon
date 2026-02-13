@@ -10,7 +10,7 @@ const dividerStyle = {
  * Renders the full parlor entry with reading-optimized typography.
  * The text IS the page — no collapse, no truncation.
  */
-export const ParlorText = ({ salonWeek }) => {
+export const ParlorText = ({ salonWeek, hideTitle = false, textSize = 13 }) => {
   const [sourcesExpanded, setSourcesExpanded] = useState(false)
 
   const furtherReading = salonWeek.parlor_further_reading || []
@@ -19,23 +19,25 @@ export const ParlorText = ({ salonWeek }) => {
   return (
     <div style={{ maxWidth: '640px', margin: '0 auto', padding: '0 5%' }}>
       {/* Title */}
-      <h2
-        className="handwritten"
-        style={{
-          fontSize: '26px',
-          textAlign: 'left',
-          marginTop: '0',
-          marginBottom: '16px',
-          color: '#2C2C2C'
-        }}
-      >
-        {salonWeek.parlor_title}
-      </h2>
+      {!hideTitle && (
+        <h2
+          className="handwritten"
+          style={{
+            fontSize: '26px',
+            textAlign: 'left',
+            marginTop: '0',
+            marginBottom: '16px',
+            color: '#2C2C2C'
+          }}
+        >
+          {salonWeek.parlor_title}
+        </h2>
+      )}
 
       {/* Body text — literary typography */}
       <div
         style={{
-          fontSize: '13px',
+          fontSize: `${textSize}px`,
           lineHeight: 1.8,
           color: '#2C2C2C',
           fontWeight: 300
