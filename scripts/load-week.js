@@ -141,7 +141,33 @@ async function loadWeek(filePath, weekOf) {
     process.exit(1)
   }
 
-  console.log(`\nInserted/updated successfully (id: ${data[0].id})`)
+  const weekId = data[0].id
+  console.log(`\nInserted/updated successfully (id: ${weekId})`)
+
+  // Pre-generate TTS audio
+  console.log('\nGenerating TTS audio...')
+  try {
+    const anonKey = process.env.VITE_SUPABASE_ANON_KEY
+    const res = await fetch(
+      `${process.env.VITE_SUPABASE_URL}/functions/v1/tts`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${anonKey}`
+        },
+        body: JSON.stringify({ salon_week_id: weekId })
+      }
+    )
+    const result = await res.json()
+    if (result.url) {
+      console.log(`  Audio ready: ${result.url}`)
+    } else {
+      console.error('  Audio generation failed:', result.error || 'unknown error')
+    }
+  } catch (err) {
+    console.error('  Audio generation failed:', err.message)
+  }
 }
 
 // --- CLI ---

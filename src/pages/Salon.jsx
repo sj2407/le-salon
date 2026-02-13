@@ -23,6 +23,8 @@ export const Salon = () => {
     const saved = localStorage.getItem('salon_text_size')
     return saved ? Number(saved) : 13
   })
+  const [audioState, setAudioState] = useState('idle') // idle | loading | playing | paused
+  const audioRef = useRef(null)
 
   // Ref to avoid stale closure in realtime callback
   const showCommonplaceRef = useRef(false)
@@ -88,6 +90,54 @@ export const Salon = () => {
       localStorage.setItem('salon_text_size', String(next))
       return next
     })
+  }
+
+  const handleAudioToggle = async () => {
+    // If already playing, pause
+    if (audioState === 'playing' && audioRef.current) {
+      audioRef.current.pause()
+      setAudioState('paused')
+      return
+    }
+
+    // If paused, resume
+    if (audioState === 'paused' && audioRef.current) {
+      audioRef.current.play()
+      setAudioState('playing')
+      return
+    }
+
+    // Otherwise, try public URL first (cached), then generate via Edge Function
+    setAudioState('loading')
+    try {
+      const publicUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/salon-audio/week-${salonWeek.id}.mp3`
+
+      // Check if cached audio exists
+      const headRes = await fetch(publicUrl, { method: 'HEAD' })
+      let audioUrl = null
+
+      if (headRes.ok) {
+        audioUrl = publicUrl
+      } else {
+        // Generate via Edge Function
+        const { data, error } = await supabase.functions.invoke('tts', {
+          body: { salon_week_id: salonWeek.id }
+        })
+        if (error) throw error
+        if (!data?.url) throw new Error('No audio URL')
+        audioUrl = data.url
+      }
+
+      const audio = new Audio(audioUrl)
+      audioRef.current = audio
+      audio.onended = () => setAudioState('idle')
+      audio.onerror = () => setAudioState('idle')
+      await audio.play()
+      setAudioState('playing')
+    } catch (err) {
+      console.error('TTS error:', err)
+      setAudioState('idle')
+    }
   }
 
   const fetchResponses = useCallback(async (weekId) => {
@@ -368,49 +418,60 @@ export const Salon = () => {
           }}>
             Semaine du {formatWeekDate(salonWeek.week_of)}
           </p>
-          <h2
-            className="handwritten"
-            style={{
-              fontSize: '26px',
-              textAlign: 'left',
-              margin: '0 0 8px 0',
-              color: '#2C2C2C'
-            }}
-          >
-            {salonWeek.parlor_title}
-          </h2>
-        </div>
-
-        {/* SCROLLABLE MIDDLE: essay body */}
-        <div style={{
-          flex: 1,
-          overflowY: 'auto',
-          minHeight: 0,
-          WebkitOverflowScrolling: 'touch',
-          borderTop: '1px solid #eee',
-          paddingTop: '12px',
-          background: '#FFFFFF',
-          position: 'relative'
-        }}>
-          {/* Text size slider */}
-          <div style={{
-            position: 'sticky',
-            top: 0,
-            display: 'flex',
-            justifyContent: 'flex-end',
-            padding: '0 5% 4px',
-            maxWidth: '640px',
-            margin: '0 auto',
-            zIndex: 1
-          }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              background: 'rgba(255,255,255,0.92)',
-              borderRadius: '6px',
-              padding: '3px 8px'
-            }}>
+          <div style={{ display: 'flex', alignItems: 'center', margin: '0 0 8px 0' }}>
+            <h2
+              className="handwritten"
+              style={{
+                fontSize: '26px',
+                textAlign: 'left',
+                margin: 0,
+                color: '#2C2C2C',
+                flex: 1
+              }}
+            >
+              {salonWeek.parlor_title}
+            </h2>
+            {/* Audio play/pause */}
+            <button
+              onClick={handleAudioToggle}
+              disabled={audioState === 'loading'}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: audioState === 'loading' ? 'wait' : 'pointer',
+                padding: '2px 4px',
+                lineHeight: 1,
+                display: 'flex',
+                alignItems: 'center',
+                flexShrink: 0
+              }}
+              aria-label={audioState === 'playing' ? 'Pause audio' : 'Listen to essay'}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={audioState === 'playing' ? '#4A7BA7' : '#999'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
+                <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+                {audioState === 'loading' && (
+                  <circle cx="12" cy="12" r="3" fill="#999" stroke="none" opacity="0.5">
+                    <animate attributeName="opacity" values="0.3;1;0.3" dur="1s" repeatCount="indefinite" />
+                  </circle>
+                )}
+                {audioState === 'playing' && (
+                  <>
+                    <line x1="10" y1="10" x2="10" y2="14" stroke="#4A7BA7" strokeWidth="1.5">
+                      <animate attributeName="y1" values="10;8;10" dur="0.5s" repeatCount="indefinite" />
+                    </line>
+                    <line x1="12" y1="9" x2="12" y2="14" stroke="#4A7BA7" strokeWidth="1.5">
+                      <animate attributeName="y1" values="9;7;9" dur="0.4s" repeatCount="indefinite" />
+                    </line>
+                    <line x1="14" y1="10" x2="14" y2="14" stroke="#4A7BA7" strokeWidth="1.5">
+                      <animate attributeName="y1" values="10;8;10" dur="0.6s" repeatCount="indefinite" />
+                    </line>
+                  </>
+                )}
+              </svg>
+            </button>
+            {/* Text size slider */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
               <span style={{ fontSize: '11px', color: '#999', fontFamily: 'Georgia, serif' }}>A</span>
               <input
                 type="range"
@@ -423,17 +484,24 @@ export const Salon = () => {
                   setTextSize(val)
                   localStorage.setItem('salon_text_size', String(val))
                 }}
-                style={{
-                  width: '80px',
-                  height: '2px',
-                  accentColor: '#999',
-                  cursor: 'pointer'
-                }}
+                style={{ width: '80px', height: '2px', accentColor: '#999', cursor: 'pointer' }}
                 aria-label="Text size"
               />
               <span style={{ fontSize: '17px', color: '#999', fontFamily: 'Georgia, serif' }}>A</span>
             </div>
           </div>
+        </div>
+
+        {/* SCROLLABLE MIDDLE: essay body */}
+        <div style={{
+          flex: 1,
+          overflowY: 'auto',
+          minHeight: 0,
+          WebkitOverflowScrolling: 'touch',
+          borderTop: '1px solid #eee',
+          paddingTop: '12px',
+          background: '#FFFFFF'
+        }}>
           <ParlorText salonWeek={salonWeek} hideTitle textSize={textSize} />
         </div>
 
@@ -478,7 +546,7 @@ export const Salon = () => {
         onClick={handleOpenCommonplace}
         style={{
           position: 'fixed',
-          bottom: '4px',
+          bottom: '-4px',
           right: '16px',
           background: 'transparent',
           border: 'none',
@@ -492,8 +560,8 @@ export const Salon = () => {
           src="/images/typewriter-ready.png"
           alt="Commonplace Book"
           style={{
-            width: '74px',
-            height: '74px',
+            width: '100px',
+            height: '100px',
             objectFit: 'contain',
             display: 'block'
           }}
