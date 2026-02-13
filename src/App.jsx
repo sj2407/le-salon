@@ -1,22 +1,25 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { Navigation } from './components/Navigation'
 import { Footer } from './components/Footer'
 import { SignUp } from './pages/SignUp'
 import { SignIn } from './pages/SignIn'
-import { ResetPassword } from './pages/ResetPassword'
-import { Salon } from './pages/Salon'
-import { MyCorner } from './pages/MyCorner'
-import { ToDo } from './pages/ToDo'
-import { PastActivities } from './pages/PastActivities'
-import { Friends } from './pages/Friends'
-import { FindFriends } from './pages/FindFriends'
-import { FriendCard } from './pages/FriendCard'
-import { Notifications } from './pages/Notifications'
-import { Newsletter } from './pages/Newsletter'
-import { AdminFeedback } from './pages/AdminFeedback'
-import { Help } from './pages/Help'
-import { AccountSettings } from './pages/AccountSettings'
+
+// Lazy-load all pages behind routes — only downloaded when visited
+const ResetPassword = lazy(() => import('./pages/ResetPassword').then(m => ({ default: m.ResetPassword })))
+const Salon = lazy(() => import('./pages/Salon').then(m => ({ default: m.Salon })))
+const MyCorner = lazy(() => import('./pages/MyCorner').then(m => ({ default: m.MyCorner })))
+const ToDo = lazy(() => import('./pages/ToDo').then(m => ({ default: m.ToDo })))
+const PastActivities = lazy(() => import('./pages/PastActivities').then(m => ({ default: m.PastActivities })))
+const Friends = lazy(() => import('./pages/Friends').then(m => ({ default: m.Friends })))
+const FindFriends = lazy(() => import('./pages/FindFriends').then(m => ({ default: m.FindFriends })))
+const FriendCard = lazy(() => import('./pages/FriendCard').then(m => ({ default: m.FriendCard })))
+const Notifications = lazy(() => import('./pages/Notifications').then(m => ({ default: m.Notifications })))
+const Newsletter = lazy(() => import('./pages/Newsletter').then(m => ({ default: m.Newsletter })))
+const AdminFeedback = lazy(() => import('./pages/AdminFeedback').then(m => ({ default: m.AdminFeedback })))
+const Help = lazy(() => import('./pages/Help').then(m => ({ default: m.Help })))
+const AccountSettings = lazy(() => import('./pages/AccountSettings').then(m => ({ default: m.AccountSettings })))
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth()
@@ -59,6 +62,7 @@ function AppRoutes() {
     <BrowserRouter>
       <AuthProvider>
         <Navigation />
+        <Suspense fallback={<div className="container"><div className="loading">Loading...</div></div>}>
         <Routes>
           <Route
             path="/signup"
@@ -177,6 +181,7 @@ function AppRoutes() {
             }
           />
         </Routes>
+        </Suspense>
         <Footer />
       </AuthProvider>
     </BrowserRouter>

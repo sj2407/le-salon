@@ -40,18 +40,22 @@ export const MyCard = () => {
       if (cardData) {
         setCard(cardData)
 
-        // Get entries for current card
-        const { data: entriesData, error: entriesError } = await supabase
-          .from('entries')
-          .select('*')
-          .eq('card_id', cardData.id)
-          .order('display_order')
+        // Fetch entries and notes in parallel (both depend on card ID)
+        const [entriesResult, notesResult] = await Promise.all([
+          supabase.from('entries').select('*').eq('card_id', cardData.id).order('display_order'),
+          supabase.from('card_notes').select('*, from_user:profiles!card_notes_from_user_id_fkey(display_name)')
+            .eq('card_id', cardData.id).eq('to_user_id', profile.id).order('created_at', { ascending: false })
+        ])
 
-        if (entriesError) throw entriesError
-        setEntries(entriesData || [])
+        if (entriesResult.error) throw entriesResult.error
+        setEntries(entriesResult.data || [])
 
-        // Fetch notes for this card
-        await fetchNotes(cardData.id)
+        if (notesResult.error) {
+          console.log('Notes fetch error (table may not exist):', notesResult.error.message)
+          setNotes([])
+        } else {
+          setNotes(notesResult.data || [])
+        }
       } else {
         // No current card exists, create one
         await createNewCard([])

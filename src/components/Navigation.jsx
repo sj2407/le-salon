@@ -6,7 +6,7 @@ import { NewsletterBell } from './NewsletterBell'
 import { FriendSearch } from './FriendSearch'
 
 export const Navigation = () => {
-  const { user, profile, signOut } = useAuth()
+  const { user, signOut } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -50,10 +50,12 @@ export const Navigation = () => {
     }
   }, [isMenuOpen])
 
-  // Close menu on location change
-  useEffect(() => {
-    closeMenu()
-  }, [location])
+  // Close menu on location change (adjust state during render, not in effect)
+  const [prevLocation, setPrevLocation] = useState(location)
+  if (prevLocation !== location) {
+    setPrevLocation(location)
+    setIsMenuOpen(false)
+  }
 
   if (!user) return null
 

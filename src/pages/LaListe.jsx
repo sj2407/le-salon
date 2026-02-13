@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion as Motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
-import { TAG_ICONS, TAG_OPTIONS, TAG_LABELS } from '../components/ReviewsDisplay'
+import { TAG_ICONS, TAG_OPTIONS, TAG_LABELS } from '../lib/reviewConstants'
 
 export const LaListe = () => {
   const { profile } = useAuth()

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { MusicEntryInput } from './music/MusicEntryInput'
 import { ReadingIcon } from './icons/ReadingIcon'
 import { ListeningIcon } from './icons/ListeningIcon'
@@ -18,46 +18,52 @@ const CATEGORY_CONFIG = {
   'My latest AI prompt': { icon: AIPromptIcon, subcategories: [] }
 }
 
-export const CardEdit = ({ entries, displayName, onSave, onCancel }) => {
-  const [formData, setFormData] = useState({})
-  const [musicMetadata, setMusicMetadata] = useState({}) // iTunes metadata keyed by index
+function buildFormData(entries) {
+  const data = {}
+  Object.keys(CATEGORY_CONFIG).forEach(category => {
+    const config = CATEGORY_CONFIG[category]
+    const categoryEntries = entries.filter(e => e.category === category)
+    if (config.subcategories.length > 0) {
+      data[category] = {}
+      config.subcategories.forEach(sub => {
+        const subEntries = categoryEntries.filter(e => e.subcategory === sub)
+        data[category][sub] = subEntries.length > 0 ? subEntries.map(e => e.content) : ['']
+      })
+    } else {
+      data[category] = categoryEntries[0]?.content || ''
+    }
+  })
+  return data
+}
 
-  useEffect(() => {
-    const data = {}
-    const metadata = {}
-    Object.keys(CATEGORY_CONFIG).forEach(category => {
-      const config = CATEGORY_CONFIG[category]
-      const categoryEntries = entries.filter(e => e.category === category)
-
-      if (config.subcategories.length > 0) {
-        data[category] = {}
-        config.subcategories.forEach(sub => {
-          const subEntries = categoryEntries.filter(e => e.subcategory === sub)
-          data[category][sub] = subEntries.length > 0
-            ? subEntries.map(e => e.content)
-            : ['']
-          // Store iTunes metadata for music entries
-          if (sub === 'music') {
-            subEntries.forEach((e, idx) => {
-              if (e.itunes_preview_url) {
-                metadata[idx] = {
-                  itunes_track_id: e.itunes_track_id,
-                  itunes_preview_url: e.itunes_preview_url,
-                  itunes_artist_name: e.itunes_artist_name,
-                  itunes_album_name: e.itunes_album_name,
-                  itunes_artwork_url: e.itunes_artwork_url
-                }
-              }
-            })
-          }
-        })
-      } else {
-        data[category] = categoryEntries[0]?.content || ''
+function buildMusicMetadata(entries) {
+  const metadata = {}
+  const musicEntries = entries.filter(e => e.category === 'Listening' && e.subcategory === 'music')
+  musicEntries.forEach((e, idx) => {
+    if (e.itunes_preview_url) {
+      metadata[idx] = {
+        itunes_track_id: e.itunes_track_id,
+        itunes_preview_url: e.itunes_preview_url,
+        itunes_artist_name: e.itunes_artist_name,
+        itunes_album_name: e.itunes_album_name,
+        itunes_artwork_url: e.itunes_artwork_url
       }
-    })
-    setFormData(data)
-    setMusicMetadata(metadata)
-  }, [entries])
+    }
+  })
+  return metadata
+}
+
+export const CardEdit = ({ entries, displayName, onSave, onCancel }) => {
+  // Compute initial form data from entries (adjusting state during render, not in effect)
+  const [prevEntries, setPrevEntries] = useState(entries)
+  const [formData, setFormData] = useState(() => buildFormData(entries))
+  const [musicMetadata, setMusicMetadata] = useState(() => buildMusicMetadata(entries))
+
+  if (prevEntries !== entries) {
+    setPrevEntries(entries)
+    setFormData(buildFormData(entries))
+    setMusicMetadata(buildMusicMetadata(entries))
+  }
 
   const handleChange = (category, subcategory, index, value) => {
     setFormData(prev => {

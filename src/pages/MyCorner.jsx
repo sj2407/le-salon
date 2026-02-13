@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { MyCard } from './MyCard'
 import { History } from './History'
@@ -9,15 +9,17 @@ import { Profile } from './Profile'
 
 export const MyCorner = () => {
   const [searchParams] = useSearchParams()
-  const [activeTab, setActiveTab] = useState('card')
+  const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'card')
 
-  // Update active tab when URL param changes (e.g., after signup)
-  useEffect(() => {
+  // Update active tab when URL param changes (adjust state during render, not in effect)
+  const [prevSearchParams, setPrevSearchParams] = useState(searchParams)
+  if (prevSearchParams !== searchParams) {
+    setPrevSearchParams(searchParams)
     const tabParam = searchParams.get('tab')
     if (tabParam) {
       setActiveTab(tabParam)
     }
-  }, [searchParams])
+  }
 
   return (
     <div className="container">

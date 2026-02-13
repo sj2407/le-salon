@@ -138,7 +138,6 @@ export const FriendWishlist = ({ friendId, friendName }) => {
       }}
       renderItemActions={(item) => {
         const isClaimedByMe = item.claimed_by === profile.id
-        const isClaimedByOther = item.claimed_by && !isClaimedByMe
 
         if (!item.claimed_by) {
           return (

@@ -2,12 +2,9 @@ import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
-import { ReviewsDisplay, TAG_ICONS, TAG_OPTIONS, TAG_LABELS } from '../components/ReviewsDisplay'
+import { ReviewsDisplay } from '../components/ReviewsDisplay'
+import { TAG_ICONS, TAG_OPTIONS, TAG_LABELS } from '../lib/reviewConstants'
 import { ExpandedReviewText } from '../components/review-comments/ExpandedReviewText'
-
-// TAG_OPTIONS imported from ReviewsDisplay
-
-export { TAG_ICONS }
 
 export const Reviews = () => {
   const { profile } = useAuth()

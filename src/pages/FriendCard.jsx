@@ -5,7 +5,8 @@ import { supabase } from '../lib/supabase'
 import { CardDisplay } from '../components/CardDisplay'
 import { FriendWishlist } from '../components/FriendWishlist'
 import { FriendProfile } from '../components/FriendProfile'
-import { ReviewsDisplay, TAG_ICONS } from '../components/ReviewsDisplay'
+import { ReviewsDisplay } from '../components/ReviewsDisplay'
+import { TAG_ICONS } from '../lib/reviewConstants'
 import { ExpandedReviewText } from '../components/review-comments/ExpandedReviewText'
 
 export const FriendCard = () => {
@@ -36,7 +37,7 @@ export const FriendCard = () => {
     try {
       setLoading(true)
 
-      // Verify friendship exists
+      // Step 1: Verify friendship exists (gatekeeper — must be first)
       const { data: friendshipData, error: friendshipError } = await supabase
         .from('friendships')
         .select('*')
@@ -49,57 +50,55 @@ export const FriendCard = () => {
         return
       }
 
-      // Get friend profile
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', friendId)
-        .single()
+      // Step 2: Fetch profile, card, reviews, and comments in parallel
+      const [profileResult, cardResult, reviewsResult, commentsResult] = await Promise.all([
+        supabase.from('profiles').select('*').eq('id', friendId).single(),
+        supabase.from('cards').select('*').eq('user_id', friendId).eq('is_current', true).single(),
+        supabase.from('reviews').select('*').eq('user_id', friendId).order('created_at', { ascending: false }),
+        supabase.from('review_comments').select('*').eq('from_user_id', profile.id).eq('to_user_id', friendId)
+      ])
 
-      if (profileError) throw profileError
-      setFriendProfile(profileData)
+      // Handle profile
+      if (profileResult.error) throw profileResult.error
+      setFriendProfile(profileResult.data)
 
-      // Get friend's current card
-      const { data: cardData, error: cardError } = await supabase
-        .from('cards')
-        .select('*')
-        .eq('user_id', friendId)
-        .eq('is_current', true)
-        .single()
+      // Handle reviews
+      if (reviewsResult.error) throw reviewsResult.error
+      setReviews(reviewsResult.data || [])
 
-      if (cardError && cardError.code !== 'PGRST116') {
-        throw cardError
+      // Handle review comments
+      if (commentsResult.error) {
+        console.log('Review comments fetch error:', commentsResult.error.message)
+        setReviewComments([])
+      } else {
+        setReviewComments(commentsResult.data || [])
+      }
+
+      // Handle card
+      const cardData = cardResult.data
+      if (cardResult.error && cardResult.error.code !== 'PGRST116') {
+        throw cardResult.error
       }
 
       if (cardData) {
         setCard(cardData)
 
-        // Get entries
-        const { data: entriesData, error: entriesError } = await supabase
-          .from('entries')
-          .select('*')
-          .eq('card_id', cardData.id)
-          .order('display_order')
+        // Step 3: Fetch entries and notes in parallel (both depend on card ID)
+        const [entriesResult, notesResult] = await Promise.all([
+          supabase.from('entries').select('*').eq('card_id', cardData.id).order('display_order'),
+          supabase.from('card_notes').select('*').eq('card_id', cardData.id).eq('from_user_id', profile.id)
+        ])
 
-        if (entriesError) throw entriesError
-        setEntries(entriesData || [])
+        if (entriesResult.error) throw entriesResult.error
+        setEntries(entriesResult.data || [])
 
-        // Fetch my notes on this card
-        await fetchMyNotes(cardData.id)
+        if (notesResult.error) {
+          console.log('Notes fetch error (table may not exist):', notesResult.error.message)
+          setMyNotes([])
+        } else {
+          setMyNotes(notesResult.data || [])
+        }
       }
-
-      // Get friend's reviews
-      const { data: reviewsData, error: reviewsError } = await supabase
-        .from('reviews')
-        .select('*')
-        .eq('user_id', friendId)
-        .order('created_at', { ascending: false })
-
-      if (reviewsError) throw reviewsError
-      setReviews(reviewsData || [])
-
-      // Fetch my comments on this friend's reviews
-      await fetchReviewComments(friendId)
     } catch (err) {
       console.error('Error fetching friend card:', err)
       setError(err.message)
@@ -314,120 +313,83 @@ export const FriendCard = () => {
 
   const fetchOverlaps = async () => {
     try {
-      // 1. Card overlaps - matching content on current cards
-      // Get my current card entries
-      const { data: myCardData } = await supabase
-        .from('cards')
-        .select('id')
-        .eq('user_id', profile.id)
-        .eq('is_current', true)
-        .single()
+      // Step 1: Fetch all independent data in parallel
+      const [myCardResult, friendCardResult, myReviewsResult, friendReviewsResult, myInterestsResult] = await Promise.all([
+        supabase.from('cards').select('id').eq('user_id', profile.id).eq('is_current', true).single(),
+        supabase.from('cards').select('id').eq('user_id', friendId).eq('is_current', true).single(),
+        supabase.from('reviews').select('title, tag, rating').eq('user_id', profile.id),
+        supabase.from('reviews').select('title, tag, rating').eq('user_id', friendId),
+        supabase.from('activity_interests').select('activity_id').eq('user_id', profile.id)
+      ])
 
-      const { data: friendCardData } = await supabase
-        .from('cards')
-        .select('id')
-        .eq('user_id', friendId)
-        .eq('is_current', true)
-        .single()
+      // Process review overlaps (in-memory, no further queries needed)
+      if (!myReviewsResult.error && myReviewsResult.data && friendReviewsResult.data) {
+        const matches = myReviewsResult.data
+          .map(myReview => {
+            const friendReview = friendReviewsResult.data.find(
+              fr => fr.title.toLowerCase() === myReview.title.toLowerCase()
+            )
+            if (friendReview) {
+              return {
+                title: myReview.title,
+                tag: myReview.tag,
+                yourRating: myReview.rating,
+                friendRating: friendReview.rating
+              }
+            }
+            return null
+          })
+          .filter(Boolean)
+        setReviewOverlaps(matches)
+      }
 
+      // Step 2: Fetch card entries and friend activity interests in parallel (depend on step 1)
+      const step2Promises = []
+
+      const myCardData = myCardResult.data
+      const friendCardData = friendCardResult.data
       if (myCardData && friendCardData) {
-        const { data: myEntries } = await supabase
-          .from('entries')
-          .select('category, content')
-          .eq('card_id', myCardData.id)
+        step2Promises.push(
+          Promise.all([
+            supabase.from('entries').select('category, content').eq('card_id', myCardData.id),
+            supabase.from('entries').select('category, content').eq('card_id', friendCardData.id)
+          ]).then(([myEntries, friendEntries]) => {
+            if (myEntries.data && friendEntries.data) {
+              const matches = myEntries.data
+                .map(myEntry => {
+                  const friendEntry = friendEntries.data.find(
+                    fe => fe.content.toLowerCase() === myEntry.content.toLowerCase() &&
+                          fe.category === myEntry.category
+                  )
+                  return friendEntry ? { category: myEntry.category, content: myEntry.content } : null
+                })
+                .filter(Boolean)
+              setCardOverlaps(matches)
+            }
+          })
+        )
+      }
 
-        const { data: friendEntries } = await supabase
-          .from('entries')
-          .select('category, content')
-          .eq('card_id', friendCardData.id)
-
-        if (myEntries && friendEntries) {
-          // Find matching content (case-insensitive)
-          const matches = myEntries
-            .map(myEntry => {
-              const friendEntry = friendEntries.find(
-                fe => fe.content.toLowerCase() === myEntry.content.toLowerCase() &&
-                      fe.category === myEntry.category
-              )
-              if (friendEntry) {
-                return {
-                  category: myEntry.category,
-                  content: myEntry.content
-                }
+      const myActivityIds = (myInterestsResult.data || []).map(a => a.activity_id)
+      if (!myInterestsResult.error && myActivityIds.length > 0) {
+        step2Promises.push(
+          supabase.from('activity_interests').select('activity_id').eq('user_id', friendId).in('activity_id', myActivityIds)
+            .then(({ data: friendActivitiesData }) => {
+              if (friendActivitiesData && friendActivitiesData.length > 0) {
+                const sharedActivityIds = friendActivitiesData.map(a => a.activity_id)
+                return supabase.from('activities').select('description, date_text').in('id', sharedActivityIds).eq('is_archived', false)
               }
               return null
             })
-            .filter(Boolean)
-
-          setCardOverlaps(matches)
-        }
-      }
-
-      // 2. Review overlaps - same titles reviewed
-      const { data: reviewOverlapsData, error: reviewError } = await supabase
-        .from('reviews')
-        .select('title, tag, rating')
-        .eq('user_id', profile.id)
-
-      if (!reviewError && reviewOverlapsData) {
-        // Get friend's reviews
-        const { data: friendReviewsData } = await supabase
-          .from('reviews')
-          .select('title, tag, rating')
-          .eq('user_id', friendId)
-
-        if (friendReviewsData) {
-          // Find matching titles (case-insensitive)
-          const matches = reviewOverlapsData
-            .map(myReview => {
-              const friendReview = friendReviewsData.find(
-                fr => fr.title.toLowerCase() === myReview.title.toLowerCase()
-              )
-              if (friendReview) {
-                return {
-                  title: myReview.title,
-                  tag: myReview.tag,
-                  yourRating: myReview.rating,
-                  friendRating: friendReview.rating
-                }
+            .then(result => {
+              if (result && result.data) {
+                setActivityOverlaps(result.data)
               }
-              return null
             })
-            .filter(Boolean)
-
-          setReviewOverlaps(matches)
-        }
+        )
       }
 
-      // 3. Activity overlaps - shared activity interests
-      const { data: activityOverlapsData, error: activityError } = await supabase
-        .from('activity_interests')
-        .select('activity_id')
-        .eq('user_id', profile.id)
-
-      if (!activityError && activityOverlapsData) {
-        const myActivityIds = activityOverlapsData.map(a => a.activity_id)
-
-        if (myActivityIds.length > 0) {
-          const { data: friendActivitiesData } = await supabase
-            .from('activity_interests')
-            .select('activity_id')
-            .eq('user_id', friendId)
-            .in('activity_id', myActivityIds)
-
-          if (friendActivitiesData && friendActivitiesData.length > 0) {
-            const sharedActivityIds = friendActivitiesData.map(a => a.activity_id)
-
-            const { data: activitiesData } = await supabase
-              .from('activities')
-              .select('description, date_text')
-              .in('id', sharedActivityIds)
-              .eq('is_archived', false)
-
-            setActivityOverlaps(activitiesData || [])
-          }
-        }
-      }
+      await Promise.all(step2Promises)
     } catch (err) {
       console.error('Error fetching overlaps:', err)
     }

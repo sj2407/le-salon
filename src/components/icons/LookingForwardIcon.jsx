@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 
-export const LookingForwardIcon = ({ className = "section-icon" }) => {
+export const LookingForwardIcon = () => {
   const audioRef = useRef(null)
 
   const handleMouseEnter = () => {

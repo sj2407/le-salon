@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 
-export const AIPromptIcon = ({ className = "section-icon" }) => {
+export const AIPromptIcon = () => {
   const audioRef = useRef(null)
 
   const handleMouseEnter = () => {

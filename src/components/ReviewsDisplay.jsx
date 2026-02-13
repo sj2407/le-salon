@@ -1,28 +1,5 @@
 import { useState } from 'react'
-
-export const TAG_ICONS = {
-  movie: '🎬',
-  book: '📖',
-  podcast: '🎧',
-  show: '📺',
-  album: '💿',
-  performing_arts: '🎭',
-  exhibition: '🖼️',
-  other: '✨'
-}
-
-export const TAG_OPTIONS = ['movie', 'book', 'podcast', 'show', 'album', 'performing_arts', 'exhibition', 'other']
-
-export const TAG_LABELS = {
-  movie: 'movie',
-  book: 'book',
-  podcast: 'podcast',
-  show: 'show',
-  album: 'album',
-  performing_arts: 'performing arts',
-  exhibition: 'exhibition',
-  other: 'other'
-}
+import { TAG_ICONS, TAG_OPTIONS, TAG_LABELS } from '../lib/reviewConstants'
 
 /**
  * Shared reviews display component

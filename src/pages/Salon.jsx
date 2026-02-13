@@ -84,14 +84,6 @@ export const Salon = () => {
     setNextWeekTitle(data?.parlor_title || null)
   }, [])
 
-  const handleTextSize = (delta) => {
-    setTextSize(prev => {
-      const next = Math.min(22, Math.max(11, prev + delta))
-      localStorage.setItem('salon_text_size', String(next))
-      return next
-    })
-  }
-
   const handleAudioToggle = async () => {
     // If already playing, pause
     if (audioState === 'playing' && audioRef.current) {

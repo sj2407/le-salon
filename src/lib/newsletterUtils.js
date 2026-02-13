@@ -6,15 +6,13 @@
  * @param {boolean} isLatest - Whether this is the most recent newsletter
  * @returns {string} Label for the newsletter section
  */
-export const getWeekLabel = (periodEnd, isLatest = false) => {
+export const getWeekLabel = (periodEnd) => {
   const end = new Date(periodEnd)
-  const now = new Date()
 
   // Format the actual date
   const month = end.toLocaleDateString('en-US', { month: 'short' })
   const day = end.getDate()
   const year = end.getFullYear()
-  const dateStr = `${month} ${day}, ${year}`
 
-  return dateStr
+  return `${month} ${day}, ${year}`
 }

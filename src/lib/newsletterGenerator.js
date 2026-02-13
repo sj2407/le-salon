@@ -11,21 +11,32 @@ export const generateNewsletter = async (userId) => {
     const today = new Date()
     const todayStr = today.toISOString().split('T')[0] // YYYY-MM-DD
 
-    // Step 2: Check if we already have a newsletter for today
-    const { data: existingNewsletters, error: nlError } = await supabase
-      .from('newsletters')
-      .select('id, period_end')
-      .eq('user_id', userId)
-      .order('period_end', { ascending: false })
+    // Step 2: Fetch existing newsletters AND friendships in parallel
+    const [newslettersResult, friendshipsResult] = await Promise.all([
+      supabase.from('newsletters').select('id, period_end').eq('user_id', userId).order('period_end', { ascending: false }),
+      supabase.from('friendships').select('requester_id, recipient_id').eq('status', 'accepted').or(`requester_id.eq.${userId},recipient_id.eq.${userId}`)
+    ])
 
-    if (nlError) throw nlError
+    if (newslettersResult.error) throw newslettersResult.error
+    if (friendshipsResult.error) throw friendshipsResult.error
+
+    const existingNewsletters = newslettersResult.data
+    const friendships = friendshipsResult.data
+
+    if (!friendships || friendships.length === 0) {
+      return null
+    }
+
+    const friendIds = friendships.map(f =>
+      f.requester_id === userId ? f.recipient_id : f.requester_id
+    )
 
     // Find today's newsletter if it exists
     const todaysNewsletter = existingNewsletters?.find(n =>
       n.period_end.split('T')[0] === todayStr
     )
 
-    // Step 3: Get ALL previously shown content
+    // Step 3: Get previously shown content AND all friend content in parallel
     const shownContent = new Set()
 
     const extractContent = (description) => {
@@ -37,85 +48,73 @@ export const generateNewsletter = async (userId) => {
       return (description || '').toLowerCase().trim()
     }
 
-    if (existingNewsletters && existingNewsletters.length > 0) {
-      const newsletterIds = existingNewsletters.map(n => n.id)
+    // Build parallel queries: previous items + cards + reviews + activities
+    const parallelQueries = [
+      // Previous items for dedup
+      existingNewsletters && existingNewsletters.length > 0
+        ? supabase.from('newsletter_items').select('friend_id, description').in('newsletter_id', existingNewsletters.map(n => n.id))
+        : Promise.resolve({ data: [], error: null }),
+      // Friend cards
+      supabase.from('cards').select('id, user_id, created_at').in('user_id', friendIds).eq('is_current', true),
+      // Friend reviews
+      supabase.from('reviews').select('id, user_id, title, rating, created_at').in('user_id', friendIds),
+      // Friend activities
+      supabase.from('activities').select('id, user_id, description, city, created_at').in('user_id', friendIds).eq('is_archived', false)
+    ]
 
-      const { data: previousItems, error: prevError } = await supabase
-        .from('newsletter_items')
-        .select('friend_id, description')
-        .in('newsletter_id', newsletterIds)
+    const [prevItemsResult, cardsResult, reviewsResult, activitiesResult] = await Promise.all(parallelQueries)
 
-      if (prevError) throw prevError
+    if (prevItemsResult.error) throw prevItemsResult.error
+    if (cardsResult.error) throw cardsResult.error
+    if (reviewsResult.error) throw reviewsResult.error
+    if (activitiesResult.error) throw activitiesResult.error
 
-      previousItems?.forEach(item => {
-        const contentText = extractContent(item.description)
-        shownContent.add(`${item.friend_id}:${contentText}`)
-      })
+    // Build dedup set from previous items
+    prevItemsResult.data?.forEach(item => {
+      const contentText = extractContent(item.description)
+      shownContent.add(`${item.friend_id}:${contentText}`)
+    })
+
+    // Step 4: Get ALL entries for ALL friend cards in ONE query (fixes N+1)
+    const currentCards = cardsResult.data || []
+    const cardIds = currentCards.map(c => c.id)
+    const cardUserMap = Object.fromEntries(currentCards.map(c => [c.id, c]))
+
+    let allEntries = []
+    if (cardIds.length > 0) {
+      const { data: entriesData, error: entriesError } = await supabase
+        .from('entries')
+        .select('id, card_id, category, content, subcategory')
+        .in('card_id', cardIds)
+        .order('display_order')
+
+      if (entriesError) throw entriesError
+      allEntries = entriesData || []
     }
-
-    // Step 4: Get accepted friends
-    const { data: friendships, error: friendshipsError } = await supabase
-      .from('friendships')
-      .select('requester_id, recipient_id')
-      .eq('status', 'accepted')
-      .or(`requester_id.eq.${userId},recipient_id.eq.${userId}`)
-
-    if (friendshipsError) throw friendshipsError
-
-    if (!friendships || friendships.length === 0) {
-      return null
-    }
-
-    const friendIds = friendships.map(f =>
-      f.requester_id === userId ? f.recipient_id : f.requester_id
-    )
 
     // Step 5: Collect NEW friend activity
     const newItems = []
 
-    // 5a. Get current card entries
-    const { data: currentCards, error: cardsError } = await supabase
-      .from('cards')
-      .select('id, user_id, created_at')
-      .in('user_id', friendIds)
-      .eq('is_current', true)
+    // 5a. Process card entries
+    for (const entry of allEntries) {
+      const card = cardUserMap[entry.card_id]
+      if (!card) continue
+      const contentKey = `${card.user_id}:${entry.content.toLowerCase().trim()}`
 
-    if (cardsError) throw cardsError
+      if (shownContent.has(contentKey)) continue
 
-    for (const card of currentCards || []) {
-      const { data: entries, error: entriesError } = await supabase
-        .from('entries')
-        .select('id, category, content, subcategory')
-        .eq('card_id', card.id)
-        .order('display_order')
-
-      if (entriesError) throw entriesError
-
-      for (const entry of entries || []) {
-        const contentKey = `${card.user_id}:${entry.content.toLowerCase().trim()}`
-
-        if (shownContent.has(contentKey)) continue
-
-        const sub = entry.subcategory ? ` (${entry.subcategory})` : ''
-        newItems.push({
-          friend_id: card.user_id,
-          item_type: 'card',
-          reference_id: entry.id,
-          description: `${entry.category}${sub}: "${entry.content}"`,
-          created_at: card.created_at
-        })
-      }
+      const sub = entry.subcategory ? ` (${entry.subcategory})` : ''
+      newItems.push({
+        friend_id: card.user_id,
+        item_type: 'card',
+        reference_id: entry.id,
+        description: `${entry.category}${sub}: "${entry.content}"`,
+        created_at: card.created_at
+      })
     }
 
-    // 5b. Get reviews
-    const { data: reviews, error: reviewsError } = await supabase
-      .from('reviews')
-      .select('id, user_id, title, rating, created_at')
-      .in('user_id', friendIds)
-
-    if (reviewsError) throw reviewsError
-
-    for (const review of reviews || []) {
+    // 5b. Process reviews
+    for (const review of reviewsResult.data || []) {
       const contentKey = `${review.user_id}:${review.title.toLowerCase().trim()}`
 
       if (shownContent.has(contentKey)) continue
@@ -129,16 +128,8 @@ export const generateNewsletter = async (userId) => {
       })
     }
 
-    // 5c. Get activities
-    const { data: activities, error: activitiesError } = await supabase
-      .from('activities')
-      .select('id, user_id, description, city, created_at')
-      .in('user_id', friendIds)
-      .eq('is_archived', false)
-
-    if (activitiesError) throw activitiesError
-
-    for (const activity of activities || []) {
+    // 5c. Process activities
+    for (const activity of activitiesResult.data || []) {
       const contentKey = `${activity.user_id}:${activity.description.toLowerCase().trim()}`
 
       if (shownContent.has(contentKey)) continue

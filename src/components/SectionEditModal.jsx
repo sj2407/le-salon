@@ -15,25 +15,23 @@ const CATEGORY_CONFIG = {
 export const SectionEditModal = ({ category, entries, onSave, onClose }) => {
   const config = CATEGORY_CONFIG[category]
   const backdropRef = useRef(null)
-  const initialFormDataRef = useRef(null)
 
   // Initialize form data ONCE on mount using initializer function (not useEffect)
-  // This avoids any dependency issues and guarantees single initialization
   const [formData, setFormData] = useState(() => {
     const categoryEntries = entries.filter(e => e.category === category)
-    let data
     if (config.subcategories.length > 0) {
-      data = {}
+      const data = {}
       config.subcategories.forEach(sub => {
         const subEntries = categoryEntries.filter(e => e.subcategory === sub)
         data[sub] = subEntries.length > 0 ? subEntries.map(e => e.content) : ['']
       })
-    } else {
-      data = { content: categoryEntries[0]?.content || '' }
+      return data
     }
-    initialFormDataRef.current = JSON.stringify(data)
-    return data
+    return { content: categoryEntries[0]?.content || '' }
   })
+
+  // Store initial snapshot in state (not ref) to avoid reading ref during render
+  const [initialFormDataSnapshot] = useState(() => JSON.stringify(formData))
 
   const [musicMetadata, setMusicMetadata] = useState(() => {
     const categoryEntries = entries.filter(e => e.category === category)
@@ -55,7 +53,7 @@ export const SectionEditModal = ({ category, entries, onSave, onClose }) => {
     return metadata
   })
 
-  const isDirty = JSON.stringify(formData) !== initialFormDataRef.current
+  const isDirty = JSON.stringify(formData) !== initialFormDataSnapshot
 
   // Escape key handler - only close if form is clean
   useEffect(() => {

@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 
-export const VinylIcon = ({ className = "section-icon" }) => {
+export const VinylIcon = () => {
   const audioRef = useRef(null)
 
   const handleMouseEnter = () => {

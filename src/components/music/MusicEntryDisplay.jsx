@@ -89,7 +89,7 @@ export const MusicEntryDisplay = ({ entry }) => {
           currentlyPlayingAudio = audio
           await audio.play()
           setIsPlaying(true)
-        } catch (err) {
+        } catch (_err) {
           setHasError(true)
         } finally {
           setIsLoading(false)

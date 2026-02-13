@@ -1,4 +1,4 @@
-export const PerformingArtsIcon = ({ className = "section-icon" }) => {
+export const PerformingArtsIcon = () => {
   return (
     <div
       style={{

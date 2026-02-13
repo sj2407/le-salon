@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
-import { TAG_ICONS } from './Reviews'
+import { TAG_ICONS } from '../lib/reviewConstants'
 
 export const RecsFromFriends = () => {
   const { profile } = useAuth()

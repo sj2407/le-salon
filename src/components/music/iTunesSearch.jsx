@@ -10,22 +10,34 @@ export const ITunesSearch = ({ isOpen, onClose, onSelect, initialQuery = '' }) =
 
   const debouncedQuery = useDebounce(query, 500)
 
-  useEffect(() => {
+  // Reset state when modal opens (adjust during render, not in effect)
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen)
+  if (prevIsOpen !== isOpen) {
+    setPrevIsOpen(isOpen)
     if (isOpen) {
       setQuery(initialQuery)
       setResults([])
       setError('')
     }
-  }, [isOpen, initialQuery])
+  }
+
+  // Adjust state when debounced query changes (during render, not in effect)
+  const [prevDebouncedQuery, setPrevDebouncedQuery] = useState(debouncedQuery)
+  if (prevDebouncedQuery !== debouncedQuery) {
+    setPrevDebouncedQuery(debouncedQuery)
+    if (!debouncedQuery || debouncedQuery.length < 2) {
+      setResults([])
+      setIsLoading(false)
+    } else {
+      setIsLoading(true)
+      setError('')
+    }
+  }
 
   useEffect(() => {
     if (!debouncedQuery || debouncedQuery.length < 2) {
-      setResults([])
       return
     }
-
-    setIsLoading(true)
-    setError('')
 
     // Use Deezer API with JSONP (more reliable than iTunes)
     const callbackName = `deezer_cb_${Date.now()}_${Math.random().toString(36).slice(2)}`
