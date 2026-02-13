@@ -312,35 +312,30 @@ export const Salon = () => {
   return (
     <>
       <div className="container">
-        {/* Salon Header */}
-        <div style={{ textAlign: 'left', marginTop: '8px', marginBottom: '16px' }}>
-          <p style={{
-            fontSize: '10px',
-            color: '#777',
-            letterSpacing: '0.04em',
-            margin: 0
-          }}>
-            Semaine du {formatWeekDate(salonWeek.week_of)}
-          </p>
-        </div>
-
-        {/* Decorative couch image */}
-        <div style={{ position: 'relative' }}>
+        {/* Decorative couch — centered, fills top space */}
+        <div style={{ textAlign: 'center', margin: '-12px 0 -10px' }}>
           <img
             src="/images/salon-couch-ready.png"
             alt=""
             style={{
-              position: 'absolute',
-              top: '-55px',
-              right: '10%',
-              width: '112px',
-              height: '112px',
+              width: '152px',
+              height: '152px',
               objectFit: 'contain',
-              opacity: 1,
+              opacity: 0.85,
               pointerEvents: 'none'
             }}
           />
         </div>
+
+        {/* Week date */}
+        <p style={{
+          fontSize: '10px',
+          color: '#777',
+          letterSpacing: '0.04em',
+          margin: '0 0 4px 0'
+        }}>
+          Semaine du {formatWeekDate(salonWeek.week_of)}
+        </p>
 
         {/* The Parlor */}
         <ParlorText salonWeek={salonWeek} />
