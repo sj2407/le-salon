@@ -9,6 +9,7 @@ export const SignUp = () => {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [confirmationSent, setConfirmationSent] = useState(false)
 
   const { signUp } = useAuth()
   const navigate = useNavigate()
@@ -19,16 +20,48 @@ export const SignUp = () => {
     setLoading(true)
 
     try {
-      // Generate username from display name (lowercase, no spaces)
       const username = displayName.toLowerCase().replace(/\s+/g, '_')
-      await signUp(email, password, displayName, username)
-      navigate('/?tab=profile')
+      const result = await signUp(email, password, displayName, username)
+
+      // If session exists, email confirmation is disabled — navigate directly
+      if (result.session) {
+        navigate('/?tab=profile')
+      } else {
+        // Email confirmation required — show message
+        setConfirmationSent(true)
+      }
     } catch (err) {
       console.error('Signup error:', err)
-      setError(err.message || 'Failed to create account')
+      if (err.message?.includes('already been registered') || err.message?.includes('Database error saving new user') || err.message?.includes('already exists')) {
+        setError('This email is already registered. Try signing in instead.')
+      } else {
+        setError(err.message || 'Failed to create account')
+      }
     } finally {
       setLoading(false)
     }
+  }
+
+  if (confirmationSent) {
+    return (
+      <div className="auth-container">
+        <div className="auth-card" style={{ textAlign: 'center' }}>
+          <h1 className="auth-title">Le Salon</h1>
+          <p style={{ fontSize: '16px', color: '#2C2C2C', marginBottom: '12px' }}>
+            Check your email
+          </p>
+          <p style={{ fontSize: '14px', color: '#666', lineHeight: 1.6 }}>
+            We sent a confirmation link to <strong>{email}</strong>. Click the link to activate your account.
+          </p>
+          <p style={{ fontSize: '13px', color: '#999', marginTop: '16px' }}>
+            Don't see it? Check your spam folder.
+          </p>
+          <Link to="/signin" style={{ display: 'inline-block', marginTop: '20px', fontSize: '14px', color: '#4A7BA7' }}>
+            Back to Sign In
+          </Link>
+        </div>
+      </div>
+    )
   }
 
   return (

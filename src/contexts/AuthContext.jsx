@@ -71,27 +71,20 @@ export const AuthProvider = ({ children }) => {
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: { display_name: displayName, username }
+      }
     })
 
     if (authError) throw authError
 
-    // Create profile and get it back
-    const profileData = {
-      id: authData.user.id,
-      email,
-      display_name: displayName,
-      username,
+    // Profile is created automatically by database trigger (handle_new_user)
+    // If session exists (email confirmation disabled), set profile immediately
+    if (authData.session) {
+      const profileData = { id: authData.user.id, email, display_name: displayName, username }
+      setProfile(profileData)
+      setLoading(false)
     }
-
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .insert(profileData)
-
-    if (profileError) throw profileError
-
-    // Set profile immediately to avoid race condition with onAuthStateChange
-    setProfile(profileData)
-    setLoading(false)
 
     return authData
   }

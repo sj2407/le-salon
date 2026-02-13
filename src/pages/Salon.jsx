@@ -27,10 +27,23 @@ export const Salon = () => {
   // --- Data fetching ---
 
   const fetchCurrentWeek = useCallback(async () => {
+    const today = new Date().toISOString().split('T')[0]
+
+    // Check localStorage cache — week content only changes on Mondays
+    const cached = localStorage.getItem('salon_week')
+    if (cached) {
+      const parsed = JSON.parse(cached)
+      // Cache is valid if the stored week_of is still the most recent Monday <= today
+      // and no newer Monday has arrived since caching
+      if (parsed.week_of <= today && parsed._cachedUntil > today) {
+        return parsed
+      }
+    }
+
     const { data, error } = await supabase
       .from('salon_weeks')
       .select('*')
-      .is('archived_at', null)
+      .lte('week_of', today)
       .order('week_of', { ascending: false })
       .limit(1)
       .single()
@@ -38,6 +51,18 @@ export const Salon = () => {
     if (error && error.code !== 'PGRST116') {
       console.error('Error fetching salon week:', error)
     }
+
+    if (data) {
+      // Cache until the next Monday after this week_of
+      const weekDate = new Date(data.week_of + 'T00:00:00')
+      const nextMonday = new Date(weekDate)
+      nextMonday.setDate(weekDate.getDate() + 7)
+      localStorage.setItem('salon_week', JSON.stringify({
+        ...data,
+        _cachedUntil: nextMonday.toISOString().split('T')[0]
+      }))
+    }
+
     return data || null
   }, [])
 
