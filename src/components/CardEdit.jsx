@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { MusicEntryInput } from './music/MusicEntryInput'
+import { CATEGORY_CONFIG } from '../lib/cardConstants'
 import { ReadingIcon } from './icons/ReadingIcon'
 import { ListeningIcon } from './icons/ListeningIcon'
 import { WatchingIcon } from './icons/WatchingIcon'
@@ -8,14 +9,14 @@ import { PerformingArtsIcon } from './icons/PerformingArtsIcon'
 import { ObsessingIcon } from './icons/ObsessingIcon'
 import { AIPromptIcon } from './icons/AIPromptIcon'
 
-const CATEGORY_CONFIG = {
-  'Reading': { icon: ReadingIcon, subcategories: ['book', 'article'] },
-  'Listening': { icon: ListeningIcon, subcategories: ['music', 'podcast', 'audiobook'] },
-  'Watching': { icon: WatchingIcon, subcategories: ['tv', 'movie'] },
-  'Looking Forward To': { icon: LookingForwardIcon, subcategories: [] },
-  'Performing Arts and Exhibits': { icon: PerformingArtsIcon, subcategories: ['musical theatre', 'exhibits'] },
-  'Obsessing Over': { icon: ObsessingIcon, subcategories: [] },
-  'My latest AI prompt': { icon: AIPromptIcon, subcategories: [] }
+const CATEGORY_ICONS = {
+  'Reading': ReadingIcon,
+  'Listening': ListeningIcon,
+  'Watching': WatchingIcon,
+  'Looking Forward To': LookingForwardIcon,
+  'Performing Arts and Exhibits': PerformingArtsIcon,
+  'Obsessing Over': ObsessingIcon,
+  'My latest AI prompt': AIPromptIcon
 }
 
 function buildFormData(entries) {
@@ -58,7 +59,6 @@ export const CardEdit = ({ entries, displayName, onSave, onCancel }) => {
   const [prevEntries, setPrevEntries] = useState(entries)
   const [formData, setFormData] = useState(() => buildFormData(entries))
   const [musicMetadata, setMusicMetadata] = useState(() => buildMusicMetadata(entries))
-
   if (prevEntries !== entries) {
     setPrevEntries(entries)
     setFormData(buildFormData(entries))
@@ -179,7 +179,7 @@ export const CardEdit = ({ entries, displayName, onSave, onCancel }) => {
 
   const renderCategoryEdit = (categoryName, isFullWidth = false) => {
     const config = CATEGORY_CONFIG[categoryName]
-    const Icon = config.icon
+    const Icon = CATEGORY_ICONS[categoryName]
     const sectionClass = isFullWidth ? 'full-width-section' : 'section-box'
 
     // Special case for "Listening" to add "to"
@@ -311,6 +311,7 @@ export const CardEdit = ({ entries, displayName, onSave, onCancel }) => {
           Cancel
         </button>
       </div>
+
     </div>
   )
 }

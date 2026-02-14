@@ -77,7 +77,8 @@ export const ITunesSearch = ({ isOpen, onClose, onSelect, initialQuery = '' }) =
 
     return () => {
       clearTimeout(timeout)
-      if (window[callbackName]) delete window[callbackName]
+      // Replace with no-op so late JSONP responses don't throw ReferenceError
+      window[callbackName] = () => { delete window[callbackName] }
       if (script.parentNode) script.parentNode.removeChild(script)
     }
   }, [debouncedQuery])

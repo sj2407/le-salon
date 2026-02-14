@@ -1,7 +1,8 @@
 import { useState } from 'react'
+import { MusicEntryDisplay } from './music/MusicEntryDisplay'
+import { CATEGORY_CONFIG } from '../lib/cardConstants'
 import { ReadingIcon } from './icons/ReadingIcon'
 import { VinylIcon } from './icons/VinylIcon'
-import { MusicEntryDisplay } from './music/MusicEntryDisplay'
 import { WatchingIcon } from './icons/WatchingIcon'
 import { LookingForwardIcon } from './icons/LookingForwardIcon'
 import { PerformingArtsIcon } from './icons/PerformingArtsIcon'
@@ -11,14 +12,14 @@ import { FlippableSection } from './marginalia/FlippableSection'
 import { CardBack } from './marginalia/CardBack'
 import { CardFold } from './marginalia/CardFold'
 
-const CATEGORY_CONFIG = {
-  'Reading': { icon: ReadingIcon, subcategories: ['book', 'article'] },
-  'Listening': { icon: VinylIcon, subcategories: ['music', 'podcast', 'audiobook'] },
-  'Watching': { icon: WatchingIcon, subcategories: ['tv', 'movie'] },
-  'Looking Forward To': { icon: LookingForwardIcon, subcategories: [] },
-  'Performing Arts and Exhibits': { icon: PerformingArtsIcon, subcategories: ['musical theatre', 'exhibits'] },
-  'Obsessing Over': { icon: ObsessingIcon, subcategories: [] },
-  'My latest AI prompt': { icon: AIPromptIcon, subcategories: [] }
+const CATEGORY_ICONS = {
+  'Reading': ReadingIcon,
+  'Listening': VinylIcon,
+  'Watching': WatchingIcon,
+  'Looking Forward To': LookingForwardIcon,
+  'Performing Arts and Exhibits': PerformingArtsIcon,
+  'Obsessing Over': ObsessingIcon,
+  'My latest AI prompt': AIPromptIcon
 }
 
 const linkifyText = (text) => {
@@ -74,6 +75,8 @@ export const CardDisplay = ({
   isEditable = false,
   onEdit,
   onSectionEdit,
+  onDictate,
+  showDictateButton = false,
   // Marginalia props
   notes = [],
   isFriendView = false,
@@ -125,7 +128,7 @@ export const CardDisplay = ({
 
   const renderCategorySection = (categoryName, isFullWidth = false) => {
     const config = CATEGORY_CONFIG[categoryName]
-    const Icon = config.icon
+    const Icon = CATEGORY_ICONS[categoryName]
     const categoryEntries = getEntriesForCategory(categoryName)
     const sectionNotes = getNotesForSection(categoryName)
     const unreadNotes = getUnreadNotesForSection(categoryName)
@@ -285,16 +288,16 @@ export const CardDisplay = ({
 
   return (
     <div className="card" style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}>
-      <header className="card-header" style={{ marginBottom: '40px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '28px', marginBottom: '12px', marginLeft: '100px' }}>
-          <h1 className="card-name">{displayName}</h1>
+      <header className="card-header" style={{ marginBottom: isEditable ? '0px' : '40px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', marginBottom: '12px', marginLeft: '100px' }}>
+          <h1 className="card-name" style={{ transform: 'translateY(12px)' }}>{displayName}</h1>
           {photoUrl && (
             <img
               src={photoUrl}
               alt={displayName}
               style={{
-                width: '128px',
-                height: '128px',
+                width: '109px',
+                height: '109px',
                 borderRadius: '50%',
                 objectFit: 'cover',
                 border: '4px solid #2C2C2C',
@@ -306,6 +309,35 @@ export const CardDisplay = ({
         </div>
         {card && <p className="card-date">{formatDate(card.created_at)}</p>}
       </header>
+
+      {isEditable && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0px' }}>
+          <button onClick={onEdit} className="edit-button" style={{ margin: 0, paddingLeft: 0, fontSize: '21px' }}>
+            Edit My Card
+          </button>
+          {showDictateButton && (
+            <button
+              onClick={onDictate}
+              title="Dictate entries by voice"
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '2px',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2C2C2C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                <line x1="12" y1="19" x2="12" y2="23" />
+                <line x1="8" y1="23" x2="16" y2="23" />
+              </svg>
+            </button>
+          )}
+        </div>
+      )}
 
       <div className="grid">
         {renderCategorySection('Reading')}
@@ -320,11 +352,6 @@ export const CardDisplay = ({
         {renderCategorySection('My latest AI prompt', true)}
       </div>
 
-      {isEditable && (
-        <button onClick={onEdit} className="edit-button" style={{ marginTop: '20px', width: '100%' }}>
-          Edit My Card
-        </button>
-      )}
     </div>
   )
 }

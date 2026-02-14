@@ -38,7 +38,8 @@ export const MusicEntryDisplay = ({ entry }) => {
 
       const timeout = setTimeout(() => {
         if (window[callbackName]) {
-          delete window[callbackName]
+          // Replace with no-op so late JSONP responses don't throw ReferenceError
+          window[callbackName] = () => { delete window[callbackName] }
           if (script.parentNode) script.parentNode.removeChild(script)
           reject(new Error('Timeout'))
         }

@@ -1,16 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { MusicEntryInput } from './music/MusicEntryInput'
-
-const CATEGORY_CONFIG = {
-  'Reading': { subcategories: ['book', 'article'] },
-  'Listening': { subcategories: ['music', 'podcast', 'audiobook'] },
-  'Watching': { subcategories: ['tv', 'movie'] },
-  'Performing Arts and Exhibits': { subcategories: ['theater', 'concert', 'exhibit'] },
-  'Looking Forward To': { subcategories: [] },
-  'Obsessing Over': { subcategories: [] },
-  'My latest AI prompt': { subcategories: [] }
-}
+import { CATEGORY_CONFIG } from '../lib/cardConstants'
 
 export const SectionEditModal = ({ category, entries, onSave, onClose }) => {
   const config = CATEGORY_CONFIG[category]

@@ -4,6 +4,8 @@ import { supabase } from '../lib/supabase'
 import { CardDisplay } from '../components/CardDisplay'
 import { CardEdit } from '../components/CardEdit'
 import { SectionEditModal } from '../components/SectionEditModal'
+import { DictationModal } from '../components/DictationModal'
+import { isSpeechSupported } from '../lib/useSpeechRecognition'
 
 export const MyCard = () => {
   const { profile } = useAuth()
@@ -12,6 +14,8 @@ export const MyCard = () => {
   const [notes, setNotes] = useState([])
   const [isEditing, setIsEditing] = useState(false)
   const [editingSection, setEditingSection] = useState(null)
+  const [showDictation, setShowDictation] = useState(false)
+  const [pendingDictation, setPendingDictation] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -305,6 +309,26 @@ export const MyCard = () => {
     }
   }
 
+  const handleDictationAccepted = (newEntries) => {
+    setPendingDictation(newEntries)
+    setIsEditing(true)
+  }
+
+  const handleEditCancel = () => {
+    setIsEditing(false)
+    setPendingDictation(null)
+  }
+
+  const handleEditSave = async (newEntries) => {
+    setPendingDictation(null)
+    await handleSave(newEntries)
+  }
+
+  // Merge pending dictation entries with existing DB entries for the edit form
+  const editEntries = pendingDictation
+    ? [...entries, ...pendingDictation]
+    : entries
+
   if (loading) {
     return (
       <div className="container">
@@ -325,10 +349,10 @@ export const MyCard = () => {
     <div className="container">
       {isEditing ? (
         <CardEdit
-          entries={entries}
+          entries={editEntries}
           displayName={profile.display_name}
-          onSave={handleSave}
-          onCancel={() => setIsEditing(false)}
+          onSave={handleEditSave}
+          onCancel={handleEditCancel}
         />
       ) : (
         <>
@@ -339,6 +363,8 @@ export const MyCard = () => {
             photoUrl={profile.profile_photo_url}
             isEditable={true}
             onEdit={() => setIsEditing(true)}
+            onDictate={() => setShowDictation(true)}
+            showDictateButton={isSpeechSupported}
             onSectionEdit={(category) => setEditingSection(category)}
             notes={notes}
             currentUserId={profile.id}
@@ -353,6 +379,11 @@ export const MyCard = () => {
               onClose={() => setEditingSection(null)}
             />
           )}
+          <DictationModal
+            isOpen={showDictation}
+            onClose={() => setShowDictation(false)}
+            onAcceptEntries={handleDictationAccepted}
+          />
         </>
       )}
     </div>
