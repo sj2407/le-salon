@@ -43,6 +43,8 @@ Questions to answer:
 
 **The break must present the philosophy's actual argument, not just its conclusion.** Do not say "they rejected X and proposed Y." Show the reasoning: what question did they ask, what test did they apply, and why did the old answers fail that test? The reader should be able to follow the logic and understand why the conclusion follows.
 
+**Every claim attributed to a named thinker must be verified against the actual source before inclusion.** This applies not just to critiques but to any secondary figure mentioned in the entry. If Rousseau is cited, read Rousseau. If the entry says "Aquinas argued X," confirm X against the SEP or primary text. Inaccurate paraphrases of other thinkers undermine the credibility of the entire entry.
+
 ### 4. The Core Claim
 
 In plain language, what do these thinkers believe? What is the central insight? Avoid jargon. A smart friend who has never studied philosophy should understand this.
@@ -75,6 +77,8 @@ Anecdotes are not decoration. Every story in the entry must demonstrate a specif
 - What philosophical claim does this story illustrate?
 - Could a reader misinterpret this story in a way that contradicts the philosophy? If yes, the story needs framing or a different story should be used.
 - Does the story show a complete arc? (Not just the dramatic moment, but what happened because of it.)
+
+**The opening anecdote must include an explicit bridge to the philosophy.** After the story, a sentence or two must explain why this particular story sets up this particular philosophy. The reader should not have to guess the connection. The bridge should not be a generic statement ("This changed everything") but a specific claim about what the anecdote reveals about the thinker's perspective or method.
 
 **Bad example:** "Epictetus's master broke his leg. He said 'I told you so.' He limped for the rest of his life." (This makes Stoicism look like a philosophy of accepting abuse. It stops at the dramatic moment without showing what the philosophy actually enabled.)
 
@@ -117,7 +121,7 @@ Questions to answer:
 - What would this philosophy say about a specific contemporary situation?
 - Why might someone today find this useful or troubling?
 
-**Frame closing questions directly to the reader.** Do not use passive constructions like "this makes injustice easier to tolerate." Ask the reader what they think: "Does this discipline make you more effective in fighting injustice, or does it give you permission to endure what you should be refusing to accept?" The entry should end with a question the reader takes away with them.
+**The closing question must do two things at once.** First, it must put the reader inside the philosophy's practice by describing a situation that mirrors what the philosophy demands of its practitioners. If the philosophy is about endurance, describe a moment of endurance. If it is about action, describe an action. If it is about withdrawal, describe a withdrawal. The reader should recognize themselves in the situation. Second, it must surface the tension that the philosophy's critics identified. The question should make the reader feel both the pull of the philosophy and the weight of the objection in the same moment. The reader should leave unsure whether the philosophy served them or gave them cover. Frame directly to the reader using "you." Use concrete situations readers have lived through, not abstract moral dilemmas they observe from the outside.
 
 ### 11. Sources
 
@@ -143,6 +147,7 @@ Format:
 - Write prose that rewards rereading
 - Make every sentence do work (if a sentence could be cut without losing meaning, cut it)
 - Match the register of the prose to the spirit of the philosophy. A Stoic entry can afford austere, muscular language. An Epicurean entry should feel lighter and warmer. A Cynicism entry might be blunt and provocative. The writing should feel like the philosophy it describes.
+- Reserve "good," "bad," and other evaluative words for contexts where they carry philosophical weight (e.g., Plato's "the Good," Machiavelli's "to be good among so many who are not good"). In all other cases, replace with precise language: "serves," "damages," "helps," "harms."
 
 ### Do Not:
 - Use em-dashes (—)
@@ -163,6 +168,9 @@ Format:
 - Collapse distinct thinkers into a single position to create a convenient foil
 - Use flat adjectives that do no descriptive work ("good," "bad," "interesting," "important"). Replace with something specific. "The conversation was good" tells you nothing. "The conversation was honest" tells you something.
 - Conflate how a philosophy was caricatured with what its critics actually objected to. When describing reception or suppression, distinguish between the stated objection and the actual threat. Christianity called Epicureanism hedonism. The real threat was its materialism.
+- Use vague or hypothetical scenarios in closing questions ("When you watch someone you respect make a decision that is cruel but necessary" — nobody pictures themselves here. Describe a specific, recognizable situation the reader has been in, involving the kind of choice the philosophy actually asks its practitioners to make.)
+- Use decorative phrasing that sounds literary but dissolves under scrutiny ("in a single gesture," "intentions unreadable," "the architecture of thought"). If a phrase could not be replaced with a plain-language equivalent that means the same thing, it means nothing.
+- Contradict yourself across paragraphs. If paragraph A claims a philosopher holds position X, paragraph B must not claim the opposite without explicitly marking the shift. Read the entry as a sequence of claims and check that each one is consistent with what came before.
 
 ---
 

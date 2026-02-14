@@ -96,14 +96,14 @@ export const SignIn = () => {
               setForgotLoading(true)
               setForgotMessage('')
               setError('')
-              try {
-                await supabase.auth.resetPasswordForEmail(resetEmail, {
-                  redirectTo: `${window.location.origin}/reset-password`
-                })
-              } catch {
-                // Ignore errors to prevent email enumeration
+              const { error: resetError } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+                redirectTo: `${window.location.origin}/reset-password`
+              })
+              if (resetError?.status === 429 || resetError?.message?.includes('rate limit')) {
+                setForgotMessage('Too many attempts. Please wait a few minutes and try again.')
+              } else {
+                setForgotMessage('If an account exists for this email, a reset link has been sent. Check your inbox and spam.')
               }
-              setForgotMessage('If an account exists for this email, a reset link has been sent. Check your inbox and spam.')
               setForgotLoading(false)
             }}
             disabled={forgotLoading}

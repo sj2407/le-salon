@@ -43,13 +43,19 @@ export const AccountSettings = () => {
                 setEmailLoading(true)
                 setEmailMessage('')
                 try {
-                  const { error } = await supabase.auth.updateUser({ email: newEmail.trim() })
+                  const { error } = await supabase.auth.updateUser(
+                    { email: newEmail.trim() },
+                    { emailRedirectTo: `${window.location.origin}/account` }
+                  )
                   if (error) throw error
-                  setEmailMessage('Email updated successfully.')
+                  setEmailMessage('A confirmation link has been sent to your new email. Click it to complete the change.')
                   setNewEmail('')
-                  await refreshProfile()
                 } catch (err) {
-                  setEmailMessage(err.message || 'Failed to update email')
+                  if (err.status === 429 || err.message?.includes('rate limit')) {
+                    setEmailMessage('Too many attempts. Please wait a few minutes and try again.')
+                  } else {
+                    setEmailMessage(err.message || 'Failed to update email')
+                  }
                 } finally {
                   setEmailLoading(false)
                 }
@@ -65,7 +71,7 @@ export const AccountSettings = () => {
             <p style={{
               fontSize: '13px',
               marginTop: '8px',
-              color: emailMessage.includes('successfully') ? '#4A7BA7' : '#E8534F'
+              color: emailMessage.includes('confirmation') ? '#4A7BA7' : '#E8534F'
             }}>
               {emailMessage}
             </p>
