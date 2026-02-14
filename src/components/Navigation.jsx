@@ -69,7 +69,7 @@ export const Navigation = () => {
           </Link>
 
           {/* Right side: Search + Bell + Newsletter + Hamburger - absolutely positioned */}
-          <div style={{ position: 'absolute', right: '0', display: 'flex', alignItems: 'center', gap: '2px' }}>
+          <div style={{ position: 'absolute', right: '4px', display: 'flex', alignItems: 'center', gap: '0px' }}>
             <FriendSearch />
             <NotificationBell />
             <NewsletterBell />

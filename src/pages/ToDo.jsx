@@ -344,8 +344,8 @@ export const ToDo = () => {
         style={{
           position: 'absolute',
           top: '8px',
-          right: '15%',
-          width: '180px',
+          right: '12%',
+          width: '144px',
           height: 'auto',
           opacity: 0.75,
           pointerEvents: 'none',

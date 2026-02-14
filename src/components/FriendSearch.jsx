@@ -96,7 +96,6 @@ export const FriendSearch = () => {
           border: 'none',
           cursor: 'pointer',
           padding: '8px',
-          paddingRight: '0',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center'
@@ -144,7 +143,7 @@ export const FriendSearch = () => {
               padding: '12px',
               border: 'none',
               borderBottom: '1px solid #E8E0D0',
-              fontSize: '14px',
+              fontSize: '16px',
               outline: 'none',
               background: 'transparent'
             }}

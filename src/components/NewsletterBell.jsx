@@ -40,7 +40,7 @@ export const NewsletterBell = () => {
         background: 'none',
         border: 'none',
         cursor: 'pointer',
-        padding: '2px',
+        padding: '8px',
         position: 'relative',
         display: 'flex',
         alignItems: 'center'

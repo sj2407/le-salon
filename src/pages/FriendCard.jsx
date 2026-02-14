@@ -518,20 +518,24 @@ export const FriendCard = () => {
           {/* Tab Content */}
           <div style={{ marginTop: '-20px' }}>
           {activeTab === 'card' && (
-            <CardDisplay
-              card={card}
-              entries={entries}
-              displayName={friendProfile.display_name}
-              photoUrl={friendProfile.profile_photo_url}
-              isEditable={false}
-              isFriendView={true}
-              notes={myNotes}
-              currentUserId={profile.id}
-              onLeaveNote={handleLeaveNote}
-              onUpdateNote={handleUpdateNote}
-              onDeleteNote={handleDeleteNote}
-              cardOwnerName={friendProfile.display_name}
-            />
+            <div style={{ marginTop: '-40px' }}>
+              <div className="container">
+                <CardDisplay
+                  card={card}
+                  entries={entries}
+                  displayName={friendProfile.display_name}
+                  photoUrl={friendProfile.profile_photo_url}
+                  isEditable={false}
+                  isFriendView={true}
+                  notes={myNotes}
+                  currentUserId={profile.id}
+                  onLeaveNote={handleLeaveNote}
+                  onUpdateNote={handleUpdateNote}
+                  onDeleteNote={handleDeleteNote}
+                  cardOwnerName={friendProfile.display_name}
+                />
+              </div>
+            </div>
           )}
 
           {activeTab === 'reviews' && (
