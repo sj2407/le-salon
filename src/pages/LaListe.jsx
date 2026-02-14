@@ -46,8 +46,8 @@ export const LaListe = () => {
 
       if (error) throw error
       setItems(data || [])
-    } catch (err) {
-      console.error('Error fetching discovery items:', err)
+    } catch (_err) {
+      // silently handled
     } finally {
       setLoading(false)
     }
@@ -75,8 +75,8 @@ export const LaListe = () => {
 
       if (reviewsError) throw reviewsError
       setRecommendations(reviewsData || [])
-    } catch (err) {
-      console.error('Error fetching recommendations:', err)
+    } catch (_err) {
+      // silently handled
     }
   }
 
@@ -102,8 +102,7 @@ export const LaListe = () => {
       setNewDate('')
       setShowAddForm(false)
       await fetchItems()
-    } catch (err) {
-      console.error('Error adding item:', err)
+    } catch (_err) {
       alert('Could not add item. Please try again.')
     }
   }
@@ -120,8 +119,8 @@ export const LaListe = () => {
 
       if (error) throw error
       await fetchItems()
-    } catch (err) {
-      console.error('Error updating item:', err)
+    } catch (_err) {
+      // silently handled
     }
   }
 
@@ -134,8 +133,8 @@ export const LaListe = () => {
 
       if (error) throw error
       await fetchItems()
-    } catch (err) {
-      console.error('Error deleting item:', err)
+    } catch (_err) {
+      // silently handled
     }
   }
 
@@ -165,8 +164,8 @@ export const LaListe = () => {
 
       setEditingId(null)
       await fetchItems()
-    } catch (err) {
-      console.error('Error updating item:', err)
+    } catch (_err) {
+      // silently handled
     }
   }
 
@@ -183,8 +182,7 @@ export const LaListe = () => {
 
       if (error) throw error
       await fetchItems()
-    } catch (err) {
-      console.error('Error adopting recommendation:', err)
+    } catch (_err) {
       alert('Could not add to your list. Please try again.')
     }
   }

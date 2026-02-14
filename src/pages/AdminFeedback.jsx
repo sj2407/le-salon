@@ -53,8 +53,8 @@ export const AdminFeedback = () => {
       }
 
       setFeedback(feedbackData || [])
-    } catch (err) {
-      console.error('Error fetching feedback:', err)
+    } catch (_err) {
+      // silently handled
     } finally {
       setLoading(false)
     }
@@ -69,8 +69,8 @@ export const AdminFeedback = () => {
 
       if (error) throw error
       fetchFeedback()
-    } catch (err) {
-      console.error('Error updating feedback:', err)
+    } catch (_err) {
+      // silently handled
     }
   }
 

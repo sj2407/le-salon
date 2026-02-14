@@ -24,8 +24,8 @@ export const NewsletterBell = () => {
 
       if (error) throw error
       setUnreadCount(count || 0)
-    } catch (err) {
-      console.error('Error fetching unread newsletter count:', err)
+    } catch {
+      // silently handled
     }
   }
 

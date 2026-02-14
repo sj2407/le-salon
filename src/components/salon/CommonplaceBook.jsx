@@ -54,8 +54,8 @@ export const CommonplaceBook = ({ isOpen, onClose, entries, userId, onSubmit, on
         await onSubmit(trimmed)
       }
       setInputText('')
-    } catch (err) {
-      console.error('Error submitting entry:', err)
+    } catch {
+      // silently handled
     } finally {
       setSubmitting(false)
     }
@@ -156,6 +156,7 @@ export const CommonplaceBook = ({ isOpen, onClose, entries, userId, onSubmit, on
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyDown={handleKeyDown}
+                maxLength={5000}
                 placeholder="What's on your mind?"
                 style={{
                   width: '100%',

@@ -66,8 +66,8 @@ export const FriendSearch = () => {
         .limit(5)
 
       setResults(friends || [])
-    } catch (err) {
-      console.error('Search error:', err)
+    } catch {
+      // silently handled
     } finally {
       setLoading(false)
     }

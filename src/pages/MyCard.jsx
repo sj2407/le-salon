@@ -55,7 +55,6 @@ export const MyCard = () => {
         setEntries(entriesResult.data || [])
 
         if (notesResult.error) {
-          console.log('Notes fetch error (table may not exist):', notesResult.error.message)
           setNotes([])
         } else {
           setNotes(notesResult.data || [])
@@ -65,7 +64,6 @@ export const MyCard = () => {
         await createNewCard([])
       }
     } catch (err) {
-      console.error('Error fetching card:', err)
       setError(err.message)
     } finally {
       setLoading(false)
@@ -82,15 +80,12 @@ export const MyCard = () => {
         .order('created_at', { ascending: false })
 
       if (error) {
-        // Table might not exist yet, just log and continue
-        console.log('Notes fetch error (table may not exist):', error.message)
         setNotes([])
         return
       }
 
       setNotes(data || [])
-    } catch (err) {
-      console.log('Error fetching notes:', err)
+    } catch (_err) {
       setNotes([])
     }
   }
@@ -110,8 +105,8 @@ export const MyCard = () => {
 
       // Refresh notes
       await fetchNotes(card.id)
-    } catch (err) {
-      console.error('Error marking notes as read:', err)
+    } catch (_err) {
+      // silently handled
     }
   }
 
@@ -145,8 +140,8 @@ export const MyCard = () => {
 
       // Refresh notes
       await fetchNotes(card.id)
-    } catch (err) {
-      console.error('Error replying to note:', err)
+    } catch (_err) {
+      // silently handled
     }
   }
 
@@ -186,7 +181,6 @@ export const MyCard = () => {
       setCard(newCard)
       setNotes([]) // New card has no notes
     } catch (err) {
-      console.error('Error creating card:', err)
       setError(err.message)
       throw err
     }
@@ -195,17 +189,12 @@ export const MyCard = () => {
   const archiveCurrentCard = async () => {
     if (!card) return
 
-    try {
-      const { error } = await supabase
-        .from('cards')
-        .update({ is_current: false })
-        .eq('id', card.id)
+    const { error } = await supabase
+      .from('cards')
+      .update({ is_current: false })
+      .eq('id', card.id)
 
-      if (error) throw error
-    } catch (err) {
-      console.error('Error archiving card:', err)
-      throw err
-    }
+    if (error) throw error
   }
 
   const handleSectionSave = async (category, newCategoryEntries) => {

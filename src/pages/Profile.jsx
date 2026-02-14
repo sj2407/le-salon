@@ -37,8 +37,15 @@ export const Profile = () => {
   const handlePhotoChange = (e) => {
     const file = e.target.files[0]
     if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        setMessage('Photo must be under 5MB')
+        return
+      }
+      if (!file.type.startsWith('image/')) {
+        setMessage('File must be an image')
+        return
+      }
       setPhotoFile(file)
-      // Preview the photo
       const reader = new FileReader()
       reader.onloadend = () => {
         setPhotoUrl(reader.result)
@@ -98,7 +105,6 @@ export const Profile = () => {
       // Refresh profile in context without hard reload
       await refreshProfile()
     } catch (err) {
-      console.error('Error updating profile:', err)
       setMessage(err.message || 'Failed to update profile')
     } finally {
       setLoading(false)

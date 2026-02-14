@@ -23,8 +23,8 @@ export const FriendProfile = ({ friendId, friendName }) => {
 
       if (error) throw error
       setProfile(data)
-    } catch (err) {
-      console.error('Error fetching friend profile:', err)
+    } catch {
+      // silently handled
     } finally {
       setLoading(false)
     }

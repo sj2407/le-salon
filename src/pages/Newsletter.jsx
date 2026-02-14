@@ -23,8 +23,8 @@ export const Newsletter = () => {
     try {
       // Generate newsletter if needed (handles all logic internally)
       await generateNewsletter(profile.id)
-    } catch (err) {
-      console.error('Error generating newsletter:', err)
+    } catch (_err) {
+      // silently handled
     }
     // Always fetch newsletters, even if generation failed
     await fetchNewsletters()
@@ -100,8 +100,8 @@ export const Newsletter = () => {
         })
         setFriendProfiles(profilesMap)
       }
-    } catch (err) {
-      console.error('Error fetching newsletters:', err)
+    } catch (_err) {
+      // silently handled
     } finally {
       setLoading(false)
     }

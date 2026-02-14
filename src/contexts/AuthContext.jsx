@@ -61,8 +61,8 @@ export const AuthProvider = ({ children }) => {
 
       if (error) throw error
       setProfile(data)
-    } catch (error) {
-      console.error('Error fetching profile:', error)
+    } catch {
+      // silently handled
     } finally {
       setLoading(false)
     }

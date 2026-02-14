@@ -63,8 +63,8 @@ export const NotificationBell = () => {
 
       if (error) throw error
       setUnreadCount(count || 0)
-    } catch (err) {
-      console.error('Error fetching unread count:', err)
+    } catch {
+      // silently handled
     }
   }
 
@@ -79,8 +79,7 @@ export const NotificationBell = () => {
 
       if (error) throw error
       return data || []
-    } catch (err) {
-      console.error('Error fetching notifications:', err)
+    } catch {
       return []
     }
   }
@@ -95,8 +94,8 @@ export const NotificationBell = () => {
         .in('id', notificationIds)
 
       if (error) throw error
-    } catch (err) {
-      console.error('Error marking notifications as read:', err)
+    } catch {
+      // silently handled
     }
   }
 

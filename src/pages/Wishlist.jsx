@@ -49,8 +49,8 @@ export const Wishlist = () => {
 
       if (error) throw error
       setItems(data || [])
-    } catch (err) {
-      console.error('Error fetching wishlist:', err)
+    } catch (_err) {
+      // silently handled
     } finally {
       setLoading(false)
     }
@@ -111,7 +111,6 @@ export const Wishlist = () => {
       setShowModal(false)
       fetchWishlistItems()
     } catch (err) {
-      console.error('Error saving item:', err)
       setError(err.message)
     }
   }
@@ -127,8 +126,8 @@ export const Wishlist = () => {
 
       if (error) throw error
       fetchWishlistItems()
-    } catch (err) {
-      console.error('Error deleting item:', err)
+    } catch (_err) {
+      // silently handled
     }
   }
 

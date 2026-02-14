@@ -72,8 +72,8 @@ export const Friends = () => {
       setFriends(accepted)
       setPendingRequests(pending)
       setSentRequests(sent)
-    } catch (err) {
-      console.error('Error fetching friendships:', err)
+    } catch (_err) {
+      // silently handled
     } finally {
       setLoading(false)
     }
@@ -103,13 +103,13 @@ export const Friends = () => {
           })
 
         if (notifError) {
-          console.error('Notification insert failed:', notifError)
+          // silently handled
         }
       }
 
       await fetchFriendships()
-    } catch (err) {
-      console.error('Error accepting request:', err)
+    } catch (_err) {
+      // silently handled
     }
   }
 
@@ -122,8 +122,8 @@ export const Friends = () => {
 
       if (error) throw error
       await fetchFriendships()
-    } catch (err) {
-      console.error('Error declining request:', err)
+    } catch (_err) {
+      // silently handled
     }
   }
 

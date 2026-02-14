@@ -25,8 +25,8 @@ export const FriendWishlist = ({ friendId, friendName }) => {
 
       if (error) throw error
       setItems(data || [])
-    } catch (err) {
-      console.error('Error fetching friend wishlist:', err)
+    } catch {
+      // silently handled
     } finally {
       setLoading(false)
     }
@@ -48,7 +48,7 @@ export const FriendWishlist = ({ friendId, friendName }) => {
 
       // Create anonymous notification for wishlist owner
       if (item) {
-        const { error: notifError } = await supabase
+        await supabase
           .from('notifications')
           .insert({
             user_id: item.user_id,
@@ -59,14 +59,11 @@ export const FriendWishlist = ({ friendId, friendName }) => {
             message: `Someone claimed ${item.name} from your wishlist`
           })
 
-        if (notifError) {
-          console.error('Notification insert failed:', notifError)
-        }
       }
 
       fetchWishlistItems()
-    } catch (err) {
-      console.error('Error claiming item:', err)
+    } catch {
+      // silently handled
     }
   }
 
@@ -82,8 +79,8 @@ export const FriendWishlist = ({ friendId, friendName }) => {
 
       if (error) throw error
       fetchWishlistItems()
-    } catch (err) {
-      console.error('Error unclaiming item:', err)
+    } catch {
+      // silently handled
     }
   }
 

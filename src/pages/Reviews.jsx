@@ -85,8 +85,8 @@ export const Reviews = () => {
 
       if (error) throw error
       setReviews(data || [])
-    } catch (err) {
-      console.error('Error fetching reviews:', err)
+    } catch (_err) {
+      // silently handled
     } finally {
       setLoading(false)
     }
@@ -115,8 +115,8 @@ export const Reviews = () => {
         if (profilesError) throw profilesError
         setFriends(profilesData || [])
       }
-    } catch (err) {
-      console.error('Error fetching friends:', err)
+    } catch (_err) {
+      // silently handled
     }
   }
 
@@ -129,7 +129,6 @@ export const Reviews = () => {
         .order('created_at', { ascending: true })
 
       if (error) {
-        console.log('Review comments fetch error:', error.message)
         setReviewComments([])
         return
       }
@@ -138,8 +137,7 @@ export const Reviews = () => {
         ...c,
         commenter_name: c.from_user?.display_name || 'Friend'
       })))
-    } catch (err) {
-      console.log('Error fetching review comments:', err)
+    } catch (_err) {
       setReviewComments([])
     }
   }
@@ -168,8 +166,8 @@ export const Reviews = () => {
       })
 
       await fetchReviewComments()
-    } catch (err) {
-      console.error('Error replying to comment:', err)
+    } catch (_err) {
+      // silently handled
     }
   }
 
@@ -201,8 +199,7 @@ export const Reviews = () => {
 
       if (error) throw error
       setRecommendToFriends(data?.map(r => r.recommended_to_user_id) || [])
-    } catch (err) {
-      console.error('Error loading recommendations:', err)
+    } catch (_err) {
       setRecommendToFriends([])
     }
 
@@ -224,6 +221,12 @@ export const Reviews = () => {
     e.preventDefault()
     setError('')
 
+    const parsedRating = parseFloat(rating)
+    if (isNaN(parsedRating) || parsedRating < 0 || parsedRating > 10) {
+      setError('Rating must be between 0 and 10')
+      return
+    }
+
     try {
       let reviewId = editingReview?.id
 
@@ -233,7 +236,7 @@ export const Reviews = () => {
           .update({
             title,
             tag,
-            rating: parseFloat(rating),
+            rating: parsedRating,
             review_text: reviewText.trim() || null,
             updated_at: new Date().toISOString()
           })
@@ -247,7 +250,7 @@ export const Reviews = () => {
             user_id: profile.id,
             title,
             tag,
-            rating: parseFloat(rating),
+            rating: parsedRating,
             review_text: reviewText.trim() || null
           })
           .select()
@@ -283,7 +286,7 @@ export const Reviews = () => {
         if (recsError) throw recsError
 
         for (const friendId of newFriendIds) {
-          const { error: notifError } = await supabase
+          await supabase
             .from('notifications')
             .insert({
               user_id: friendId,
@@ -293,10 +296,6 @@ export const Reviews = () => {
               reference_name: title,
               message: `${profile.display_name} recommended ${title}`
             })
-
-          if (notifError) {
-            console.error('Notification insert failed:', notifError)
-          }
         }
       } else if (reviewId) {
         await supabase
@@ -308,7 +307,6 @@ export const Reviews = () => {
       setShowModal(false)
       fetchReviews()
     } catch (err) {
-      console.error('Error saving review:', err)
       setError(err.message)
     }
   }
@@ -324,8 +322,8 @@ export const Reviews = () => {
 
       if (error) throw error
       fetchReviews()
-    } catch (err) {
-      console.error('Error deleting review:', err)
+    } catch (_err) {
+      // silently handled
     }
   }
 
@@ -465,6 +463,7 @@ export const Reviews = () => {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   required
+                  maxLength={200}
                   placeholder="e.g., Avatar: The Way of Water"
                 />
               </div>
@@ -511,6 +510,7 @@ export const Reviews = () => {
                 <textarea
                   value={reviewText}
                   onChange={(e) => setReviewText(e.target.value)}
+                  maxLength={5000}
                   placeholder="Share your thoughts..."
                   style={{ minHeight: '120px' }}
                 />

@@ -91,8 +91,7 @@ export const DictationModal = ({ isOpen, onClose, onAcceptEntries }) => {
       }
       setParsedEntries(data.entries)
       setPhase('preview')
-    } catch (err) {
-      console.error('Dictation parse error:', err)
+    } catch (_err) {
       setErrorMessage('Could not parse your dictation. Please check your connection and try again.')
       setPhase('error')
     }
@@ -113,8 +112,7 @@ export const DictationModal = ({ isOpen, onClose, onAcceptEntries }) => {
       }
       setParsedEntries(data.entries)
       setPhase('preview')
-    } catch (err) {
-      console.error('Dictation retry error:', err)
+    } catch (_err) {
       setErrorMessage('Could not parse your dictation. Please try again.')
       setPhase('error')
     }

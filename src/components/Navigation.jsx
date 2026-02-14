@@ -15,8 +15,8 @@ export const Navigation = () => {
     try {
       await signOut()
       navigate('/signin')
-    } catch (err) {
-      console.error('Error signing out:', err)
+    } catch {
+      // silently handled
     }
   }
 

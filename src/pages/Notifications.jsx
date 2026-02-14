@@ -27,8 +27,8 @@ export const Notifications = () => {
 
       if (error) throw error
       setNotifications(data || [])
-    } catch (err) {
-      console.error('Error fetching notifications:', err)
+    } catch (_err) {
+      // silently handled
     } finally {
       setLoading(false)
     }

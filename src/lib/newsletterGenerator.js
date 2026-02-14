@@ -6,7 +6,6 @@ import { supabase } from './supabase'
  * - Tracks by content to prevent duplicates
  */
 export const generateNewsletter = async (userId) => {
-  try {
     // Step 1: Get today's date (for grouping)
     const today = new Date()
     const todayStr = today.toISOString().split('T')[0] // YYYY-MM-DD
@@ -195,9 +194,4 @@ export const generateNewsletter = async (userId) => {
     if (itemsError) throw itemsError
 
     return newsletter
-
-  } catch (error) {
-    console.error('Error generating newsletter:', error)
-    throw error
-  }
 }

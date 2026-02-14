@@ -37,26 +37,22 @@ export const FriendCard = () => {
     try {
       setLoading(true)
 
-      // Step 1: Verify friendship exists (gatekeeper — must be first)
-      const { data: friendshipData, error: friendshipError } = await supabase
-        .from('friendships')
-        .select('*')
-        .eq('status', 'accepted')
-        .or(`and(requester_id.eq.${profile.id},recipient_id.eq.${friendId}),and(requester_id.eq.${friendId},recipient_id.eq.${profile.id})`)
-        .single()
-
-      if (friendshipError || !friendshipData) {
-        setError('You are not friends with this user')
-        return
-      }
-
-      // Step 2: Fetch profile, card, reviews, and comments in parallel
-      const [profileResult, cardResult, reviewsResult, commentsResult] = await Promise.all([
+      // Fetch friendship check AND all data in one parallel batch
+      const [friendshipResult, profileResult, cardResult, reviewsResult, commentsResult] = await Promise.all([
+        supabase.from('friendships').select('id').eq('status', 'accepted')
+          .or(`and(requester_id.eq.${profile.id},recipient_id.eq.${friendId}),and(requester_id.eq.${friendId},recipient_id.eq.${profile.id})`)
+          .single(),
         supabase.from('profiles').select('*').eq('id', friendId).single(),
         supabase.from('cards').select('*').eq('user_id', friendId).eq('is_current', true).single(),
         supabase.from('reviews').select('*').eq('user_id', friendId).order('created_at', { ascending: false }),
         supabase.from('review_comments').select('*').eq('from_user_id', profile.id).eq('to_user_id', friendId)
       ])
+
+      // Check friendship before using data
+      if (friendshipResult.error || !friendshipResult.data) {
+        setError('You are not friends with this user')
+        return
+      }
 
       // Handle profile
       if (profileResult.error) throw profileResult.error
@@ -68,7 +64,6 @@ export const FriendCard = () => {
 
       // Handle review comments
       if (commentsResult.error) {
-        console.log('Review comments fetch error:', commentsResult.error.message)
         setReviewComments([])
       } else {
         setReviewComments(commentsResult.data || [])
@@ -93,14 +88,12 @@ export const FriendCard = () => {
         setEntries(entriesResult.data || [])
 
         if (notesResult.error) {
-          console.log('Notes fetch error (table may not exist):', notesResult.error.message)
           setMyNotes([])
         } else {
           setMyNotes(notesResult.data || [])
         }
       }
     } catch (err) {
-      console.error('Error fetching friend card:', err)
       setError(err.message)
     } finally {
       setLoading(false)
@@ -116,15 +109,12 @@ export const FriendCard = () => {
         .eq('from_user_id', profile.id)
 
       if (error) {
-        // Table might not exist yet, just log and continue
-        console.log('Notes fetch error (table may not exist):', error.message)
         setMyNotes([])
         return
       }
 
       setMyNotes(data || [])
-    } catch (err) {
-      console.log('Error fetching my notes:', err)
+    } catch (_err) {
       setMyNotes([])
     }
   }
@@ -144,13 +134,12 @@ export const FriendCard = () => {
         })
 
       if (error) {
-        console.error('Error saving note:', error)
         alert('Could not save note. Please try again.')
         return
       }
 
       // Create notification for the friend
-      const { error: notifError } = await supabase.from('notifications').insert({
+      await supabase.from('notifications').insert({
         user_id: friendProfile.id,
         type: 'card_note',
         actor_id: profile.id,
@@ -158,14 +147,9 @@ export const FriendCard = () => {
         reference_id: card.id
       })
 
-      if (notifError) {
-        console.error('Error creating notification:', notifError)
-      }
-
       // Refresh notes
       await fetchMyNotes(card.id)
-    } catch (err) {
-      console.error('Error leaving note:', err)
+    } catch (_err) {
       alert('Could not save note. Please try again.')
     }
   }
@@ -200,8 +184,8 @@ export const FriendCard = () => {
       if (card) {
         await fetchMyNotes(card.id)
       }
-    } catch (err) {
-      console.error('Error updating note:', err)
+    } catch (_err) {
+      // silently handled
     }
   }
 
@@ -219,8 +203,8 @@ export const FriendCard = () => {
       if (card) {
         await fetchMyNotes(card.id)
       }
-    } catch (err) {
-      console.error('Error deleting note:', err)
+    } catch (_err) {
+      // silently handled
     }
   }
 
@@ -233,13 +217,11 @@ export const FriendCard = () => {
         .eq('to_user_id', friendUserId)
 
       if (error) {
-        console.log('Review comments fetch error:', error.message)
         setReviewComments([])
         return
       }
       setReviewComments(data || [])
-    } catch (err) {
-      console.log('Error fetching review comments:', err)
+    } catch (_err) {
       setReviewComments([])
     }
   }
@@ -259,7 +241,6 @@ export const FriendCard = () => {
         })
 
       if (error) {
-        console.error('Error saving comment:', error)
         alert('Could not save comment. Please try again.')
         return
       }
@@ -275,8 +256,7 @@ export const FriendCard = () => {
       })
 
       await fetchReviewComments(friendProfile.id)
-    } catch (err) {
-      console.error('Error leaving review comment:', err)
+    } catch (_err) {
       alert('Could not save comment. Please try again.')
     }
   }
@@ -291,8 +271,8 @@ export const FriendCard = () => {
 
       if (error) throw error
       await fetchReviewComments(friendProfile.id)
-    } catch (err) {
-      console.error('Error updating review comment:', err)
+    } catch (_err) {
+      // silently handled
     }
   }
 
@@ -306,8 +286,8 @@ export const FriendCard = () => {
 
       if (error) throw error
       await fetchReviewComments(friendProfile.id)
-    } catch (err) {
-      console.error('Error deleting review comment:', err)
+    } catch (_err) {
+      // silently handled
     }
   }
 
@@ -390,8 +370,8 @@ export const FriendCard = () => {
       }
 
       await Promise.all(step2Promises)
-    } catch (err) {
-      console.error('Error fetching overlaps:', err)
+    } catch (_err) {
+      // silently handled
     }
   }
 

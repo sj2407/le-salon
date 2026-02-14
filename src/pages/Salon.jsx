@@ -55,7 +55,7 @@ export const Salon = () => {
       .single()
 
     if (error && error.code !== 'PGRST116') {
-      console.error('Error fetching salon week:', error)
+      // silently handled
     }
 
     if (data) {
@@ -126,8 +126,7 @@ export const Salon = () => {
       audio.onerror = () => setAudioState('idle')
       await audio.play()
       setAudioState('playing')
-    } catch (err) {
-      console.error('TTS error:', err)
+    } catch (_err) {
       setAudioState('idle')
     }
   }
@@ -139,10 +138,7 @@ export const Salon = () => {
       .eq('salon_week_id', weekId)
       .order('created_at', { ascending: true })
 
-    if (error) {
-      console.error('Error fetching responses:', error)
-      return
-    }
+    if (error) return
     setResponses(data || [])
   }, [])
 
@@ -153,10 +149,7 @@ export const Salon = () => {
       .eq('salon_week_id', weekId)
       .order('created_at', { ascending: false })
 
-    if (error) {
-      console.error('Error fetching commonplace entries:', error)
-      return
-    }
+    if (error) return
     setCommonplaceEntries(data || [])
   }, [])
 
@@ -287,7 +280,7 @@ export const Salon = () => {
       .eq('id', id)
 
     if (error) {
-      console.error('Error deleting response:', error)
+      // silently handled
     }
   }
 
@@ -317,7 +310,7 @@ export const Salon = () => {
       .eq('id', id)
 
     if (error) {
-      console.error('Error deleting entry:', error)
+      // silently handled
     }
   }
 

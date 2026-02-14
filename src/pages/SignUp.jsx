@@ -31,7 +31,6 @@ export const SignUp = () => {
         setConfirmationSent(true)
       }
     } catch (err) {
-      console.error('Signup error:', err)
       if (err.message?.includes('already been registered') || err.message?.includes('Database error saving new user') || err.message?.includes('already exists')) {
         setError('This email is already registered. Try signing in instead.')
       } else {

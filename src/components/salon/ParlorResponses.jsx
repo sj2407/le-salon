@@ -32,8 +32,8 @@ export const ParlorResponses = ({ responses, userId, onSubmit, onEdit, onDelete,
         await onSubmit(trimmed)
       }
       setInputText('')
-    } catch (err) {
-      console.error('Error submitting response:', err)
+    } catch {
+      // silently handled
     } finally {
       setSubmitting(false)
     }
@@ -111,6 +111,7 @@ export const ParlorResponses = ({ responses, userId, onSubmit, onEdit, onDelete,
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                   onKeyDown={handleKeyDown}
+                  maxLength={2000}
                   placeholder="Write your response..."
                   style={{
                     width: '100%',

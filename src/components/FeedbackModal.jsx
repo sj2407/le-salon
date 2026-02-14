@@ -38,7 +38,6 @@ export const FeedbackModal = ({ onClose }) => {
         onClose()
       }, 2000)
     } catch (err) {
-      console.error('Error submitting feedback:', err)
       setError(err.message)
       setSubmitting(false)
     }

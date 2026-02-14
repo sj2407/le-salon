@@ -83,7 +83,6 @@ export const History = () => {
         setHistoryData(historyRows)
       }
     } catch (err) {
-      console.error('Error fetching history:', err)
       setError(err.message)
     } finally {
       setLoading(false)
@@ -101,11 +100,7 @@ export const History = () => {
 
   const exportToPDF = () => {
     try {
-      console.log('Starting PDF export...')
-      console.log('jsPDF:', jsPDF)
-
       const doc = new jsPDF('landscape')
-      console.log('jsPDF instance created:', doc)
 
       // Add title
       doc.setFontSize(20)
@@ -122,9 +117,6 @@ export const History = () => {
         formatDate(row.date) + (row.isCurrent ? ' (Current)' : ''),
         ...allColumns.map(column => row.entries[column] || '—')
       ])
-
-      console.log('Table data prepared:', tableColumn.length, 'columns,', tableRows.length, 'rows')
-      console.log('autoTable function:', typeof autoTable)
 
       // Use autoTable as a standalone function
       autoTable(doc, {
@@ -152,16 +144,10 @@ export const History = () => {
         margin: { top: 40 }
       })
 
-      console.log('Table added, saving PDF...')
-
       // Save the PDF
       const filename = `le-salon-history-${profile.username}-${new Date().toISOString().split('T')[0]}.pdf`
       doc.save(filename)
-
-      console.log('PDF saved successfully:', filename)
     } catch (err) {
-      console.error('Error exporting PDF:', err)
-      console.error('Error stack:', err.stack)
       alert(`Failed to export PDF: ${err.message}`)
     }
   }

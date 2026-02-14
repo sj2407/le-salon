@@ -11,17 +11,17 @@ export const FindFriends = () => {
 
   const handleSearch = async (e) => {
     e.preventDefault()
-    if (!searchQuery.trim()) return
+    if (!searchQuery.trim() || !profile?.id) return
 
     try {
       setLoading(true)
       setMessage('')
 
-      // Search by username or email
+      // Search by username, email, or display name
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .or(`username.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`)
+        .or(`username.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,display_name.ilike.%${searchQuery}%`)
         .neq('id', profile.id)
         .limit(10)
 
@@ -50,8 +50,7 @@ export const FindFriends = () => {
       if (filteredResults.length === 0) {
         setMessage('No users found')
       }
-    } catch (err) {
-      console.error('Error searching:', err)
+    } catch (_err) {
       setMessage('Error searching for users')
     } finally {
       setLoading(false)
@@ -71,7 +70,7 @@ export const FindFriends = () => {
       if (error) throw error
 
       // Create notification for recipient
-      const { error: notifError } = await supabase
+      await supabase
         .from('notifications')
         .insert({
           user_id: recipientId,
@@ -80,14 +79,9 @@ export const FindFriends = () => {
           message: `${profile.display_name} wants to be friends`
         })
 
-      if (notifError) {
-        console.error('Notification insert failed:', notifError)
-      }
-
       setMessage('Friend request sent!')
       setSearchResults(searchResults.filter(user => user.id !== recipientId))
-    } catch (err) {
-      console.error('Error sending request:', err)
+    } catch (_err) {
       setMessage('Error sending friend request')
     }
   }

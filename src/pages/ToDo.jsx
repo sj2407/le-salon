@@ -93,8 +93,8 @@ export const ToDo = () => {
         .update({ is_archived: true })
         .lt('date_parsed', today)
         .eq('is_archived', false)
-    } catch (err) {
-      console.error('Error auto-archiving:', err)
+    } catch (_err) {
+      // silently handled
     }
   }
 
@@ -152,8 +152,8 @@ export const ToDo = () => {
       setActivities(activitiesData)
       setInterests(interestsByActivity)
       setProfiles(profilesMap)
-    } catch (err) {
-      console.error('Error fetching activities:', err)
+    } catch (_err) {
+      // silently handled
     } finally {
       setLoading(false)
     }
@@ -232,7 +232,6 @@ export const ToDo = () => {
       setShowModal(false)
       fetchActivities()
     } catch (err) {
-      console.error('Error saving activity:', err)
       setError(err.message)
     }
   }
@@ -248,8 +247,8 @@ export const ToDo = () => {
 
       if (error) throw error
       fetchActivities()
-    } catch (err) {
-      console.error('Error deleting activity:', err)
+    } catch (_err) {
+      // silently handled
     }
   }
 
@@ -292,14 +291,14 @@ export const ToDo = () => {
             })
 
           if (notifError) {
-            console.error('Notification insert failed:', notifError)
+            // silently handled
           }
         }
       }
 
       fetchActivities()
-    } catch (err) {
-      console.error('Error toggling interest:', err)
+    } catch (_err) {
+      // silently handled
     }
   }
 
@@ -562,6 +561,7 @@ export const ToDo = () => {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   required
+                  maxLength={300}
                   placeholder="e.g., Pottery class in Brooklyn"
                 />
               </div>
@@ -572,6 +572,7 @@ export const ToDo = () => {
                   type="text"
                   value={dateText}
                   onChange={(e) => setDateText(e.target.value)}
+                  maxLength={100}
                   placeholder="e.g., February, Feb 14, anytime"
                 />
               </div>
@@ -606,6 +607,7 @@ export const ToDo = () => {
                   type="text"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
+                  maxLength={200}
                   placeholder="e.g., Brooklyn, Manhattan"
                 />
               </div>
@@ -616,6 +618,7 @@ export const ToDo = () => {
                   type="text"
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
+                  maxLength={50}
                   placeholder="e.g., Free, $45"
                 />
               </div>

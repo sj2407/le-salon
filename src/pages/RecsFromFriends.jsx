@@ -45,8 +45,8 @@ export const RecsFromFriends = () => {
       if (reviewsError) throw reviewsError
 
       setRecommendations(reviewsData || [])
-    } catch (err) {
-      console.error('Error fetching recommendations:', err)
+    } catch (_err) {
+      // silently handled
     } finally {
       setLoading(false)
     }

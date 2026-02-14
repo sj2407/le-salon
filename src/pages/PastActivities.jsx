@@ -73,8 +73,8 @@ export const PastActivities = () => {
       }
 
       setActivities(activitiesData)
-    } catch (err) {
-      console.error('Error fetching past activities:', err)
+    } catch (_err) {
+      // silently handled
     } finally {
       setLoading(false)
     }
