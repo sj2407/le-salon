@@ -1,43 +1,63 @@
 # Le Salon
 
-A private social app where friends share what's currently occupying their minds - what they're reading, listening to, watching, and planning to do. Le Salon combines personal interest tracking with social features like reviews and shared activity planning.
+A private social app where friends share what's currently occupying their minds and engage in weekly philosophical discussion. Le Salon combines personal interest tracking, reviews, shared activity planning, and a curated intellectual space called The Salon.
 
 ## Features
 
-### Core Features
-- **My Card**: Create and edit your current interest card with 5 categories (reading, listening, watching, looking forward to, obsessing over)
-- **History**: Private timeline of all your past cards - a personal diary of your evolving interests
-- **Friends**: Connect with friends via search and friend requests
-- **Friend Cards**: View friends' current cards and their reviews
+### The Salon
+The home page and intellectual heart of the app. Two elements:
+- **The Parlor**: A new philosophical essay every week, presented in a book-reader layout with adjustable text size and text-to-speech audio playback. Users can share their reflections in a collapsible "Vos réflexions" thread with real-time updates
+- **The Commonplace Book**: A shared notebook accessible via a floating typewriter icon. Friends write and read entries together, with a badge showing unread count. Opens as a full-screen overlay
 
-### Reviews
-- **Rate & Review**: Share your thoughts on movies, books, podcasts, shows, and albums
-- **Rating System**: 0-10 scale with decimal precision (e.g., 7.5/10)
-- **Tag Filters**: Filter reviews by media type (movie 🎬, book 📖, podcast 🎧, show 📺, album 💿)
-- **Collapsible Content**: Compact view with expandable full text
-- **Friend Reviews**: See what your friends are rating and reviewing
+Content auto-rotates every Monday. Each entry covers a philosophical movement with historical context, key arguments, critiques, and a closing question for discussion.
+
+### My Corner
+A tabbed hub for personal content:
+- **Card**: Your current interest card with 7 categories (Reading, Listening, Watching, Looking Forward To, Performing Arts and Exhibits, Obsessing Over, My latest AI prompt). Supports voice dictation via the microphone button and iTunes music search for the Listening category
+- **History**: Private timeline of all your past cards, a personal diary of your evolving interests
+- **Reviews**: Rate and review movies, books, podcasts, shows, albums, performing arts, exhibitions, and more on a 0-10 scale. Recommend reviews to specific friends. Paragraph-level comments on review text
+- **La Liste**: A curated list of recommendations from friends. See what friends have flagged for you across all media types
+- **Wishlist**: Create a wishlist of items you'd love to receive. Friends can anonymously claim items to avoid duplicate gifts
+- **Profile**: Edit your display name, bio, and avatar
+
+### Marginalia
+Leave private notes on friends' cards. Flip a card over to see and write annotations, like scribbling in the margins of a book.
 
 ### Activity Board
 - **Shared Planning**: Post activities and events you want to do with friends
 - **Multi-City Support**: Filter activities by city (New York, London, Paris)
-- **Interest Tracking**: Express interest in friends' activities with a simple + button
+- **Interest Tracking**: Express interest in friends' activities
 - **Auto-Archive**: Past activities automatically archive based on date
 - **Flexible Dates**: Support for specific dates, month-only, or "anytime"
 - **Location & Price**: Add venue details and cost information
 
+### Social
+- **Friends**: Search by username, send and accept friend requests
+- **Friend Cards**: View friends' current cards, reviews, wishlists, and profiles
+- **Notifications**: Real-time activity feed (friend requests, activity interest, review recommendations, wishlist claims, card notes). Bell icon with unread count
+- **Newsletter**: Weekly digest preview of friend activity
+- **Friend Search**: Quick search from the nav bar
+
+### Account
+- **Account Settings**: Change password, manage email
+- **Forgot Password / Reset Password**: Full password recovery flow
+
 ### Design
-- **Beautiful Aesthetic**: Hand-drawn fonts (Caveat), warm cream color palette
-- **Compact Cards**: Clean, space-efficient design optimized for mobile and desktop
-- **Subtle Icons**: Icon-based UI for edit/delete actions
+- **Warm Aesthetic**: Hand-drawn fonts (Caveat), cream color palette, no borders (boxShadow only)
+- **Responsive**: Optimized for mobile and desktop
+- **Animations**: Gentle floating and swaying effects on decorative elements
+- **PWA**: Progressive Web App support for mobile installation
 
 ## Tech Stack
 
-- **Frontend**: React + Vite
-- **Routing**: React Router
-- **Backend**: Supabase (Auth + PostgreSQL)
+- **Frontend**: React 19 + Vite 7
+- **Routing**: React Router 7
+- **Backend**: Supabase (Auth + PostgreSQL + Realtime subscriptions)
+- **Animations**: Framer Motion
+- **PDF Export**: jsPDF + jspdf-autotable
 - **Styling**: Custom CSS with Google Fonts (Caveat + Source Serif 4)
+- **Testing**: Playwright (E2E)
 - **Hosting**: Vercel
-- **PWA**: Progressive Web App support for mobile installation
 
 ## Setup Instructions
 
@@ -179,59 +199,57 @@ The app should now be running at `http://localhost:5173`
 
 ### Getting Started
 1. **Sign Up**: Create an account with email, password, display name, and username
-2. **Create Your Card**: Fill in your current interests across 5 categories
-3. **Find Friends**: Search by email or username and send friend requests
-4. **Explore**: View friends' cards, add reviews, and plan activities together
-
-### Managing Your Card
-- Edit your card anytime - previous versions are automatically saved to History
-- View your personal timeline in the History page
-- Friends can only see your current card, not your history
-
-### Reviews
-1. Click **Reviews** in the navigation
-2. Click **Add Review** to rate something new
-3. Select a tag (movie, book, podcast, show, album, other)
-4. Add a rating (0-10) and optional review text
-5. Use tag filters to browse reviews by type
-6. Click **+** to expand and read full reviews
-
-### Activity Board
-1. Click **Activity Board** in the navigation
-2. Click **Add Activity** to post something you want to do
-3. Select a city, add date/location/price details
-4. Friends can click **+** to show interest
-5. Use the city filter to see activities in specific locations
-6. Past activities automatically archive based on date
+2. **Visit The Salon**: Read this week's philosophical essay and share your reflections
+3. **Create Your Card**: Go to My Corner and fill in your current interests across 7 categories
+4. **Find Friends**: Search by username and send friend requests
+5. **Explore**: View friends' cards, add reviews, plan activities, and write in the Commonplace Book
 
 ## Project Structure
 
 ```
 src/
 ├── components/
-│   ├── icons/          # SVG icon components
-│   ├── CardDisplay.jsx # Display card in view mode
-│   ├── CardEdit.jsx    # Edit card form
-│   └── Navigation.jsx  # Top nav bar
+│   ├── salon/            # Salon components (ParlorText, ParlorResponses, CommonplaceBook, etc.)
+│   ├── marginalia/       # Card annotation system
+│   ├── music/            # iTunes search integration
+│   ├── review-comments/  # Paragraph-level review comments
+│   ├── icons/            # SVG icon components
+│   ├── CardDisplay.jsx   # Card view mode with flip animation
+│   ├── CardEdit.jsx      # Card edit form
+│   ├── DictationModal.jsx # Voice dictation overlay
+│   ├── ReviewsDisplay.jsx # Shared reviews component
+│   ├── WishlistDisplay.jsx # Shared wishlist component
+│   ├── ProfileDisplay.jsx  # Shared profile display
+│   ├── Navigation.jsx    # Top nav with search, notifications, newsletter
+│   └── NotificationBell.jsx # Real-time notification indicator
 ├── contexts/
-│   └── AuthContext.jsx # Auth state management
+│   └── AuthContext.jsx    # Auth state management
+├── hooks/
+│   └── useDebounce.js     # Search debouncing
 ├── lib/
-│   └── supabase.js     # Supabase client
+│   ├── supabase.js        # Supabase client
+│   ├── cardConstants.js   # Shared card category config
+│   ├── reviewConstants.js # Review tag constants
+│   ├── timeUtils.js       # Relative time formatting
+│   ├── markdownUtils.jsx  # Lightweight markdown renderer
+│   ├── useSpeechRecognition.js # Web Speech API wrapper
+│   └── newsletterUtils.js # Newsletter generation
 ├── pages/
-│   ├── SignUp.jsx        # Sign up page
-│   ├── SignIn.jsx        # Sign in page
-│   ├── MyCard.jsx        # Current card (home)
-│   ├── History.jsx       # Past cards timeline
-│   ├── Reviews.jsx       # Reviews list with filters
-│   ├── ToDo.jsx          # Activity board
-│   ├── PastActivities.jsx # Archived activities
-│   ├── Friends.jsx       # Friends list + requests
-│   ├── FindFriends.jsx   # Search and add friends
-│   ├── FriendCard.jsx    # View friend's card + reviews
-│   └── Profile.jsx       # User profile settings
-├── App.jsx             # Routes and auth
-├── main.jsx            # Entry point
-└── index.css           # Global styles
+│   ├── Salon.jsx          # Weekly philosophy + Commonplace Book
+│   ├── MyCorner.jsx       # Tabbed hub (Card, History, Reviews, La Liste, Wishlist, Profile)
+│   ├── MyCard.jsx         # Current card with voice dictation
+│   ├── LaListe.jsx        # Friend recommendations
+│   ├── Reviews.jsx        # Reviews with filters
+│   ├── ToDo.jsx           # Activity board
+│   ├── Friends.jsx        # Friends list + requests
+│   ├── FriendCard.jsx     # Friend card + reviews view
+│   ├── Notifications.jsx  # Activity feed
+│   ├── Newsletter.jsx     # Weekly digest
+│   ├── Account.jsx        # Account settings
+│   └── Help.jsx           # App guide
+├── App.jsx                # Routes with lazy loading
+├── main.jsx               # Entry point
+└── index.css              # Global styles + animations
 ```
 
 ## Design System
@@ -253,6 +271,8 @@ src/
 - Podcast: 🎧 `#D0E0D0` (sage green)
 - Show: 📺 `#D0D8E8` (soft blue)
 - Album: 💿 `#E0D8E8` (lavender)
+- Performing Arts: 🎭
+- Exhibition: 🖼️
 - Other: ✨ `#E0E0E0` (gray)
 
 ### Layout Rules
@@ -362,12 +382,15 @@ Views that exist in both My Corner and Friend view use shared components:
 
 - Row Level Security (RLS) enabled on all tables
 - Users can only see:
-  - Their own data (profile, cards, history, reviews, activities)
-  - Current cards and reviews of accepted friends
+  - Their own data (profile, cards, history, reviews, activities, wishlist)
+  - Current cards, reviews, and wishlists of accepted friends
+  - Salon content (parlor responses, commonplace entries) from all users
   - Activities posted by anyone in their friend network
   - Friend requests they're involved in
 - Passwords are hashed by Supabase Auth
-- API keys are environment variables, never committed to git
+- API keys and access tokens are environment variables, never committed to git
+- Supabase Realtime subscriptions respect RLS policies
+- Email delivery via SQL auth hook + Resend API (key stored in Supabase Vault)
 
 ## Deployment
 
@@ -391,13 +414,12 @@ Make sure to run all SQL migrations in your production Supabase project before d
 
 ## Future Enhancements
 
-- Notifications (email or push)
-- Comments on reviews
+- Push notifications (currently in-app only)
 - Recurring activities
-- Integration with external services (Goodreads, Spotify, etc.)
-- Custom city options
 - Activity calendar view
 - Export personal data
+- LLM-powered recommendations based on review history
+- Additional external service integrations (Goodreads, Spotify)
 
 ## License
 

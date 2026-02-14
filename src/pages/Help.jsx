@@ -13,12 +13,43 @@ export const Help = () => {
         marginBottom: '24px'
       }}>
         <p style={{ fontSize: '16px', lineHeight: '1.6', marginBottom: '20px' }}>
-          Le Salon is your personal space to share what you're into right now with your friends.
-          Think of it as a living snapshot of your interests, activities, and recommendations.
+          Le Salon is your personal space to share what you're into right now with your friends,
+          and a shared intellectual space where you gather each week around a new idea.
         </p>
 
-        {/* My Card Section */}
+        {/* The Salon Section */}
         <div style={{ marginBottom: '32px' }}>
+          <h2 className="handwritten" style={{ fontSize: '32px', marginBottom: '16px', color: '#2C2C2C' }}>
+            🏛️ The Salon
+          </h2>
+          <p style={{ fontSize: '15px', lineHeight: '1.6', marginBottom: '12px' }}>
+            The home page. Each week, a new philosophical essay appears in <strong>The Parlor</strong>,
+            covering a different movement in the history of ideas. Read it, adjust the text size to your liking,
+            or listen with the audio player.
+          </p>
+          <ul style={{ fontSize: '15px', lineHeight: '1.8', marginLeft: '24px', marginBottom: '12px' }}>
+            <li><strong>Vos réflexions</strong> — share your thoughts on the week's theme and see what friends wrote</li>
+            <li><strong>The Commonplace Book</strong> — tap the typewriter icon to open a shared notebook where anyone can write. A badge shows how many new entries you haven't seen</li>
+            <li>New essays appear every Monday automatically</li>
+          </ul>
+          <p style={{ fontSize: '14px', fontStyle: 'italic', color: '#666' }}>
+            💡 Tip: Use the Aa slider to adjust text size and the play button to listen to the essay read aloud!
+          </p>
+        </div>
+
+        {/* My Corner Section */}
+        <div style={{ marginBottom: '32px', borderTop: '1px dashed #E0E0E0', paddingTop: '24px' }}>
+          <h2 className="handwritten" style={{ fontSize: '32px', marginBottom: '16px', color: '#2C2C2C' }}>
+            🪴 My Corner
+          </h2>
+          <p style={{ fontSize: '15px', lineHeight: '1.6' }}>
+            Your personal hub with six tabs: Card, History, Reviews, La Liste, Wishlist, and Profile.
+            Everything about you lives here.
+          </p>
+        </div>
+
+        {/* My Card Section */}
+        <div style={{ marginBottom: '32px', borderTop: '1px dashed #E0E0E0', paddingTop: '24px' }}>
           <h2 className="handwritten" style={{ fontSize: '32px', marginBottom: '16px', color: '#2C2C2C' }}>
             📇 My Card
           </h2>
@@ -27,14 +58,15 @@ export const Help = () => {
           </p>
           <ul style={{ fontSize: '15px', lineHeight: '1.8', marginLeft: '24px', marginBottom: '12px' }}>
             <li><strong>Reading</strong> - Books, articles, or anything you're diving into</li>
-            <li><strong>Listening to</strong> - Music, podcasts, audiobooks</li>
+            <li><strong>Listening to</strong> - Music, podcasts, audiobooks. Use the music search to find albums and songs</li>
             <li><strong>Watching</strong> - Shows, movies, YouTube channels</li>
-            <li><strong>Obsessing over</strong> - Whatever's capturing your attention</li>
             <li><strong>Looking forward to</strong> - Upcoming plans and excitement</li>
+            <li><strong>Performing Arts and Exhibits</strong> - Theatre, musicals, gallery shows</li>
+            <li><strong>Obsessing over</strong> - Whatever's capturing your attention</li>
             <li><strong>Latest AI prompt</strong> - Fun conversations with AI</li>
           </ul>
           <p style={{ fontSize: '14px', fontStyle: 'italic', color: '#666' }}>
-            💡 Tip: Click the vinyl, book, TV, or other icons to see them come to life!
+            💡 Tip: Tap the microphone icon to dictate entries by voice instead of typing!
           </p>
         </div>
 
@@ -46,6 +78,7 @@ export const Help = () => {
           <p style={{ fontSize: '15px', lineHeight: '1.6' }}>
             Your history page keeps a record of all your past cards. See how your interests have evolved over time.
             Each row shows what you were into on a specific day—like a personal time capsule of your cultural life.
+            Only you can see your history.
           </p>
         </div>
 
@@ -55,16 +88,31 @@ export const Help = () => {
             ⚖️ Reviews
           </h2>
           <p style={{ fontSize: '15px', lineHeight: '1.6', marginBottom: '12px' }}>
-            Rate and review movies, books, shows, albums, and more on a scale of 0-10.
+            Rate and review movies, books, podcasts, shows, albums, performing arts, exhibitions, and more on a scale of 0-10.
           </p>
           <ul style={{ fontSize: '15px', lineHeight: '1.8', marginLeft: '24px', marginBottom: '12px' }}>
             <li>Write reviews to remember your thoughts</li>
             <li>Recommend reviews to specific friends</li>
             <li>See what friends have recommended to you</li>
             <li>Filter by category (movies, books, podcasts, etc.)</li>
+            <li>Leave paragraph-level comments on friends' reviews</li>
           </ul>
           <p style={{ fontSize: '14px', fontStyle: 'italic', color: '#666' }}>
             💡 Tip: Use the post-it style cards to jot down quick ratings or detailed thoughts!
+          </p>
+        </div>
+
+        {/* La Liste Section */}
+        <div style={{ marginBottom: '32px', borderTop: '1px dashed #E0E0E0', paddingTop: '24px' }}>
+          <h2 className="handwritten" style={{ fontSize: '32px', marginBottom: '16px', color: '#2C2C2C' }}>
+            📋 La Liste
+          </h2>
+          <p style={{ fontSize: '15px', lineHeight: '1.6', marginBottom: '12px' }}>
+            Your curated inbox of recommendations from friends. When a friend recommends a review to you,
+            it appears here. Think of it as a reading/watching/listening list built by the people who know you best.
+          </p>
+          <p style={{ fontSize: '14px', fontStyle: 'italic', color: '#666' }}>
+            💡 Tip: Check La Liste regularly — it's the best way to discover what your friends think you'll love!
           </p>
         </div>
 
@@ -96,11 +144,23 @@ export const Help = () => {
             Connect with friends to see their cards and share your interests.
           </p>
           <ul style={{ fontSize: '15px', lineHeight: '1.8', marginLeft: '24px' }}>
-            <li>Search for friends by username</li>
+            <li>Search for friends by username (use the magnifying glass in the nav bar for quick search)</li>
             <li>Send and accept friend requests</li>
-            <li>View friends' current cards and profiles</li>
+            <li>View friends' current cards, reviews, wishlists, and profiles</li>
             <li>See what your friends are into right now</li>
           </ul>
+        </div>
+
+        {/* Marginalia Section */}
+        <div style={{ marginBottom: '32px', borderTop: '1px dashed #E0E0E0', paddingTop: '24px' }}>
+          <h2 className="handwritten" style={{ fontSize: '32px', marginBottom: '16px', color: '#2C2C2C' }}>
+            🖋️ Marginalia
+          </h2>
+          <p style={{ fontSize: '15px', lineHeight: '1.6' }}>
+            Leave notes on friends' cards, like scribbling in the margins of a book.
+            When you view a friend's card, flip it over to see and write annotations.
+            You'll get a notification when someone leaves a note on yours.
+          </p>
         </div>
 
         {/* Wishlist Section */}
@@ -136,9 +196,32 @@ export const Help = () => {
             <li>See when someone is interested in your activities</li>
             <li>Know when friends recommend reviews to you</li>
             <li>Get an alert when someone claims a wishlist item (anonymous)</li>
+            <li>See when someone leaves a note on your card</li>
           </ul>
           <p style={{ fontSize: '14px', fontStyle: 'italic', color: '#666' }}>
             💡 Tip: Click the bell to see all unread notifications—they're automatically marked as read when you view them!
+          </p>
+        </div>
+
+        {/* Newsletter Section */}
+        <div style={{ marginBottom: '32px', borderTop: '1px dashed #E0E0E0', paddingTop: '24px' }}>
+          <h2 className="handwritten" style={{ fontSize: '32px', marginBottom: '16px', color: '#2C2C2C' }}>
+            📰 Newsletter
+          </h2>
+          <p style={{ fontSize: '15px', lineHeight: '1.6' }}>
+            A weekly digest of what your friends have been up to — new cards, reviews, and activity.
+            Access it from the newspaper icon in the nav bar.
+          </p>
+        </div>
+
+        {/* Account Section */}
+        <div style={{ marginBottom: '32px', borderTop: '1px dashed #E0E0E0', paddingTop: '24px' }}>
+          <h2 className="handwritten" style={{ fontSize: '32px', marginBottom: '16px', color: '#2C2C2C' }}>
+            ⚙️ Account Settings
+          </h2>
+          <p style={{ fontSize: '15px', lineHeight: '1.6' }}>
+            Change your password or manage your account from the menu. If you forget your password,
+            use the reset link on the sign-in page to receive a recovery email.
           </p>
         </div>
 
@@ -157,8 +240,9 @@ export const Help = () => {
             <li>Fill out your profile with a display name and bio</li>
             <li>Create your first card with what you're currently into</li>
             <li>Add some friends to share with</li>
+            <li>Read this week's Parlor essay and leave a reflection</li>
             <li>Start posting reviews, activities, and wishlist items</li>
-            <li>Check back weekly to update your card!</li>
+            <li>Check back weekly to update your card and read the new essay!</li>
           </ol>
         </div>
       </div>
