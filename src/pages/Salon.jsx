@@ -35,13 +35,18 @@ export const Salon = () => {
   const fetchCurrentWeek = useCallback(async () => {
     const today = new Date().toISOString().split('T')[0]
 
-    // Check localStorage cache — week content only changes on Mondays
-    const cached = localStorage.getItem('salon_week')
+    // Which Monday are we in? (UTC)
+    const now = new Date()
+    const utcDay = now.getUTCDay()
+    const diff = utcDay === 0 ? 6 : utcDay - 1
+    const thisMonday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - diff))
+    const thisMondayStr = thisMonday.toISOString().split('T')[0]
+
+    // Cache is valid only if it was set during the same week
+    const cached = localStorage.getItem('salon_week_v2')
     if (cached) {
       const parsed = JSON.parse(cached)
-      // Cache is valid if the stored week_of is still the most recent Monday <= today
-      // and no newer Monday has arrived since caching
-      if (parsed.week_of <= today && parsed._cachedUntil > today) {
+      if (parsed._weekMonday === thisMondayStr) {
         return parsed
       }
     }
@@ -59,13 +64,9 @@ export const Salon = () => {
     }
 
     if (data) {
-      // Cache until the next Monday after this week_of
-      const weekDate = new Date(data.week_of + 'T00:00:00')
-      const nextMonday = new Date(weekDate)
-      nextMonday.setDate(weekDate.getDate() + 7)
-      localStorage.setItem('salon_week', JSON.stringify({
+      localStorage.setItem('salon_week_v2', JSON.stringify({
         ...data,
-        _cachedUntil: nextMonday.toISOString().split('T')[0]
+        _weekMonday: thisMondayStr
       }))
     }
 
