@@ -15,7 +15,8 @@ const CATEGORY_LABELS = {
   'My latest AI prompt': 'AI Prompt'
 }
 
-export const DictationModal = ({ isOpen, onClose, onAcceptEntries }) => {
+export const DictationModal = ({ isOpen, onClose, onAcceptEntries, mode = 'card', onSaveDirectly }) => {
+  const isDirectMode = mode !== 'card'
   const [phase, setPhase] = useState('recording') // recording | parsing | preview | error
   const [parsedEntries, setParsedEntries] = useState([])
   const [lang, setLang] = useState('en-US')
@@ -79,6 +80,17 @@ export const DictationModal = ({ isOpen, onClose, onAcceptEntries }) => {
     setSavedTranscript(fullTranscript)
     setPhase('parsing')
 
+    if (isDirectMode) {
+      try {
+        await onSaveDirectly(fullTranscript)
+        handleClose()
+      } catch (err) {
+        setErrorMessage(err.message || 'Could not save. Please try again.')
+        setPhase('error')
+      }
+      return
+    }
+
     try {
       const { data, error } = await supabase.functions.invoke('parse-card-dictation', {
         body: { transcript: fullTranscript }
@@ -100,6 +112,18 @@ export const DictationModal = ({ isOpen, onClose, onAcceptEntries }) => {
   const handleRetry = async () => {
     if (!savedTranscript.trim()) return
     setPhase('parsing')
+
+    if (isDirectMode) {
+      try {
+        await onSaveDirectly(savedTranscript)
+        handleClose()
+      } catch (err) {
+        setErrorMessage(err.message || 'Could not save. Please try again.')
+        setPhase('error')
+      }
+      return
+    }
+
     try {
       const { data, error } = await supabase.functions.invoke('parse-card-dictation', {
         body: { transcript: savedTranscript }
@@ -190,7 +214,7 @@ export const DictationModal = ({ isOpen, onClose, onAcceptEntries }) => {
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h3 className="handwritten" style={{ fontSize: '26px', margin: 0, color: '#2C2C2C' }}>
-                {phase === 'recording' ? 'Dictate' : phase === 'parsing' ? 'Parsing...' : phase === 'preview' ? 'Preview' : 'Oops'}
+                {phase === 'recording' ? 'Dictate' : phase === 'parsing' ? (isDirectMode ? 'Saving...' : 'Parsing...') : phase === 'preview' ? 'Preview' : 'Oops'}
               </h3>
               {phase !== 'parsing' && (
                 <button
@@ -276,7 +300,11 @@ export const DictationModal = ({ isOpen, onClose, onAcceptEntries }) => {
                     </>
                   ) : (
                     <span style={{ color: '#999', fontStyle: 'italic' }}>
-                      Start speaking... e.g. &ldquo;I&apos;m reading The Stranger by Camus&rdquo;
+                      {mode === 'review'
+                        ? 'e.g. "I watched The Bear, 8 out of 10, loved the cinematography"'
+                        : mode === 'liste'
+                        ? 'e.g. "I want to watch Dune Part Two and read Project Hail Mary"'
+                        : 'Start speaking... e.g. "I\'m reading The Stranger by Camus"'}
                     </span>
                   )}
                 </div>
@@ -297,7 +325,7 @@ export const DictationModal = ({ isOpen, onClose, onAcceptEntries }) => {
                       className="primary"
                       style={{ flex: 1 }}
                     >
-                      Done
+                      {isDirectMode ? 'Save' : 'Done'}
                     </button>
                   )}
                   <button onClick={handleClose} style={{ flex: 1 }}>
@@ -310,7 +338,7 @@ export const DictationModal = ({ isOpen, onClose, onAcceptEntries }) => {
             {/* PARSING PHASE */}
             {phase === 'parsing' && (
               <div style={{ textAlign: 'center', padding: '40px 0' }}>
-                <div className="loading">Parsing your dictation...</div>
+                <div className="loading">{isDirectMode ? 'Saving...' : 'Parsing your dictation...'}</div>
               </div>
             )}
 

@@ -5,6 +5,8 @@ import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { TAG_ICONS, TAG_OPTIONS, TAG_LABELS } from '../lib/reviewConstants'
 import { EmptyStateFantom } from '../components/EmptyStateFantom'
+import { DictationModal } from '../components/DictationModal'
+import { isSpeechSupported } from '../lib/useSpeechRecognition'
 
 export const LaListe = () => {
   const { profile } = useAuth()
@@ -18,6 +20,7 @@ export const LaListe = () => {
   const [sortBy, setSortBy] = useState('newest')
   const [recsExpanded, setRecsExpanded] = useState(false)
   const [expandedRecs, setExpandedRecs] = useState(new Set())
+  const [showDictation, setShowDictation] = useState(false)
 
   // Add/edit form state
   const [newTitle, setNewTitle] = useState('')
@@ -207,6 +210,30 @@ export const LaListe = () => {
     setExpandedRecs(newExpanded)
   }
 
+  const handleDictationSave = async (transcript) => {
+    const { data, error } = await supabase.functions.invoke('parse-dictation', {
+      body: { transcript, context: 'liste' }
+    })
+    if (error) {
+      const detail = data?.error || error.message
+      throw new Error(detail)
+    }
+    if (!data?.entries || data.entries.length === 0) {
+      throw new Error("Couldn't identify any items. Try being more specific, e.g. \"I want to watch Dune Part Two\".")
+    }
+
+    const rows = data.entries.map(entry => ({
+      user_id: profile.id,
+      title: entry.title,
+      tag: TAG_OPTIONS.includes(entry.tag) ? entry.tag : 'other',
+      note: entry.note || null
+    }))
+
+    const { error: insertError } = await supabase.from('discovery_items').insert(rows)
+    if (insertError) throw insertError
+    await fetchItems()
+  }
+
   if (loading) {
     return <div className="loading">Loading...</div>
   }
@@ -232,7 +259,7 @@ export const LaListe = () => {
   return (
     <div style={{ maxWidth: '720px', position: 'relative' }}>
       {/* Add button - absolute positioned */}
-      <div style={{ position: 'absolute', top: '0', right: '0', zIndex: 1 }}>
+      <div style={{ position: 'absolute', top: '0', right: '0', zIndex: 1, display: 'flex', alignItems: 'center', gap: '6px' }}>
         <button
           onClick={() => setShowAddForm(!showAddForm)}
           style={{
@@ -255,6 +282,27 @@ export const LaListe = () => {
         >
           +
         </button>
+        {isSpeechSupported && (
+          <button
+            onClick={() => setShowDictation(true)}
+            title="Dictate items by voice"
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '2px',
+              display: 'flex',
+              alignItems: 'center'
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2C2C2C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+              <line x1="12" y1="19" x2="12" y2="23" />
+              <line x1="8" y1="23" x2="16" y2="23" />
+            </svg>
+          </button>
+        )}
       </div>
 
       {/* Filter + Sort */}
@@ -895,6 +943,13 @@ export const LaListe = () => {
           </AnimatePresence>
         </div>
       )}
+
+      <DictationModal
+        isOpen={showDictation}
+        onClose={() => setShowDictation(false)}
+        mode="liste"
+        onSaveDirectly={handleDictationSave}
+      />
     </div>
   )
 }

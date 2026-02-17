@@ -5,6 +5,8 @@ import { supabase } from '../lib/supabase'
 import { ReviewsDisplay } from '../components/ReviewsDisplay'
 import { TAG_ICONS, TAG_OPTIONS, TAG_LABELS } from '../lib/reviewConstants'
 import { ExpandedReviewText } from '../components/review-comments/ExpandedReviewText'
+import { DictationModal } from '../components/DictationModal'
+import { isSpeechSupported } from '../lib/useSpeechRecognition'
 
 export const Reviews = () => {
   const { profile } = useAuth()
@@ -14,6 +16,7 @@ export const Reviews = () => {
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingReview, setEditingReview] = useState(null)
+  const [showDictation, setShowDictation] = useState(false)
 
   // Form state
   const [title, setTitle] = useState('')
@@ -327,6 +330,32 @@ export const Reviews = () => {
     }
   }
 
+  const handleDictationSave = async (transcript) => {
+    const { data, error } = await supabase.functions.invoke('parse-dictation', {
+      body: { transcript, context: 'review' }
+    })
+    if (error) {
+      // Surface actual error from function body if available
+      const detail = data?.error || error.message
+      throw new Error(detail)
+    }
+    if (!data?.entries || data.entries.length === 0) {
+      throw new Error("Couldn't identify any reviews. Try being more specific, e.g. \"I watched The Bear, 8 out of 10\".")
+    }
+
+    const rows = data.entries.map(entry => ({
+      user_id: profile.id,
+      title: entry.title,
+      tag: TAG_OPTIONS.includes(entry.tag) ? entry.tag : 'other',
+      rating: entry.rating,
+      review_text: entry.review_text || null
+    }))
+
+    const { error: insertError } = await supabase.from('reviews').insert(rows)
+    if (insertError) throw insertError
+    await fetchReviews()
+  }
+
   if (loading) {
     return (
       <div className="container">
@@ -355,28 +384,51 @@ export const Reviews = () => {
           )
         }}
         renderHeaderActions={() => (
-          <button
-            onClick={openAddModal}
-            style={{
-              background: '#DCDCDC',
-              border: 'none',
-              borderRadius: '50%',
-              fontSize: '12px',
-              color: '#333',
-              cursor: 'pointer',
-              width: '18px',
-              height: '18px',
-              minWidth: '18px',
-              minHeight: '18px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: 0,
-              lineHeight: 1
-            }}
-          >
-            +
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <button
+              onClick={openAddModal}
+              style={{
+                background: '#DCDCDC',
+                border: 'none',
+                borderRadius: '50%',
+                fontSize: '12px',
+                color: '#333',
+                cursor: 'pointer',
+                width: '18px',
+                height: '18px',
+                minWidth: '18px',
+                minHeight: '18px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 0,
+                lineHeight: 1
+              }}
+            >
+              +
+            </button>
+            {isSpeechSupported && (
+              <button
+                onClick={() => setShowDictation(true)}
+                title="Dictate reviews by voice"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '2px',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2C2C2C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                  <line x1="12" y1="19" x2="12" y2="23" />
+                  <line x1="8" y1="23" x2="16" y2="23" />
+                </svg>
+              </button>
+            )}
+          </div>
         )}
         renderActions={(review) => (
           <>
@@ -418,6 +470,13 @@ export const Reviews = () => {
             </button>
           </>
         )}
+      />
+
+      <DictationModal
+        isOpen={showDictation}
+        onClose={() => setShowDictation(false)}
+        mode="review"
+        onSaveDirectly={handleDictationSave}
       />
 
       {/* Add/Edit Modal */}
