@@ -49,12 +49,12 @@ export const Newsletter = () => {
         return
       }
 
-      // Mark latest as read (fire-and-forget, don't block UI) + fetch items in parallel
-      const latestNewsletter = newslettersData[0]
+      // Mark all unread as read (fire-and-forget, don't block UI) + fetch items in parallel
       const newsletterIds = newslettersData.map(n => n.id)
+      const unreadIds = newslettersData.filter(n => !n.read).map(n => n.id)
 
-      const markReadPromise = !latestNewsletter.read
-        ? supabase.from('newsletters').update({ read: true }).eq('id', latestNewsletter.id)
+      const markReadPromise = unreadIds.length > 0
+        ? supabase.from('newsletters').update({ read: true }).in('id', unreadIds)
         : Promise.resolve()
 
       const [, itemsResult] = await Promise.all([

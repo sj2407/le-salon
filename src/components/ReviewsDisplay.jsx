@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { TAG_ICONS, TAG_OPTIONS, TAG_LABELS } from '../lib/reviewConstants'
+import { EmptyStateFantom } from './EmptyStateFantom'
 
 /**
  * Shared reviews display component
@@ -35,23 +36,25 @@ export const ReviewsDisplay = ({
 
   return (
     <div style={{ maxWidth: '720px', position: 'relative' }}>
-      {/* Gavel - absolute positioned */}
-      <img
-        src="/images/gavel-ready.png"
-        alt=""
-        style={{
-          position: 'absolute',
-          top: '-20px',
-          right: '15%',
-          width: '72px',
-          height: '72px',
-          opacity: 0.3,
-          pointerEvents: 'none',
-          zIndex: 0,
-          animation: 'gavelSway 5s ease-in-out infinite',
-          filter: 'contrast(2.5) brightness(1.35)'
-        }}
-      />
+      {/* Gavel - only when reviews exist */}
+      {reviews.length > 0 && (
+        <img
+          src="/images/gavel-ready.png"
+          alt=""
+          style={{
+            position: 'absolute',
+            top: '-20px',
+            right: '15%',
+            width: '72px',
+            height: '72px',
+            opacity: 0.3,
+            pointerEvents: 'none',
+            zIndex: 0,
+            animation: 'gavelSway 5s ease-in-out infinite',
+            filter: 'contrast(2.5) brightness(1.35)'
+          }}
+        />
+      )}
 
       {/* Add button - absolute positioned, doesn't affect layout */}
       {renderHeaderActions && (
@@ -86,11 +89,13 @@ export const ReviewsDisplay = ({
 
       {/* Reviews list */}
       {filteredReviews.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '40px', fontStyle: 'italic', color: '#777' }}>
-          {reviews.length === 0
-            ? emptyMessage
-            : (emptyFilteredMessage || `No ${TAG_LABELS[filterTag] || filterTag} reviews yet.`)}
-        </div>
+        reviews.length === 0 ? (
+          <EmptyStateFantom />
+        ) : (
+          <div style={{ textAlign: 'center', padding: '40px', fontStyle: 'italic', color: '#777' }}>
+            {emptyFilteredMessage || `No ${TAG_LABELS[filterTag] || filterTag} reviews yet.`}
+          </div>
+        )
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {filteredReviews.map((review, index) => (

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { Link } from 'react-router-dom'
+import { EmptyStateFantom } from '../components/EmptyStateFantom'
 
 // Parse date_text into date_parsed
 const parseDate = (dateText) => {
@@ -337,23 +338,25 @@ export const ToDo = () => {
 
   return (
     <div className="container" style={{ maxWidth: '900px', position: 'relative' }}>
-      {/* Collage dancing people - top right */}
-      <img
-        src="/images/activity-ready.png"
-        alt=""
-        style={{
-          position: 'absolute',
-          top: '8px',
-          right: '12%',
-          width: '144px',
-          height: 'auto',
-          opacity: 0.75,
-          pointerEvents: 'none',
-          zIndex: 0,
-          animation: 'calendarFloat 5s ease-in-out infinite',
-          filter: 'contrast(1.2) brightness(1.05)'
-        }}
-      />
+      {/* Collage dancing people - only when activities exist */}
+      {activities.length > 0 && (
+        <img
+          src="/images/activity-ready.png"
+          alt=""
+          style={{
+            position: 'absolute',
+            top: '8px',
+            right: '12%',
+            width: '144px',
+            height: 'auto',
+            opacity: 0.75,
+            pointerEvents: 'none',
+            zIndex: 0,
+            animation: 'calendarFloat 5s ease-in-out infinite',
+            filter: 'contrast(1.2) brightness(1.05)'
+          }}
+        />
+      )}
 
       <div style={{ marginBottom: '24px', position: 'relative', zIndex: 1, marginLeft: '10px' }}>
         <div className="handwritten" style={{ fontSize: '32px', marginBottom: '16px' }}>
@@ -408,11 +411,13 @@ export const ToDo = () => {
       </div>
 
       {filteredActivities.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '40px', fontStyle: 'italic', color: '#777' }}>
-          {activities.length === 0
-            ? 'No activities yet. Add something fun to do with friends!'
-            : `No activities in ${cityFilter}.`}
-        </div>
+        activities.length === 0 ? (
+          <EmptyStateFantom />
+        ) : (
+          <div style={{ textAlign: 'center', padding: '40px', fontStyle: 'italic', color: '#777' }}>
+            {`No activities in ${cityFilter}.`}
+          </div>
+        )
       ) : (
         <div className="activity-board-note" style={{ position: 'relative' }}>
 

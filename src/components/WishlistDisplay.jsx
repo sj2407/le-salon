@@ -1,3 +1,5 @@
+import { EmptyStateFantom } from './EmptyStateFantom'
+
 /**
  * Shared wishlist display component
  * Used by both My Corner (Wishlist.jsx) and Friend View (FriendWishlist.jsx)
@@ -21,23 +23,25 @@ export const WishlistDisplay = ({
 }) => {
   return (
     <div style={{ maxWidth: '720px', position: 'relative' }}>
-      {/* Gift box collage */}
-      <img
-        src="/images/gift-ready.png"
-        alt=""
-        style={{
-          position: 'absolute',
-          top: '8px',
-          right: '15%',
-          width: '80px',
-          height: 'auto',
-          opacity: 0.6,
-          pointerEvents: 'none',
-          zIndex: 0,
-          animation: 'bookFloat 4.5s ease-in-out infinite',
-          filter: 'contrast(1.3) brightness(1.1)'
-        }}
-      />
+      {/* Gift box collage - only when items exist */}
+      {items.length > 0 && (
+        <img
+          src="/images/gift-ready.png"
+          alt=""
+          style={{
+            position: 'absolute',
+            top: '8px',
+            right: '15%',
+            width: '80px',
+            height: 'auto',
+            opacity: 0.6,
+            pointerEvents: 'none',
+            zIndex: 0,
+            animation: 'bookFloat 4.5s ease-in-out infinite',
+            filter: 'contrast(1.3) brightness(1.1)'
+          }}
+        />
+      )}
 
       <h1 className="handwritten" style={{ fontSize: '42px', marginBottom: '24px', marginTop: '8px', marginLeft: '10px', position: 'relative', zIndex: 1, transform: 'translateY(16px)' }}>
         {title}
@@ -52,9 +56,7 @@ export const WishlistDisplay = ({
       )}
 
       {items.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '40px', fontStyle: 'italic', color: '#777' }}>
-          {emptyMessage}
-        </div>
+        <EmptyStateFantom />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {items.map((item, index) => (

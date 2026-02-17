@@ -4,6 +4,7 @@ import { AnimatePresence, motion as Motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { TAG_ICONS, TAG_OPTIONS, TAG_LABELS } from '../lib/reviewConstants'
+import { EmptyStateFantom } from '../components/EmptyStateFantom'
 
 export const LaListe = () => {
   const { profile } = useAuth()
@@ -418,17 +419,7 @@ export const LaListe = () => {
 
       {/* Pending items */}
       {filteredPending.length === 0 && filteredDone.length === 0 && recommendations.length === 0 ? (
-        <div style={{
-          background: '#FFFEFA',
-          borderRadius: '2px',
-          padding: '48px 32px',
-          textAlign: 'center',
-          boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)'
-        }}>
-          <p style={{ fontSize: '16px', color: '#666', margin: 0 }}>
-            Your list is empty. Tap + to add something you want to discover!
-          </p>
-        </div>
+        <EmptyStateFantom />
       ) : (
         <>
           {filteredPending.length === 0 && pendingItems.length > 0 ? (

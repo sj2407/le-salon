@@ -1004,6 +1004,15 @@ nav a:hover {
   50% { transform: rotate(4deg) translateY(-6px); }
 }
 
+/* Fantom ghost orbit - clockwise circular sway */
+@keyframes fantomOrbit {
+  0%   { transform: translate(0, 0) rotate(0deg); }
+  25%  { transform: translate(12px, -10px) rotate(2deg); }
+  50%  { transform: translate(0, -18px) rotate(0deg); }
+  75%  { transform: translate(-12px, -10px) rotate(-2deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+
 /* Mic pulse animation for dictation */
 @keyframes micPulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(232, 93, 117, 0.4); }

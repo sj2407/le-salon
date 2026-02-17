@@ -149,7 +149,7 @@ export const Wishlist = () => {
         renderHeaderActions={() => (
           <button onClick={openAddModal} style={{
             position: 'absolute',
-            top: '140px',
+            top: '98px',
             right: '0',
             background: '#DCDCDC',
             border: 'none',
