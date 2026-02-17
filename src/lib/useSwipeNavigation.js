@@ -31,18 +31,25 @@ export function useSwipeNavigation(tabs, activeTab, setActiveTab) {
     }
   }, [tabs, activeTab, setActiveTab])
 
-  // Touch events (mobile)
+  // Touch events (mobile) — detect swipe during touchmove so it fires
+  // even if the browser cancels the gesture for scrolling (touchcancel)
   const onTouchStart = useCallback((e) => {
-    startRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+    startRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, swiped: false }
   }, [])
 
-  const onTouchEnd = useCallback((e) => {
-    if (!startRef.current) return
-    const deltaX = e.changedTouches[0].clientX - startRef.current.x
-    const deltaY = e.changedTouches[0].clientY - startRef.current.y
-    startRef.current = null
-    navigate(deltaX, deltaY)
+  const onTouchMove = useCallback((e) => {
+    if (!startRef.current || startRef.current.swiped) return
+    const deltaX = e.touches[0].clientX - startRef.current.x
+    const deltaY = e.touches[0].clientY - startRef.current.y
+    if (Math.abs(deltaX) >= SWIPE_THRESHOLD && Math.abs(deltaX) > Math.abs(deltaY) * DIRECTION_LOCK_RATIO) {
+      startRef.current.swiped = true
+      navigate(deltaX, deltaY)
+    }
   }, [navigate])
+
+  const onTouchEnd = useCallback(() => {
+    startRef.current = null
+  }, [])
 
   // Mouse drag (desktop) — capture mouseup on document for reliability
   const onMouseDown = useCallback((e) => {
@@ -86,7 +93,7 @@ export function useSwipeNavigation(tabs, activeTab, setActiveTab) {
     setActiveTab(tabKey)
   }, [tabs, activeTab, setActiveTab])
 
-  const swipeHandlers = { onTouchStart, onTouchEnd, onMouseDown, onWheel }
+  const swipeHandlers = { onTouchStart, onTouchMove, onTouchEnd, onMouseDown, onWheel }
 
   return { swipeHandlers, direction, handleTabClick }
 }
