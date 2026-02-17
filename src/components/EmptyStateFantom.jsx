@@ -19,7 +19,6 @@ export const EmptyStateFantom = () => (
         opacity: 0.55,
         pointerEvents: 'none',
         animation: 'fantomOrbit 6s ease-in-out infinite',
-        mixBlendMode: 'multiply',
         filter: 'contrast(1.35)'
       }}
     />

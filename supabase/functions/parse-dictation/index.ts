@@ -8,6 +8,9 @@ const corsHeaders = {
 
 const TAG_OPTIONS = ['movie', 'book', 'podcast', 'show', 'album', 'performing_arts', 'exhibition', 'other'];
 
+// Cache OpenAI key across warm invocations to avoid vault lookup on every call
+let cachedOpenaiKey: string | null = null;
+
 const REVIEW_SYSTEM_PROMPT = `You are a review parser. Extract reviews from the user's spoken transcript.
 
 For each item mentioned, return:
@@ -48,23 +51,26 @@ Deno.serve(async (req: Request) => {
 
     const systemPrompt = context === 'review' ? REVIEW_SYSTEM_PROMPT : LISTE_SYSTEM_PROMPT;
 
-    // Get OpenAI key from Supabase vault (same pattern as parse-card-dictation)
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
+    // Use cached key or fetch from vault
+    if (!cachedOpenaiKey) {
+      const supabaseAdmin = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+      );
+      const { data: secrets } = await supabaseAdmin.rpc('get_secret', {
+        secret_name: 'openai_api_key',
+      });
+      cachedOpenaiKey = secrets?.[0]?.secret || null;
+    }
 
-    const { data: secrets } = await supabaseAdmin.rpc('get_secret', {
-      secret_name: 'openai_api_key',
-    });
-    const openaiKey = secrets?.[0]?.secret;
-
-    if (!openaiKey) {
+    if (!cachedOpenaiKey) {
       return new Response(
         JSON.stringify({ error: 'OpenAI API key not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    const openaiKey = cachedOpenaiKey;
 
     const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -75,6 +81,7 @@ Deno.serve(async (req: Request) => {
       body: JSON.stringify({
         model: 'gpt-4o-mini',
         temperature: 0.2,
+        max_tokens: 500,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: transcript },

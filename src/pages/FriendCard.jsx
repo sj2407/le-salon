@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { AnimatePresence, motion as Motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { CardDisplay } from '../components/CardDisplay'
@@ -8,6 +9,9 @@ import { FriendProfile } from '../components/FriendProfile'
 import { ReviewsDisplay } from '../components/ReviewsDisplay'
 import { TAG_ICONS } from '../lib/reviewConstants'
 import { ExpandedReviewText } from '../components/review-comments/ExpandedReviewText'
+import { useSwipeNavigation, tabSlideVariants, tabSlideTransition } from '../lib/useSwipeNavigation'
+
+const FRIEND_TABS = ['card', 'reviews', 'overlap', 'wishlist', 'profile']
 
 export const FriendCard = () => {
   const { friendId } = useParams()
@@ -22,6 +26,7 @@ export const FriendCard = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [activeTab, setActiveTab] = useState('card')
+  const { swipeHandlers, direction, handleTabClick } = useSwipeNavigation(FRIEND_TABS, activeTab, setActiveTab)
   const [cardOverlaps, setCardOverlaps] = useState([])
   const [reviewOverlaps, setReviewOverlaps] = useState([])
   const [activityOverlaps, setActivityOverlaps] = useState([])
@@ -419,7 +424,7 @@ export const FriendCard = () => {
           {/* Tab Navigation */}
           <div style={{ display: 'flex', gap: '1px', marginBottom: '8px', overflowX: 'auto', paddingLeft: '20px', scrollbarWidth: 'none', msOverflowStyle: 'none' }} className="hide-scrollbar">
             <button
-              onClick={() => setActiveTab('card')}
+              onClick={() => handleTabClick('card')}
               style={{
                 background: 'none',
                 border: 'none',
@@ -438,7 +443,7 @@ export const FriendCard = () => {
               Card
             </button>
             <button
-              onClick={() => setActiveTab('reviews')}
+              onClick={() => handleTabClick('reviews')}
               style={{
                 background: 'none',
                 border: 'none',
@@ -457,7 +462,7 @@ export const FriendCard = () => {
               Reviews
             </button>
             <button
-              onClick={() => setActiveTab('overlap')}
+              onClick={() => handleTabClick('overlap')}
               style={{
                 background: 'none',
                 border: 'none',
@@ -476,7 +481,7 @@ export const FriendCard = () => {
               Overlap
             </button>
             <button
-              onClick={() => setActiveTab('wishlist')}
+              onClick={() => handleTabClick('wishlist')}
               style={{
                 background: 'none',
                 border: 'none',
@@ -495,7 +500,7 @@ export const FriendCard = () => {
               Wishlist
             </button>
             <button
-              onClick={() => setActiveTab('profile')}
+              onClick={() => handleTabClick('profile')}
               style={{
                 background: 'none',
                 border: 'none',
@@ -516,7 +521,17 @@ export const FriendCard = () => {
           </div>
 
           {/* Tab Content */}
-          <div style={{ marginTop: '-20px' }}>
+          <div style={{ marginTop: '-20px', overflow: 'hidden' }} {...swipeHandlers}>
+          <AnimatePresence mode="wait" initial={false} custom={direction.current}>
+            <Motion.div
+              key={activeTab}
+              custom={direction.current}
+              variants={tabSlideVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={tabSlideTransition}
+            >
           {activeTab === 'card' && (
             <div style={{ marginTop: '-40px' }}>
               <div className="container">
@@ -663,6 +678,8 @@ export const FriendCard = () => {
           {activeTab === 'profile' && (
             <FriendProfile friendId={friendId} friendName={friendProfile?.display_name} />
           )}
+            </Motion.div>
+          </AnimatePresence>
           </div>
         </>
       )}

@@ -1,0 +1,103 @@
+import { useRef, useCallback } from 'react'
+
+const SWIPE_THRESHOLD = 50
+const DIRECTION_LOCK_RATIO = 1.5
+const WHEEL_THRESHOLD = 60
+const WHEEL_COOLDOWN_MS = 500
+
+/**
+ * Hook for horizontal swipe navigation between tabs.
+ * Supports touch (mobile), mouse drag, and trackpad two-finger swipe (wheel).
+ * Returns swipeHandlers (spread onto content wrapper), direction ref,
+ * and handleTabClick (replaces raw setActiveTab for directional animation).
+ */
+export function useSwipeNavigation(tabs, activeTab, setActiveTab) {
+  const startRef = useRef(null)
+  const direction = useRef(1)
+  const wheelRef = useRef({ x: 0, timeout: null, cooldown: false })
+
+  const navigate = useCallback((deltaX, deltaY) => {
+    if (Math.abs(deltaX) < SWIPE_THRESHOLD || Math.abs(deltaX) < Math.abs(deltaY) * DIRECTION_LOCK_RATIO) {
+      return
+    }
+
+    const currentIndex = tabs.indexOf(activeTab)
+    if (deltaX < 0 && currentIndex < tabs.length - 1) {
+      direction.current = 1
+      setActiveTab(tabs[currentIndex + 1])
+    } else if (deltaX > 0 && currentIndex > 0) {
+      direction.current = -1
+      setActiveTab(tabs[currentIndex - 1])
+    }
+  }, [tabs, activeTab, setActiveTab])
+
+  // Touch events (mobile)
+  const onTouchStart = useCallback((e) => {
+    startRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+  }, [])
+
+  const onTouchEnd = useCallback((e) => {
+    if (!startRef.current) return
+    const deltaX = e.changedTouches[0].clientX - startRef.current.x
+    const deltaY = e.changedTouches[0].clientY - startRef.current.y
+    startRef.current = null
+    navigate(deltaX, deltaY)
+  }, [navigate])
+
+  // Mouse drag (desktop) — capture mouseup on document for reliability
+  const onMouseDown = useCallback((e) => {
+    startRef.current = { x: e.clientX, y: e.clientY }
+    const onDocMouseUp = (upEvent) => {
+      document.removeEventListener('mouseup', onDocMouseUp)
+      if (!startRef.current) return
+      const deltaX = upEvent.clientX - startRef.current.x
+      const deltaY = upEvent.clientY - startRef.current.y
+      startRef.current = null
+      navigate(deltaX, deltaY)
+    }
+    document.addEventListener('mouseup', onDocMouseUp)
+  }, [navigate])
+
+  // Wheel events (Mac trackpad two-finger horizontal swipe)
+  const onWheel = useCallback((e) => {
+    const w = wheelRef.current
+    if (w.cooldown) return
+    if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return
+
+    w.x += e.deltaX
+    clearTimeout(w.timeout)
+
+    if (Math.abs(w.x) > WHEEL_THRESHOLD) {
+      w.cooldown = true
+      navigate(-w.x, 0)
+      w.x = 0
+      setTimeout(() => { w.cooldown = false }, WHEEL_COOLDOWN_MS)
+      return
+    }
+
+    w.timeout = setTimeout(() => { w.x = 0 }, 200)
+  }, [navigate])
+
+  const handleTabClick = useCallback((tabKey) => {
+    const currentIndex = tabs.indexOf(activeTab)
+    const targetIndex = tabs.indexOf(tabKey)
+    if (currentIndex === targetIndex) return
+    direction.current = targetIndex > currentIndex ? 1 : -1
+    setActiveTab(tabKey)
+  }, [tabs, activeTab, setActiveTab])
+
+  const swipeHandlers = { onTouchStart, onTouchEnd, onMouseDown, onWheel }
+
+  return { swipeHandlers, direction, handleTabClick }
+}
+
+export const tabSlideVariants = {
+  enter: (dir) => ({ x: dir > 0 ? '40%' : '-40%', opacity: 0 }),
+  center: { x: 0, opacity: 1 },
+  exit: (dir) => ({ x: dir > 0 ? '-40%' : '40%', opacity: 0 })
+}
+
+export const tabSlideTransition = {
+  x: { type: 'tween', duration: 0.2, ease: 'easeOut' },
+  opacity: { duration: 0.15 }
+}
