@@ -37,23 +37,25 @@ export const ReviewsDisplay = ({
 
   return (
     <div style={{ maxWidth: '720px', position: 'relative' }}>
-      {/* Gavel illustration */}
-      <img
-        src="/images/gavel-ready.png"
-        alt=""
-        style={{
-          position: 'absolute',
-          top: '8px',
-          right: '15%',
-          width: '72px',
-          height: '72px',
-          opacity: 0.3,
-          pointerEvents: 'none',
-          zIndex: 0,
-          animation: 'gavelSway 5s ease-in-out infinite',
-          filter: 'contrast(2.5) brightness(1.35)'
-        }}
-      />
+      {/* Gavel illustration - only when reviews exist */}
+      {reviews.length > 0 && (
+        <img
+          src="/images/gavel-ready.png"
+          alt=""
+          style={{
+            position: 'absolute',
+            top: '8px',
+            right: '15%',
+            width: '72px',
+            height: '72px',
+            opacity: 0.3,
+            pointerEvents: 'none',
+            zIndex: 0,
+            animation: 'gavelSway 5s ease-in-out infinite',
+            filter: 'contrast(2.5) brightness(1.35)'
+          }}
+        />
+      )}
 
       <h1 className="handwritten" style={{ fontSize: '42px', marginBottom: '0', marginTop: '8px', marginLeft: '10px', position: 'relative', zIndex: 1, transform: 'translateY(16px)' }}>
         {title}

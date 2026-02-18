@@ -14,7 +14,7 @@ export const EmptyStateFantom = () => (
       src="/images/fantom.png"
       alt=""
       style={{
-        width: '360px',
+        width: '288px',
         height: 'auto',
         opacity: 0.55,
         pointerEvents: 'none',
