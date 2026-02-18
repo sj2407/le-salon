@@ -548,6 +548,7 @@ export const FriendCard = () => {
                   {activeTab === 'reviews' && (
                     <ReviewsDisplay
                       reviews={reviews}
+                      title={`${friendProfile.display_name}'s Reviews`}
                       emptyMessage={`${friendProfile.display_name} hasn't added any reviews yet.`}
                       renderExpandedText={(review) => (
                         <ExpandedReviewText

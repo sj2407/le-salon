@@ -372,6 +372,7 @@ export const Reviews = () => {
     <>
       <ReviewsDisplay
         reviews={reviews}
+        title="My Reviews"
         emptyMessage="No reviews yet. Share your thoughts on movies, books, and more!"
         renderExpandedText={(review) => {
           const commentsForReview = reviewComments.filter(c => c.review_id === review.id)
@@ -464,13 +465,13 @@ export const Reviews = () => {
                 opacity: 0.6,
                 transition: 'opacity 0.2s',
                 flexShrink: 0,
-                fontSize: '18px'
+                display: 'flex'
               }}
               onMouseEnter={(e) => e.target.style.opacity = '1'}
               onMouseLeave={(e) => e.target.style.opacity = '0.6'}
               title="Delete"
             >
-              🗑️
+              <img src="/images/eraser.jpeg" alt="Delete" style={{ width: '20px', height: '20px', objectFit: 'contain', transform: 'rotate(60deg)' }} />
             </button>
           </>
         )}

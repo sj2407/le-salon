@@ -502,7 +502,7 @@ export const ToDo = () => {
                                 onMouseEnter={(e) => e.target.style.opacity = '1'}
                                 onMouseLeave={(e) => e.target.style.opacity = '0.6'}
                               >
-                                <img src="/images/eraser.jpeg" alt="Delete" style={{ width: '18px', height: '18px', objectFit: 'contain' }} />
+                                <img src="/images/eraser.jpeg" alt="Delete" style={{ width: '18px', height: '18px', objectFit: 'contain', transform: 'rotate(60deg)' }} />
                               </button>
                             </>
                           )}

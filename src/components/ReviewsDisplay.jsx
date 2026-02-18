@@ -11,6 +11,7 @@ import { EmptyStateFantom } from './EmptyStateFantom'
  */
 export const ReviewsDisplay = ({
   reviews,
+  title = 'Reviews',
   emptyMessage = 'No reviews yet.',
   emptyFilteredMessage,
   renderActions,
@@ -36,25 +37,27 @@ export const ReviewsDisplay = ({
 
   return (
     <div style={{ maxWidth: '720px', position: 'relative' }}>
-      {/* Gavel - only when reviews exist */}
-      {reviews.length > 0 && (
-        <img
-          src="/images/gavel-ready.png"
-          alt=""
-          style={{
-            position: 'absolute',
-            top: '-20px',
-            right: '15%',
-            width: '72px',
-            height: '72px',
-            opacity: 0.3,
-            pointerEvents: 'none',
-            zIndex: 0,
-            animation: 'gavelSway 5s ease-in-out infinite',
-            filter: 'contrast(2.5) brightness(1.35)'
-          }}
-        />
-      )}
+      {/* Gavel illustration */}
+      <img
+        src="/images/gavel-ready.png"
+        alt=""
+        style={{
+          position: 'absolute',
+          top: '8px',
+          right: '15%',
+          width: '72px',
+          height: '72px',
+          opacity: 0.3,
+          pointerEvents: 'none',
+          zIndex: 0,
+          animation: 'gavelSway 5s ease-in-out infinite',
+          filter: 'contrast(2.5) brightness(1.35)'
+        }}
+      />
+
+      <h1 className="handwritten" style={{ fontSize: '42px', marginBottom: '0', marginTop: '8px', marginLeft: '10px', position: 'relative', zIndex: 1, transform: 'translateY(16px)' }}>
+        {title}
+      </h1>
 
       {/* Add button - absolute positioned, doesn't affect layout */}
       {renderHeaderActions && (
@@ -64,7 +67,7 @@ export const ReviewsDisplay = ({
       )}
 
       {/* Filter dropdown - fixed structure */}
-      <div style={{ marginTop: '32px', marginBottom: '20px' }}>
+      <div style={{ marginTop: '16px', marginBottom: '20px' }}>
         <select
           value={filterTag}
           onChange={(e) => setFilterTag(e.target.value)}
@@ -121,7 +124,11 @@ export const ReviewsDisplay = ({
                 <div className="handwritten" style={{ fontSize: '18px', lineHeight: 1, color: '#2C2C2C', flexShrink: 0 }}>
                   {review.rating}/10
                 </div>
-                {renderActions && renderActions(review)}
+                {renderActions && (
+                  <div style={{ display: 'flex', alignItems: 'center', height: 0, overflow: 'visible' }}>
+                    {renderActions(review)}
+                  </div>
+                )}
               </div>
 
               {/* Review text: one-line preview or full expanded */}
@@ -163,7 +170,7 @@ export const ReviewsDisplay = ({
                       border: 'none',
                       cursor: 'pointer',
                       padding: '4px 0',
-                      marginTop: '6px',
+                      marginTop: '2px',
                       width: '100%',
                       textAlign: 'left',
                       display: 'flex',

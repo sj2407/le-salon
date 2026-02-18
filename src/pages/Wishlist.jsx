@@ -216,13 +216,13 @@ export const Wishlist = () => {
                 padding: '4px',
                 opacity: 0.6,
                 transition: 'opacity 0.2s',
-                fontSize: '18px'
+                display: 'flex'
               }}
               onMouseEnter={(e) => e.target.style.opacity = '1'}
               onMouseLeave={(e) => e.target.style.opacity = '0.6'}
               title="Delete"
             >
-              🗑️
+              <img src="/images/eraser.jpeg" alt="Delete" style={{ width: '20px', height: '20px', objectFit: 'contain', transform: 'rotate(60deg)' }} />
             </button>
           </>
         )}

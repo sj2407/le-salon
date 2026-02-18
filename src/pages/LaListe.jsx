@@ -258,8 +258,30 @@ export const LaListe = () => {
 
   return (
     <div style={{ maxWidth: '720px', position: 'relative' }}>
+      {/* Scroll illustration */}
+      <img
+        src="/images/scroll-ready.png"
+        alt=""
+        style={{
+          position: 'absolute',
+          top: '0px',
+          right: '15%',
+          width: '70px',
+          height: 'auto',
+          opacity: 0.5,
+          pointerEvents: 'none',
+          zIndex: 0,
+          animation: 'bookFloat 4.5s ease-in-out infinite',
+          filter: 'contrast(1.3) brightness(1.1)'
+        }}
+      />
+
+      <h1 className="handwritten" style={{ fontSize: '42px', marginBottom: '0', marginTop: '8px', marginLeft: '10px', position: 'relative', zIndex: 1, transform: 'translateY(16px)' }}>
+        La Liste
+      </h1>
+
       {/* Add button - absolute positioned */}
-      <div style={{ position: 'absolute', top: '0', right: '0', zIndex: 1, display: 'flex', alignItems: 'center', gap: '6px' }}>
+      <div style={{ position: 'absolute', top: '48px', right: '0', zIndex: 1, display: 'flex', alignItems: 'center', gap: '6px' }}>
         <button
           onClick={() => setShowAddForm(!showAddForm)}
           style={{
@@ -306,7 +328,7 @@ export const LaListe = () => {
       </div>
 
       {/* Filter + Sort */}
-      <div style={{ marginTop: '32px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <div style={{ marginTop: '16px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
         <select
           value={filterTag}
           onChange={(e) => setFilterTag(e.target.value)}
@@ -476,7 +498,7 @@ export const LaListe = () => {
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {filteredPending.map((item) => (
+              {filteredPending.map((item, index) => (
                 editingId === item.id ? (
                   /* Inline edit form */
                   <div
@@ -602,6 +624,8 @@ export const LaListe = () => {
                   /* Normal item display */
                   <div
                     key={item.id}
+                    className="review-card"
+                    data-index={index}
                     style={{
                       background: '#FFFEFA',
                       borderRadius: '2px',
@@ -659,13 +683,16 @@ export const LaListe = () => {
                         border: 'none',
                         cursor: 'pointer',
                         padding: '2px',
-                        fontSize: '12px',
-                        color: '#4A7BA7',
-                        flexShrink: 0
+                        opacity: 0.4,
+                        transition: 'opacity 0.2s',
+                        flexShrink: 0,
+                        display: 'flex'
                       }}
+                      onMouseEnter={(e) => e.target.style.opacity = '0.8'}
+                      onMouseLeave={(e) => e.target.style.opacity = '0.4'}
                       title="Edit"
                     >
-                      Edit
+                      <img src="/images/quill-ready.png" alt="Edit" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />
                     </button>
 
                     {/* Delete */}
@@ -676,13 +703,16 @@ export const LaListe = () => {
                         border: 'none',
                         cursor: 'pointer',
                         padding: '2px',
-                        fontSize: '14px',
-                        color: '#BBB',
-                        flexShrink: 0
+                        opacity: 0.6,
+                        transition: 'opacity 0.2s',
+                        flexShrink: 0,
+                        display: 'flex'
                       }}
+                      onMouseEnter={(e) => e.target.style.opacity = '1'}
+                      onMouseLeave={(e) => e.target.style.opacity = '0.6'}
                       title="Remove"
                     >
-                      ×
+                      <img src="/images/eraser.jpeg" alt="Delete" style={{ width: '18px', height: '18px', objectFit: 'contain', transform: 'rotate(60deg)' }} />
                     </button>
                   </div>
                 )
@@ -718,9 +748,11 @@ export const LaListe = () => {
 
               {showDone && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '8px' }}>
-                  {filteredDone.map((item) => (
+                  {filteredDone.map((item, index) => (
                     <div
                       key={item.id}
+                      className="review-card"
+                      data-index={index}
                       style={{
                         background: '#FFFEFA',
                         borderRadius: '2px',
@@ -793,13 +825,16 @@ export const LaListe = () => {
                           border: 'none',
                           cursor: 'pointer',
                           padding: '2px',
-                          fontSize: '14px',
-                          color: '#BBB',
-                          flexShrink: 0
+                          opacity: 0.6,
+                          transition: 'opacity 0.2s',
+                          flexShrink: 0,
+                          display: 'flex'
                         }}
+                        onMouseEnter={(e) => e.target.style.opacity = '1'}
+                        onMouseLeave={(e) => e.target.style.opacity = '0.6'}
                         title="Remove"
                       >
-                        ×
+                        <img src="/images/eraser.jpeg" alt="Delete" style={{ width: '18px', height: '18px', objectFit: 'contain', transform: 'rotate(60deg)' }} />
                       </button>
                     </div>
                   ))}
