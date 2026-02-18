@@ -73,8 +73,9 @@ export const ReviewsDisplay = ({
           onChange={(e) => setFilterTag(e.target.value)}
           style={{
             fontFamily: "'Source Serif 4', Georgia, serif",
+            fontStyle: 'italic',
             padding: '6px 10px',
-            border: '1px solid #ccc',
+            border: 'none',
             borderRadius: '3px',
             background: '#FFFEFA',
             fontSize: '14px',

@@ -211,7 +211,7 @@ export const History = () => {
               background: '#FFFEFA'
             }}>
               <thead>
-                <tr style={{ background: '#F5F1EB', borderBottom: '1px dashed #2C2C2C' }}>
+                <tr style={{ background: '#F5F1EB' }}>
                   <th className="history-date-header" style={{
                     padding: '12px',
                     textAlign: 'left',
@@ -220,7 +220,6 @@ export const History = () => {
                     letterSpacing: '0.06em',
                     fontWeight: 600,
                     background: '#F5F1EB',
-                    borderRight: '1px dashed #2C2C2C',
                     minWidth: '100px'
                   }}>
                     Date
@@ -234,7 +233,7 @@ export const History = () => {
                       letterSpacing: '0.06em',
                       fontWeight: 600,
                       minWidth: '180px',
-                      borderRight: '1px dashed #E0E0E0'
+                      borderRight: 'none'
                     }}>
                       {column}
                     </th>
@@ -244,7 +243,7 @@ export const History = () => {
               <tbody>
                 {historyData.map((row, index) => (
                   <tr key={index} style={{
-                    borderBottom: index < historyData.length - 1 ? '1px dashed #E8E8E8' : 'none',
+                    borderBottom: 'none',
                     background: row.isCurrent ? '#FFF9E6' : '#FFFEFA'
                   }}>
                     <td className="history-date-cell" style={{
@@ -252,7 +251,6 @@ export const History = () => {
                       fontSize: '13px',
                       fontWeight: 600,
                       background: row.isCurrent ? '#FFF9E6' : '#FFFEFA',
-                      borderRight: '1px dashed #2C2C2C',
                       whiteSpace: 'nowrap'
                     }}>
                       <div>{formatDate(row.date)}</div>
@@ -273,7 +271,7 @@ export const History = () => {
                         fontSize: '14px',
                         fontStyle: 'italic',
                         color: row.entries[column] ? '#2C2C2C' : '#CCC',
-                        borderRight: '1px dashed #E0E0E0',
+                        borderRight: 'none',
                         lineHeight: '1.4',
                         whiteSpace: 'pre-line'
                       }}>
