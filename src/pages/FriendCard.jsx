@@ -521,7 +521,7 @@ export const FriendCard = () => {
           </div>
 
           {/* Tab Content */}
-          <div ref={containerRef} style={{ marginTop: '-20px', overflow: 'hidden' }} {...swipeHandlers}>
+          <div ref={containerRef} style={{ marginTop: '-20px', overflow: 'hidden', touchAction: 'pan-y' }} {...swipeHandlers}>
           <AnimatePresence mode="wait" initial={false} custom={direction.current}>
             <Motion.div
               key={activeTab}

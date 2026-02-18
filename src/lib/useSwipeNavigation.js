@@ -2,30 +2,29 @@ import { useRef, useCallback, useEffect } from 'react'
 
 const SWIPE_THRESHOLD = 50
 const DIRECTION_LOCK_RATIO = 1.5
-const DIRECTION_DECIDE_PX = 10
 const WHEEL_THRESHOLD = 60
 const WHEEL_COOLDOWN_MS = 500
 
 /**
  * Hook for horizontal swipe navigation between tabs.
- * Uses native (non-passive) touch listeners so the browser can't steal
- * horizontal gestures for scrolling. Also supports mouse drag and trackpad wheel.
+ * Supports touch (mobile), mouse drag, and trackpad two-finger swipe (wheel).
  *
- * Returns: containerRef (attach to swipeable wrapper), swipeHandlers (mouse/wheel),
- * direction ref, and handleTabClick.
+ * Returns: containerRef (attach to wrapper div for wheel handling),
+ * swipeHandlers (spread onto same div for touch/mouse), direction ref,
+ * and handleTabClick.
  */
 export function useSwipeNavigation(tabs, activeTab, setActiveTab) {
   const containerRef = useRef(null)
   const startRef = useRef(null)
   const direction = useRef(1)
   const wheelRef = useRef({ x: 0, timeout: null, cooldown: false })
-  // Keep current values in refs so native listeners always see latest state
+  // Refs so the native wheel listener always sees current state
   const tabsRef = useRef(tabs)
   const activeTabRef = useRef(activeTab)
   tabsRef.current = tabs
   activeTabRef.current = activeTab
 
-  const navigate = useCallback((deltaX) => {
+  const navigateWheel = useCallback((deltaX) => {
     const currentTabs = tabsRef.current
     const currentTab = activeTabRef.current
     const currentIndex = currentTabs.indexOf(currentTab)
@@ -38,57 +37,39 @@ export function useSwipeNavigation(tabs, activeTab, setActiveTab) {
     }
   }, [setActiveTab])
 
-  // Native touch listeners (non-passive) — attached via ref
-  useEffect(() => {
-    const el = containerRef.current
-    if (!el) return
-
-    const onTouchStart = (e) => {
-      const t = e.touches[0]
-      startRef.current = { x: t.clientX, y: t.clientY, swiped: false, direction: null }
+  const navigate = useCallback((deltaX, deltaY) => {
+    if (Math.abs(deltaX) < SWIPE_THRESHOLD || Math.abs(deltaX) < Math.abs(deltaY) * DIRECTION_LOCK_RATIO) {
+      return
     }
 
-    const onTouchMove = (e) => {
-      const s = startRef.current
-      if (!s || s.swiped) return
-      const t = e.touches[0]
-      const deltaX = t.clientX - s.x
-      const deltaY = t.clientY - s.y
-      const absX = Math.abs(deltaX)
-      const absY = Math.abs(deltaY)
-
-      // Decide gesture direction after a small movement
-      if (!s.direction && (absX > DIRECTION_DECIDE_PX || absY > DIRECTION_DECIDE_PX)) {
-        s.direction = absX > absY ? 'horizontal' : 'vertical'
-      }
-
-      // If horizontal, prevent scrolling and check threshold
-      if (s.direction === 'horizontal') {
-        e.preventDefault()
-        if (absX >= SWIPE_THRESHOLD && absX > absY * DIRECTION_LOCK_RATIO) {
-          s.swiped = true
-          navigate(deltaX)
-        }
-      }
-      // If vertical, do nothing — let the browser scroll normally
+    const currentIndex = tabs.indexOf(activeTab)
+    if (deltaX < 0 && currentIndex < tabs.length - 1) {
+      direction.current = 1
+      setActiveTab(tabs[currentIndex + 1])
+    } else if (deltaX > 0 && currentIndex > 0) {
+      direction.current = -1
+      setActiveTab(tabs[currentIndex - 1])
     }
+  }, [tabs, activeTab, setActiveTab])
 
-    const onTouchEnd = () => {
-      startRef.current = null
-    }
+  // Touch events (mobile) — detect swipe during touchmove
+  const onTouchStart = useCallback((e) => {
+    startRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, swiped: false }
+  }, [])
 
-    el.addEventListener('touchstart', onTouchStart, { passive: true })
-    el.addEventListener('touchmove', onTouchMove, { passive: false })
-    el.addEventListener('touchend', onTouchEnd, { passive: true })
-    el.addEventListener('touchcancel', onTouchEnd, { passive: true })
-
-    return () => {
-      el.removeEventListener('touchstart', onTouchStart)
-      el.removeEventListener('touchmove', onTouchMove)
-      el.removeEventListener('touchend', onTouchEnd)
-      el.removeEventListener('touchcancel', onTouchEnd)
+  const onTouchMove = useCallback((e) => {
+    if (!startRef.current || startRef.current.swiped) return
+    const deltaX = e.touches[0].clientX - startRef.current.x
+    const deltaY = e.touches[0].clientY - startRef.current.y
+    if (Math.abs(deltaX) >= SWIPE_THRESHOLD && Math.abs(deltaX) > Math.abs(deltaY) * DIRECTION_LOCK_RATIO) {
+      startRef.current.swiped = true
+      navigate(deltaX, deltaY)
     }
   }, [navigate])
+
+  const onTouchEnd = useCallback(() => {
+    startRef.current = null
+  }, [])
 
   // Mouse drag (desktop) — capture mouseup on document for reliability
   const onMouseDown = useCallback((e) => {
@@ -99,42 +80,51 @@ export function useSwipeNavigation(tabs, activeTab, setActiveTab) {
       const deltaX = upEvent.clientX - startRef.current.x
       const deltaY = upEvent.clientY - startRef.current.y
       startRef.current = null
-      if (Math.abs(deltaX) >= SWIPE_THRESHOLD && Math.abs(deltaX) > Math.abs(deltaY) * DIRECTION_LOCK_RATIO) {
-        navigate(deltaX)
-      }
+      navigate(deltaX, deltaY)
     }
     document.addEventListener('mouseup', onDocMouseUp)
   }, [navigate])
 
-  // Wheel events (Mac trackpad two-finger horizontal swipe)
-  const onWheel = useCallback((e) => {
-    const w = wheelRef.current
-    if (w.cooldown) return
-    if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return
+  // Native wheel listener (non-passive) so we can preventDefault
+  // to stop browser back/forward on horizontal trackpad swipes
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
 
-    w.x += e.deltaX
-    clearTimeout(w.timeout)
+    const onWheel = (e) => {
+      const w = wheelRef.current
+      if (w.cooldown) return
+      if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return
 
-    if (Math.abs(w.x) > WHEEL_THRESHOLD) {
-      w.cooldown = true
-      navigate(-w.x)
-      w.x = 0
-      setTimeout(() => { w.cooldown = false }, WHEEL_COOLDOWN_MS)
-      return
+      e.preventDefault()
+
+      w.x += e.deltaX
+      clearTimeout(w.timeout)
+
+      if (Math.abs(w.x) > WHEEL_THRESHOLD) {
+        w.cooldown = true
+        navigateWheel(-w.x)
+        w.x = 0
+        setTimeout(() => { w.cooldown = false }, WHEEL_COOLDOWN_MS)
+        return
+      }
+
+      w.timeout = setTimeout(() => { w.x = 0 }, 200)
     }
 
-    w.timeout = setTimeout(() => { w.x = 0 }, 200)
-  }, [navigate])
+    el.addEventListener('wheel', onWheel, { passive: false })
+    return () => el.removeEventListener('wheel', onWheel)
+  }, [navigateWheel])
 
   const handleTabClick = useCallback((tabKey) => {
-    const currentIndex = tabsRef.current.indexOf(activeTabRef.current)
-    const targetIndex = tabsRef.current.indexOf(tabKey)
+    const currentIndex = tabs.indexOf(activeTab)
+    const targetIndex = tabs.indexOf(tabKey)
     if (currentIndex === targetIndex) return
     direction.current = targetIndex > currentIndex ? 1 : -1
     setActiveTab(tabKey)
-  }, [setActiveTab])
+  }, [tabs, activeTab, setActiveTab])
 
-  const swipeHandlers = { onMouseDown, onWheel }
+  const swipeHandlers = { onTouchStart, onTouchMove, onTouchEnd, onMouseDown }
 
   return { containerRef, swipeHandlers, direction, handleTabClick }
 }
