@@ -380,25 +380,6 @@ export const FriendCard = () => {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="container">
-        <div className="loading">Loading card...</div>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="container">
-        <div className="error-message" style={{ textAlign: 'center' }}>{error}</div>
-        <div style={{ textAlign: 'center', marginTop: '20px' }}>
-          <button onClick={() => navigate('/friends')}>Back to Friends</button>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="container" style={{ position: 'relative' }}>
       {/* Back button - positioned top right */}
@@ -413,276 +394,284 @@ export const FriendCard = () => {
           fontSize: '13px',
           color: '#777',
           cursor: 'pointer',
-          padding: '4px 8px'
+          padding: '4px 8px',
+          zIndex: 1
         }}
       >
         Back
       </button>
 
-      {friendProfile && (
-        <>
-          {/* Tab Navigation */}
-          <div style={{ display: 'flex', gap: '1px', marginBottom: '8px', overflowX: 'auto', paddingLeft: '20px', scrollbarWidth: 'none', msOverflowStyle: 'none' }} className="hide-scrollbar">
-            <button
-              onClick={() => handleTabClick('card')}
-              style={{
-                background: 'none',
-                border: 'none',
-                boxShadow: 'none',
-                outline: 'none',
-                padding: '8px 10px',
-                fontSize: '13px',
-                fontWeight: activeTab === 'card' ? 600 : 400,
-                color: activeTab === 'card' ? '#2C2C2C' : '#777',
-                marginBottom: '-2px',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                whiteSpace: 'nowrap'
-              }}
-            >
-              Card
-            </button>
-            <button
-              onClick={() => handleTabClick('reviews')}
-              style={{
-                background: 'none',
-                border: 'none',
-                boxShadow: 'none',
-                outline: 'none',
-                padding: '8px 10px',
-                fontSize: '13px',
-                fontWeight: activeTab === 'reviews' ? 600 : 400,
-                color: activeTab === 'reviews' ? '#2C2C2C' : '#777',
-                marginBottom: '-2px',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                whiteSpace: 'nowrap'
-              }}
-            >
-              Reviews
-            </button>
-            <button
-              onClick={() => handleTabClick('overlap')}
-              style={{
-                background: 'none',
-                border: 'none',
-                boxShadow: 'none',
-                outline: 'none',
-                padding: '8px 10px',
-                fontSize: '13px',
-                fontWeight: activeTab === 'overlap' ? 600 : 400,
-                color: activeTab === 'overlap' ? '#2C2C2C' : '#777',
-                marginBottom: '-2px',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                whiteSpace: 'nowrap'
-              }}
-            >
-              Overlap
-            </button>
-            <button
-              onClick={() => handleTabClick('wishlist')}
-              style={{
-                background: 'none',
-                border: 'none',
-                boxShadow: 'none',
-                outline: 'none',
-                padding: '8px 10px',
-                fontSize: '13px',
-                fontWeight: activeTab === 'wishlist' ? 600 : 400,
-                color: activeTab === 'wishlist' ? '#2C2C2C' : '#777',
-                marginBottom: '-2px',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                whiteSpace: 'nowrap'
-              }}
-            >
-              Wishlist
-            </button>
-            <button
-              onClick={() => handleTabClick('profile')}
-              style={{
-                background: 'none',
-                border: 'none',
-                boxShadow: 'none',
-                outline: 'none',
-                padding: '8px 10px',
-                fontSize: '13px',
-                fontWeight: activeTab === 'profile' ? 600 : 400,
-                color: activeTab === 'profile' ? '#2C2C2C' : '#777',
-                marginBottom: '-2px',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                whiteSpace: 'nowrap'
-              }}
-            >
-              Profile
-            </button>
-          </div>
-
-          {/* Tab Content */}
-          <div ref={containerRef} style={{ marginTop: '-20px', overflow: 'hidden', touchAction: 'pan-y' }} {...swipeHandlers}>
-          <AnimatePresence mode="wait" initial={false} custom={direction.current}>
-            <Motion.div
-              key={activeTab}
-              custom={direction.current}
-              variants={tabSlideVariants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={tabSlideTransition}
-            >
-          {activeTab === 'card' && (
-            <div style={{ marginTop: '-40px' }}>
-              <div className="container">
-                <CardDisplay
-                  card={card}
-                  entries={entries}
-                  displayName={friendProfile.display_name}
-                  photoUrl={friendProfile.profile_photo_url}
-                  isEditable={false}
-                  isFriendView={true}
-                  notes={myNotes}
-                  currentUserId={profile.id}
-                  onLeaveNote={handleLeaveNote}
-                  onUpdateNote={handleUpdateNote}
-                  onDeleteNote={handleDeleteNote}
-                  cardOwnerName={friendProfile.display_name}
-                />
-              </div>
+      <div ref={containerRef} {...swipeHandlers} style={{ touchAction: 'pan-y', overscrollBehaviorX: 'none', minHeight: 'calc(100vh - 120px)' }}>
+        {loading ? (
+          <div className="loading">Loading card...</div>
+        ) : error ? (
+          <div>
+            <div className="error-message" style={{ textAlign: 'center' }}>{error}</div>
+            <div style={{ textAlign: 'center', marginTop: '20px' }}>
+              <button onClick={() => navigate('/friends')}>Back to Friends</button>
             </div>
-          )}
+          </div>
+        ) : friendProfile ? (
+          <>
+            {/* Tab Navigation */}
+            <div style={{ display: 'flex', gap: '1px', marginBottom: '8px', overflowX: 'auto', paddingLeft: '20px', scrollbarWidth: 'none', msOverflowStyle: 'none' }} className="hide-scrollbar">
+              <button
+                onClick={() => handleTabClick('card')}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  boxShadow: 'none',
+                  outline: 'none',
+                  padding: '8px 10px',
+                  fontSize: '13px',
+                  fontWeight: activeTab === 'card' ? 600 : 400,
+                  color: activeTab === 'card' ? '#2C2C2C' : '#777',
+                  marginBottom: '-2px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                Card
+              </button>
+              <button
+                onClick={() => handleTabClick('reviews')}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  boxShadow: 'none',
+                  outline: 'none',
+                  padding: '8px 10px',
+                  fontSize: '13px',
+                  fontWeight: activeTab === 'reviews' ? 600 : 400,
+                  color: activeTab === 'reviews' ? '#2C2C2C' : '#777',
+                  marginBottom: '-2px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                Reviews
+              </button>
+              <button
+                onClick={() => handleTabClick('overlap')}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  boxShadow: 'none',
+                  outline: 'none',
+                  padding: '8px 10px',
+                  fontSize: '13px',
+                  fontWeight: activeTab === 'overlap' ? 600 : 400,
+                  color: activeTab === 'overlap' ? '#2C2C2C' : '#777',
+                  marginBottom: '-2px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                Overlap
+              </button>
+              <button
+                onClick={() => handleTabClick('wishlist')}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  boxShadow: 'none',
+                  outline: 'none',
+                  padding: '8px 10px',
+                  fontSize: '13px',
+                  fontWeight: activeTab === 'wishlist' ? 600 : 400,
+                  color: activeTab === 'wishlist' ? '#2C2C2C' : '#777',
+                  marginBottom: '-2px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                Wishlist
+              </button>
+              <button
+                onClick={() => handleTabClick('profile')}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  boxShadow: 'none',
+                  outline: 'none',
+                  padding: '8px 10px',
+                  fontSize: '13px',
+                  fontWeight: activeTab === 'profile' ? 600 : 400,
+                  color: activeTab === 'profile' ? '#2C2C2C' : '#777',
+                  marginBottom: '-2px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                Profile
+              </button>
+            </div>
 
-          {activeTab === 'reviews' && (
-            <ReviewsDisplay
-              reviews={reviews}
-              emptyMessage={`${friendProfile.display_name} hasn't added any reviews yet.`}
-              renderExpandedText={(review) => (
-                <ExpandedReviewText
-                  review={review}
-                  comments={reviewComments.filter(c => c.review_id === review.id)}
-                  isOwner={false}
-                  currentUserId={profile.id}
-                  ownerName={friendProfile.display_name}
-                  commenterName={profile.display_name}
-                  onLeaveComment={handleLeaveReviewComment}
-                  onUpdateComment={handleUpdateReviewComment}
-                  onDeleteComment={handleDeleteReviewComment}
-                />
-              )}
-            />
-          )}
-
-          {activeTab === 'overlap' && (
-            <div style={{ maxWidth: '720px', marginLeft: 'auto', marginRight: 'auto', paddingLeft: '40px' }}>
-              <h2 className="handwritten" style={{ fontSize: '32px', marginTop: '24px', marginBottom: '16px' }}>
-                What you have in common
-              </h2>
-
-              {/* Section 1: Currently Matching Cards */}
-              {cardOverlaps.length > 0 && (
-                <div style={{ marginBottom: '48px', marginLeft: '-20px', background: '#FFFEFA', border: 'none', borderRadius: '2px', padding: '24px', boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)', transform: 'rotate(0.7deg)', animation: 'gentleSway1 5s ease-in-out infinite', position: 'relative' }}>
-                  <h3 style={{ fontSize: '20px', marginBottom: '16px', fontWeight: 600 }}>
-                    Currently Matching
-                  </h3>
-                  <ul style={{ margin: 0, paddingLeft: '20px', listStyleType: 'disc' }}>
-                    {cardOverlaps.map((overlap, index) => (
-                      <li
-                        key={index}
-                        style={{
-                          fontSize: '15px',
-                          fontStyle: 'italic',
-                          marginBottom: '8px',
-                          lineHeight: 1.6
-                        }}
-                      >
-                        You're both {overlap.category.toLowerCase()}: <strong>{overlap.content}</strong>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* Section 2: Shared Reviews */}
-              {reviewOverlaps.length > 0 && (
-                <div style={{ marginBottom: '48px' }}>
-                  <h3 style={{ fontSize: '20px', marginBottom: '16px', fontWeight: 600 }}>
-                    Shared Reviews
-                  </h3>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    {reviewOverlaps.map((overlap, index) => (
-                      <div
-                        key={index}
-                        style={{
-                          background: '#FFFEFA',
-                          borderRadius: '3px',
-                          padding: '16px',
-                          boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)'
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                          <span style={{ fontSize: '18px' }}>{TAG_ICONS[overlap.tag]}</span>
-                          <strong style={{ fontSize: '16px' }}>{overlap.title}</strong>
-                        </div>
-                        <div style={{ fontSize: '14px', color: '#666' }}>
-                          You: <span className="handwritten" style={{ fontSize: '18px', color: '#2C2C2C' }}>{overlap.yourRating}/10</span>
-                          {' '} • {' '}
-                          {friendProfile?.display_name}: <span className="handwritten" style={{ fontSize: '18px', color: '#2C2C2C' }}>{overlap.friendRating}/10</span>
-                        </div>
+            {/* Tab Content */}
+            <div style={{ marginTop: '-20px', overflow: 'hidden' }}>
+              <AnimatePresence mode="wait" initial={false} custom={direction.current}>
+                <Motion.div
+                  key={activeTab}
+                  custom={direction.current}
+                  variants={tabSlideVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={tabSlideTransition}
+                >
+                  {activeTab === 'card' && (
+                    <div style={{ marginTop: '-30px' }}>
+                      <div className="container">
+                        <CardDisplay
+                          card={card}
+                          entries={entries}
+                          displayName={friendProfile.display_name}
+                          photoUrl={friendProfile.profile_photo_url}
+                          isEditable={false}
+                          isFriendView={true}
+                          notes={myNotes}
+                          currentUserId={profile.id}
+                          onLeaveNote={handleLeaveNote}
+                          onUpdateNote={handleUpdateNote}
+                          onDeleteNote={handleDeleteNote}
+                          cardOwnerName={friendProfile.display_name}
+                        />
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+                    </div>
+                  )}
 
-              {/* Section 3: Shared Activity Interest */}
-              {activityOverlaps.length > 0 && (
-                <div style={{ marginBottom: '48px' }}>
-                  <h3 style={{ fontSize: '20px', marginBottom: '16px', fontWeight: 600 }}>
-                    Shared Activity Interest
-                  </h3>
-                  <ul style={{ margin: 0, paddingLeft: '20px', listStyleType: 'disc' }}>
-                    {activityOverlaps.map((activity, index) => (
-                      <li
-                        key={index}
-                        style={{
-                          fontSize: '15px',
-                          fontStyle: 'italic',
-                          marginBottom: '8px',
-                          lineHeight: 1.6
-                        }}
-                      >
-                        You're both interested in: <strong>{activity.description}</strong>
-                        {activity.date_text && ` (${activity.date_text})`}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+                  {activeTab === 'reviews' && (
+                    <ReviewsDisplay
+                      reviews={reviews}
+                      emptyMessage={`${friendProfile.display_name} hasn't added any reviews yet.`}
+                      renderExpandedText={(review) => (
+                        <ExpandedReviewText
+                          review={review}
+                          comments={reviewComments.filter(c => c.review_id === review.id)}
+                          isOwner={false}
+                          currentUserId={profile.id}
+                          ownerName={friendProfile.display_name}
+                          commenterName={profile.display_name}
+                          onLeaveComment={handleLeaveReviewComment}
+                          onUpdateComment={handleUpdateReviewComment}
+                          onDeleteComment={handleDeleteReviewComment}
+                        />
+                      )}
+                    />
+                  )}
 
-              {/* Empty State */}
-              {cardOverlaps.length === 0 && reviewOverlaps.length === 0 && activityOverlaps.length === 0 && (
-                <div style={{ padding: '20px 0' }}>
-                  <p style={{ fontSize: '16px', color: '#666', margin: 0, fontStyle: 'italic' }}>
-                    No overlaps yet — check back as you both update your cards!
-                  </p>
-                </div>
-              )}
+                  {activeTab === 'overlap' && (
+                    <div style={{ maxWidth: '720px', marginLeft: 'auto', marginRight: 'auto', paddingLeft: '40px' }}>
+                      <h2 className="handwritten" style={{ fontSize: '32px', marginTop: '24px', marginBottom: '16px' }}>
+                        What you have in common
+                      </h2>
+
+                      {cardOverlaps.length > 0 && (
+                        <div style={{ marginBottom: '48px', marginLeft: '-20px', background: '#FFFEFA', border: 'none', borderRadius: '2px', padding: '24px', boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)', transform: 'rotate(0.7deg)', animation: 'gentleSway1 5s ease-in-out infinite', position: 'relative' }}>
+                          <h3 style={{ fontSize: '20px', marginBottom: '16px', fontWeight: 600 }}>
+                            Currently Matching
+                          </h3>
+                          <ul style={{ margin: 0, paddingLeft: '20px', listStyleType: 'disc' }}>
+                            {cardOverlaps.map((overlap, index) => (
+                              <li
+                                key={index}
+                                style={{
+                                  fontSize: '15px',
+                                  fontStyle: 'italic',
+                                  marginBottom: '8px',
+                                  lineHeight: 1.6
+                                }}
+                              >
+                                You're both {overlap.category.toLowerCase()}: <strong>{overlap.content}</strong>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {reviewOverlaps.length > 0 && (
+                        <div style={{ marginBottom: '48px' }}>
+                          <h3 style={{ fontSize: '20px', marginBottom: '16px', fontWeight: 600 }}>
+                            Shared Reviews
+                          </h3>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            {reviewOverlaps.map((overlap, index) => (
+                              <div
+                                key={index}
+                                style={{
+                                  background: '#FFFEFA',
+                                  borderRadius: '3px',
+                                  padding: '16px',
+                                  boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)'
+                                }}
+                              >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                                  <span style={{ fontSize: '18px' }}>{TAG_ICONS[overlap.tag]}</span>
+                                  <strong style={{ fontSize: '16px' }}>{overlap.title}</strong>
+                                </div>
+                                <div style={{ fontSize: '14px', color: '#666' }}>
+                                  You: <span className="handwritten" style={{ fontSize: '18px', color: '#2C2C2C' }}>{overlap.yourRating}/10</span>
+                                  {' '} • {' '}
+                                  {friendProfile?.display_name}: <span className="handwritten" style={{ fontSize: '18px', color: '#2C2C2C' }}>{overlap.friendRating}/10</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {activityOverlaps.length > 0 && (
+                        <div style={{ marginBottom: '48px' }}>
+                          <h3 style={{ fontSize: '20px', marginBottom: '16px', fontWeight: 600 }}>
+                            Shared Activity Interest
+                          </h3>
+                          <ul style={{ margin: 0, paddingLeft: '20px', listStyleType: 'disc' }}>
+                            {activityOverlaps.map((activity, index) => (
+                              <li
+                                key={index}
+                                style={{
+                                  fontSize: '15px',
+                                  fontStyle: 'italic',
+                                  marginBottom: '8px',
+                                  lineHeight: 1.6
+                                }}
+                              >
+                                You're both interested in: <strong>{activity.description}</strong>
+                                {activity.date_text && ` (${activity.date_text})`}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {cardOverlaps.length === 0 && reviewOverlaps.length === 0 && activityOverlaps.length === 0 && (
+                        <div style={{ padding: '20px 0' }}>
+                          <p style={{ fontSize: '16px', color: '#666', margin: 0, fontStyle: 'italic' }}>
+                            No overlaps yet — check back as you both update your cards!
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {activeTab === 'wishlist' && (
+                    <FriendWishlist friendId={friendId} friendName={friendProfile?.display_name} />
+                  )}
+
+                  {activeTab === 'profile' && (
+                    <FriendProfile friendId={friendId} friendName={friendProfile?.display_name} />
+                  )}
+                </Motion.div>
+              </AnimatePresence>
             </div>
-          )}
-
-          {activeTab === 'wishlist' && (
-            <FriendWishlist friendId={friendId} friendName={friendProfile?.display_name} />
-          )}
-
-          {activeTab === 'profile' && (
-            <FriendProfile friendId={friendId} friendName={friendProfile?.display_name} />
-          )}
-            </Motion.div>
-          </AnimatePresence>
-          </div>
-        </>
-      )}
+          </>
+        ) : null}
+      </div>
     </div>
   )
 }

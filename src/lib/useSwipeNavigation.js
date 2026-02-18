@@ -3,56 +3,53 @@ import { useRef, useCallback, useEffect } from 'react'
 const SWIPE_THRESHOLD = 50
 const DIRECTION_LOCK_RATIO = 1.5
 const WHEEL_THRESHOLD = 60
+const SWIPE_COOLDOWN_MS = 400
 const WHEEL_COOLDOWN_MS = 500
 
 /**
  * Hook for horizontal swipe navigation between tabs.
- * Supports touch (mobile), mouse drag, and trackpad two-finger swipe (wheel).
+ * Supports touch (mobile) and trackpad two-finger swipe (wheel).
+ * Mouse drag removed — desktop users click tabs or use trackpad.
  *
- * Returns: containerRef (attach to wrapper div for wheel handling),
- * swipeHandlers (spread onto same div for touch/mouse), direction ref,
- * and handleTabClick.
+ * containerRef: attach to outermost wrapper (tabs + content) so wheel
+ *   preventDefault covers the full area and blocks browser back/forward.
+ * swipeHandlers: spread onto the same wrapper for touch gestures.
  */
 export function useSwipeNavigation(tabs, activeTab, setActiveTab) {
   const containerRef = useRef(null)
   const startRef = useRef(null)
   const direction = useRef(1)
+  const cooldownRef = useRef(false)
   const wheelRef = useRef({ x: 0, timeout: null, cooldown: false })
-  // Refs so the native wheel listener always sees current state
+
+  // Refs so every handler always sees the latest state
   const tabsRef = useRef(tabs)
   const activeTabRef = useRef(activeTab)
   tabsRef.current = tabs
   activeTabRef.current = activeTab
 
-  const navigateWheel = useCallback((deltaX) => {
+  // Single navigate function — all inputs read from refs
+  const navigate = useCallback((deltaX) => {
+    if (cooldownRef.current) return
+
     const currentTabs = tabsRef.current
     const currentTab = activeTabRef.current
     const currentIndex = currentTabs.indexOf(currentTab)
+
     if (deltaX < 0 && currentIndex < currentTabs.length - 1) {
       direction.current = 1
+      cooldownRef.current = true
       setActiveTab(currentTabs[currentIndex + 1])
+      setTimeout(() => { cooldownRef.current = false }, SWIPE_COOLDOWN_MS)
     } else if (deltaX > 0 && currentIndex > 0) {
       direction.current = -1
+      cooldownRef.current = true
       setActiveTab(currentTabs[currentIndex - 1])
+      setTimeout(() => { cooldownRef.current = false }, SWIPE_COOLDOWN_MS)
     }
   }, [setActiveTab])
 
-  const navigate = useCallback((deltaX, deltaY) => {
-    if (Math.abs(deltaX) < SWIPE_THRESHOLD || Math.abs(deltaX) < Math.abs(deltaY) * DIRECTION_LOCK_RATIO) {
-      return
-    }
-
-    const currentIndex = tabs.indexOf(activeTab)
-    if (deltaX < 0 && currentIndex < tabs.length - 1) {
-      direction.current = 1
-      setActiveTab(tabs[currentIndex + 1])
-    } else if (deltaX > 0 && currentIndex > 0) {
-      direction.current = -1
-      setActiveTab(tabs[currentIndex - 1])
-    }
-  }, [tabs, activeTab, setActiveTab])
-
-  // Touch events (mobile) — detect swipe during touchmove
+  // --- Touch events (mobile) ---
   const onTouchStart = useCallback((e) => {
     startRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, swiped: false }
   }, [])
@@ -63,7 +60,7 @@ export function useSwipeNavigation(tabs, activeTab, setActiveTab) {
     const deltaY = e.touches[0].clientY - startRef.current.y
     if (Math.abs(deltaX) >= SWIPE_THRESHOLD && Math.abs(deltaX) > Math.abs(deltaY) * DIRECTION_LOCK_RATIO) {
       startRef.current.swiped = true
-      navigate(deltaX, deltaY)
+      navigate(deltaX)
     }
   }, [navigate])
 
@@ -71,41 +68,30 @@ export function useSwipeNavigation(tabs, activeTab, setActiveTab) {
     startRef.current = null
   }, [])
 
-  // Mouse drag (desktop) — capture mouseup on document for reliability
-  const onMouseDown = useCallback((e) => {
-    startRef.current = { x: e.clientX, y: e.clientY }
-    const onDocMouseUp = (upEvent) => {
-      document.removeEventListener('mouseup', onDocMouseUp)
-      if (!startRef.current) return
-      const deltaX = upEvent.clientX - startRef.current.x
-      const deltaY = upEvent.clientY - startRef.current.y
-      startRef.current = null
-      navigate(deltaX, deltaY)
-    }
-    document.addEventListener('mouseup', onDocMouseUp)
-  }, [navigate])
-
-  // Native wheel listener (non-passive) so we can preventDefault
-  // to stop browser back/forward on horizontal trackpad swipes
+  // --- Trackpad wheel (non-passive to preventDefault browser back/forward) ---
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
 
     const onWheel = (e) => {
+      // Always block browser back/forward on horizontal swipes,
+      // even during cooldown — momentum events must not leak through
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+        e.preventDefault()
+      }
+
       const w = wheelRef.current
       if (w.cooldown) return
       if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return
-
-      e.preventDefault()
 
       w.x += e.deltaX
       clearTimeout(w.timeout)
 
       if (Math.abs(w.x) > WHEEL_THRESHOLD) {
         w.cooldown = true
-        navigateWheel(-w.x)
+        navigate(-w.x)
         w.x = 0
-        setTimeout(() => { w.cooldown = false }, WHEEL_COOLDOWN_MS)
+        setTimeout(() => { w.cooldown = false; w.x = 0 }, WHEEL_COOLDOWN_MS)
         return
       }
 
@@ -114,17 +100,19 @@ export function useSwipeNavigation(tabs, activeTab, setActiveTab) {
 
     el.addEventListener('wheel', onWheel, { passive: false })
     return () => el.removeEventListener('wheel', onWheel)
-  }, [navigateWheel])
+  }, [navigate])
 
   const handleTabClick = useCallback((tabKey) => {
-    const currentIndex = tabs.indexOf(activeTab)
-    const targetIndex = tabs.indexOf(tabKey)
+    const currentTabs = tabsRef.current
+    const currentTab = activeTabRef.current
+    const currentIndex = currentTabs.indexOf(currentTab)
+    const targetIndex = currentTabs.indexOf(tabKey)
     if (currentIndex === targetIndex) return
     direction.current = targetIndex > currentIndex ? 1 : -1
     setActiveTab(tabKey)
-  }, [tabs, activeTab, setActiveTab])
+  }, [setActiveTab])
 
-  const swipeHandlers = { onTouchStart, onTouchMove, onTouchEnd, onMouseDown }
+  const swipeHandlers = { onTouchStart, onTouchMove, onTouchEnd }
 
   return { containerRef, swipeHandlers, direction, handleTabClick }
 }
