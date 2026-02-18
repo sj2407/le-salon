@@ -24,6 +24,7 @@ export const Reviews = () => {
   const [rating, setRating] = useState(7.0)
   const [reviewText, setReviewText] = useState('')
   const [recommendToFriends, setRecommendToFriends] = useState([])
+  const [friendQuery, setFriendQuery] = useState('')
   const [error, setError] = useState('')
   const [reviewComments, setReviewComments] = useState([])
 
@@ -49,6 +50,7 @@ export const Reviews = () => {
       setRating(7.0)
       setReviewText('')
       setRecommendToFriends([])
+      setFriendQuery('')
       setError('')
       initialFormRef.current = { title: prefillTitle, tag: prefillTag || 'other', rating: 7.0, reviewText: '', recommendToFriends: [] }
       setShowModal(true)
@@ -181,6 +183,7 @@ export const Reviews = () => {
     setRating(7.0)
     setReviewText('')
     setRecommendToFriends([])
+    setFriendQuery('')
     setError('')
     initialFormRef.current = { title: '', tag: 'other', rating: 7.0, reviewText: '', recommendToFriends: [] }
     setShowModal(true)
@@ -192,6 +195,7 @@ export const Reviews = () => {
     setTag(review.tag)
     setRating(review.rating)
     setReviewText(review.review_text || '')
+    setFriendQuery('')
     setError('')
 
     try {
@@ -578,36 +582,116 @@ export const Reviews = () => {
               {friends.length > 0 && (
                 <div className="form-group">
                   <label className="form-label">Who would love this? (optional)</label>
-                  <div>
-                    {friends.map(friend => (
-                      <div key={friend.id} style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
-                        <label
-                          htmlFor={`friend-${friend.id}`}
-                          style={{
-                            fontFamily: 'Source Serif 4, Georgia, serif',
-                            fontSize: '15px',
-                            fontStyle: 'italic',
-                            cursor: 'pointer',
-                            margin: 0,
-                            marginRight: '8px'
-                          }}
-                        >
-                          {friend.display_name}
-                        </label>
-                        <input
-                          type="checkbox"
-                          id={`friend-${friend.id}`}
-                          checked={recommendToFriends.includes(friend.id)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setRecommendToFriends([...recommendToFriends, friend.id])
-                            } else {
-                              setRecommendToFriends(recommendToFriends.filter(id => id !== friend.id))
-                            }
-                          }}
-                        />
-                      </div>
-                    ))}
+
+                  {/* Selected friend chips */}
+                  {recommendToFriends.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '8px' }}>
+                      {recommendToFriends.map(friendId => {
+                        const friend = friends.find(f => f.id === friendId)
+                        if (!friend) return null
+                        return (
+                          <span
+                            key={friendId}
+                            style={{
+                              background: '#F5F0EB',
+                              borderRadius: '12px',
+                              padding: '4px 10px',
+                              fontSize: '13px',
+                              fontFamily: 'Source Serif 4, Georgia, serif',
+                              fontStyle: 'italic',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px'
+                            }}
+                          >
+                            {friend.display_name}
+                            <button
+                              type="button"
+                              onClick={() => setRecommendToFriends(recommendToFriends.filter(id => id !== friendId))}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                cursor: 'pointer',
+                                padding: 0,
+                                fontSize: '14px',
+                                lineHeight: 1,
+                                color: '#999'
+                              }}
+                            >
+                              ×
+                            </button>
+                          </span>
+                        )
+                      })}
+                    </div>
+                  )}
+
+                  {/* Autocomplete input */}
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type="text"
+                      value={friendQuery}
+                      onChange={(e) => setFriendQuery(e.target.value)}
+                      placeholder="Type a friend's name..."
+                      autoComplete="off"
+                      style={{
+                        width: '100%',
+                        padding: '8px 10px',
+                        border: '1px solid #ccc',
+                        borderRadius: '3px',
+                        background: '#FFFEFA',
+                        fontFamily: 'Source Serif 4, Georgia, serif',
+                        fontSize: '15px',
+                        fontStyle: 'italic',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+
+                    {/* Dropdown suggestions */}
+                    {friendQuery.trim() && (() => {
+                      const filtered = friends.filter(f =>
+                        !recommendToFriends.includes(f.id) &&
+                        f.display_name.toLowerCase().includes(friendQuery.toLowerCase())
+                      )
+                      if (filtered.length === 0) return null
+                      return (
+                        <div style={{
+                          position: 'absolute',
+                          top: '100%',
+                          left: 0,
+                          right: 0,
+                          background: '#FFFEFA',
+                          border: '1px solid #ccc',
+                          borderTop: 'none',
+                          borderRadius: '0 0 3px 3px',
+                          maxHeight: '150px',
+                          overflowY: 'auto',
+                          zIndex: 10
+                        }}>
+                          {filtered.map(friend => (
+                            <div
+                              key={friend.id}
+                              onClick={() => {
+                                setRecommendToFriends([...recommendToFriends, friend.id])
+                                setFriendQuery('')
+                              }}
+                              style={{
+                                padding: '8px 10px',
+                                cursor: 'pointer',
+                                fontFamily: 'Source Serif 4, Georgia, serif',
+                                fontSize: '15px',
+                                fontStyle: 'italic',
+                                transition: 'background 0.15s'
+                              }}
+                              onMouseEnter={(e) => e.currentTarget.style.background = '#F5F0EB'}
+                              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                            >
+                              {friend.display_name}
+                            </div>
+                          ))}
+                        </div>
+                      )
+                    })()}
                   </div>
                 </div>
               )}
