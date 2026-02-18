@@ -26,7 +26,7 @@ export const FriendCard = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [activeTab, setActiveTab] = useState('card')
-  const { swipeHandlers, direction, handleTabClick } = useSwipeNavigation(FRIEND_TABS, activeTab, setActiveTab)
+  const { containerRef, swipeHandlers, direction, handleTabClick } = useSwipeNavigation(FRIEND_TABS, activeTab, setActiveTab)
   const [cardOverlaps, setCardOverlaps] = useState([])
   const [reviewOverlaps, setReviewOverlaps] = useState([])
   const [activityOverlaps, setActivityOverlaps] = useState([])
@@ -521,7 +521,7 @@ export const FriendCard = () => {
           </div>
 
           {/* Tab Content */}
-          <div style={{ marginTop: '-20px', overflow: 'hidden' }} {...swipeHandlers}>
+          <div ref={containerRef} style={{ marginTop: '-20px', overflow: 'hidden' }} {...swipeHandlers}>
           <AnimatePresence mode="wait" initial={false} custom={direction.current}>
             <Motion.div
               key={activeTab}

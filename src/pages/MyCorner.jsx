@@ -14,7 +14,7 @@ const MY_CORNER_TABS = ['card', 'history', 'reviews', 'liste', 'wishlist', 'prof
 export const MyCorner = () => {
   const [searchParams] = useSearchParams()
   const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'card')
-  const { swipeHandlers, direction, handleTabClick } = useSwipeNavigation(MY_CORNER_TABS, activeTab, setActiveTab)
+  const { containerRef, swipeHandlers, direction, handleTabClick } = useSwipeNavigation(MY_CORNER_TABS, activeTab, setActiveTab)
 
   // Update active tab when URL param changes (adjust state during render, not in effect)
   const [prevSearchParams, setPrevSearchParams] = useState(searchParams)
@@ -152,7 +152,7 @@ export const MyCorner = () => {
       </div>
 
       {/* Tab Content */}
-      <div style={{ marginTop: '-20px', overflow: 'hidden' }} {...swipeHandlers}>
+      <div ref={containerRef} style={{ marginTop: '-20px', overflow: 'hidden' }} {...swipeHandlers}>
         <AnimatePresence mode="wait" initial={false} custom={direction.current}>
           <Motion.div
             key={activeTab}
