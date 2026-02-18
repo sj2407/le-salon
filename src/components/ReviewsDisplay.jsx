@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { TAG_ICONS, TAG_OPTIONS, TAG_LABELS } from '../lib/reviewConstants'
 import { EmptyStateFantom } from './EmptyStateFantom'
+import { FilterDropdown } from './FilterDropdown'
 
 /**
  * Shared reviews display component
@@ -70,27 +71,14 @@ export const ReviewsDisplay = ({
 
       {/* Filter dropdown - fixed structure */}
       <div style={{ marginTop: '16px', marginBottom: '20px' }}>
-        <select
+        <FilterDropdown
           value={filterTag}
-          onChange={(e) => setFilterTag(e.target.value)}
-          style={{
-            fontFamily: "'Source Serif 4', Georgia, serif",
-            fontStyle: 'italic',
-            padding: '6px 10px',
-            border: 'none',
-            borderRadius: '3px',
-            background: '#FFFEFA',
-            fontSize: '14px',
-            cursor: 'pointer'
-          }}
-        >
-          <option value="all">All</option>
-          {TAG_OPTIONS.map((tagOption) => (
-            <option key={tagOption} value={tagOption}>
-              {TAG_ICONS[tagOption]} {TAG_LABELS[tagOption]}
-            </option>
-          ))}
-        </select>
+          onChange={setFilterTag}
+          options={[
+            { value: 'all', label: 'All' },
+            ...TAG_OPTIONS.map(t => ({ value: t, label: `${TAG_ICONS[t]} ${TAG_LABELS[t]}` }))
+          ]}
+        />
       </div>
 
       {/* Reviews list */}
