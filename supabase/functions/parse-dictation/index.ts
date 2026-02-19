@@ -40,6 +40,15 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    // Verify JWT — defense in depth (also enforced by verify_jwt deployment flag)
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const { transcript, context } = await req.json();
 
     if (!transcript || !context) {

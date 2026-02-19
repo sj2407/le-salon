@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { getRelativeTime } from '../lib/timeUtils'
+import { getNotificationRoute } from '../lib/notificationUtils'
 
 export const NotificationBell = () => {
   const { profile } = useAuth()
@@ -120,41 +121,8 @@ export const NotificationBell = () => {
 
   const handleNotificationClick = (notification) => {
     setIsOpen(false)
-
-    // Navigate based on notification type
-    switch (notification.type) {
-      case 'friend_request':
-        navigate('/friends')
-        break
-      case 'friend_accepted':
-        navigate(`/friend/${notification.actor_id}`)
-        break
-      case 'activity_interest':
-        navigate('/todo')
-        break
-      case 'recommendation':
-        navigate('/my-corner?tab=liste')
-        break
-      case 'wishlist_claimed':
-        navigate('/wishlist')
-        break
-      case 'card_note':
-        if (notification.reference_name === 'reply') {
-          navigate(`/friend/${notification.actor_id}`)
-        } else {
-          navigate('/my-corner')
-        }
-        break
-      case 'review_comment':
-        if (notification.reference_name === 'reply') {
-          navigate(`/friend/${notification.actor_id}`)
-        } else {
-          navigate('/my-corner')
-        }
-        break
-      default:
-        break
-    }
+    const route = getNotificationRoute(notification)
+    if (route) navigate(route)
   }
 
   return (

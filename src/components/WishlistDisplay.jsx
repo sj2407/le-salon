@@ -15,7 +15,7 @@ import { EmptyStateFantom } from './EmptyStateFantom'
 export const WishlistDisplay = ({
   items,
   title,
-  emptyMessage = 'Nothing on the wishlist yet...',
+  emptyMessage: _emptyMessage = 'Nothing on the wishlist yet...',
   description,
   renderItemActions,
   renderItemStatus,
@@ -47,7 +47,12 @@ export const WishlistDisplay = ({
         {title}
       </h1>
 
-      {renderHeaderActions && renderHeaderActions()}
+      {/* Add button - absolute positioned, doesn't affect layout */}
+      {renderHeaderActions && (
+        <div style={{ position: 'absolute', top: '48px', right: '0', zIndex: 1 }}>
+          {renderHeaderActions()}
+        </div>
+      )}
 
       {description && (
         <p style={{ fontSize: '15px', color: '#666', fontStyle: 'italic', marginBottom: '24px', textAlign: 'center' }}>

@@ -148,9 +148,6 @@ export const Wishlist = () => {
         description="Add items you'd like, and friends can anonymously claim them as gifts for you."
         renderHeaderActions={() => (
           <button onClick={openAddModal} style={{
-            position: 'absolute',
-            top: '98px',
-            right: '0',
             background: '#DCDCDC',
             border: 'none',
             borderRadius: '50%',
@@ -165,8 +162,7 @@ export const Wishlist = () => {
             alignItems: 'center',
             justifyContent: 'center',
             padding: 0,
-            lineHeight: 1,
-            zIndex: 1
+            lineHeight: 1
           }}>
             +
           </button>

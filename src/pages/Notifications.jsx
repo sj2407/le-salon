@@ -3,6 +3,76 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { getRelativeTime } from '../lib/timeUtils'
+import { getNotificationRoute } from '../lib/notificationUtils'
+
+const NotificationItem = ({ notification, onClick }) => (
+  <button
+    onClick={() => onClick(notification)}
+    style={{
+      width: '100%',
+      background: notification.read ? '#FFFEFA' : '#FFF9E6',
+      border: 'none',
+      borderRadius: '3px',
+      padding: '16px',
+      textAlign: 'left',
+      cursor: 'pointer',
+      boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)',
+      transition: 'all 0.2s'
+    }}
+    onMouseEnter={(e) => {
+      e.currentTarget.style.background = '#F5F1EB'
+      e.currentTarget.style.boxShadow = '2px 2px 0 #2C2C2C'
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.background = notification.read ? '#FFFEFA' : '#FFF9E6'
+      e.currentTarget.style.boxShadow = '2px 3px 8px rgba(0, 0, 0, 0.1)'
+    }}
+  >
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+      {!notification.read && (
+        <span style={{
+          width: '8px',
+          height: '8px',
+          borderRadius: '50%',
+          background: '#E8534F',
+          flexShrink: 0
+        }} />
+      )}
+      <div style={{ fontSize: '15px', lineHeight: 1.4, flex: 1 }}>
+        {notification.message}
+      </div>
+    </div>
+    <div style={{ fontSize: '13px', color: '#999', marginLeft: notification.read ? '0' : '16px' }}>
+      {getRelativeTime(notification.created_at)}
+    </div>
+  </button>
+)
+
+const NotificationSection = ({ title, notifications, onClick }) => {
+  if (notifications.length === 0) return null
+  return (
+    <section>
+      <h2 style={{
+        fontSize: '18px',
+        marginBottom: '16px',
+        textTransform: 'uppercase',
+        letterSpacing: '0.06em',
+        color: '#666'
+      }}>
+        {title}
+      </h2>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {notifications.map((notification) => (
+          <NotificationItem
+            key={notification.id}
+            notification={notification}
+            onClick={onClick}
+          />
+        ))}
+      </div>
+    </section>
+  )
+}
 
 export const Notifications = () => {
   const { profile } = useAuth()
@@ -35,40 +105,8 @@ export const Notifications = () => {
   }
 
   const handleNotificationClick = (notification) => {
-    // Navigate based on notification type
-    switch (notification.type) {
-      case 'friend_request':
-        navigate('/friends')
-        break
-      case 'friend_accepted':
-        navigate(`/friend/${notification.actor_id}`)
-        break
-      case 'activity_interest':
-        navigate('/todo')
-        break
-      case 'recommendation':
-        navigate('/my-corner?tab=liste')
-        break
-      case 'wishlist_claimed':
-        navigate('/wishlist')
-        break
-      case 'card_note':
-        if (notification.reference_name === 'reply') {
-          navigate(`/friend/${notification.actor_id}`)
-        } else {
-          navigate('/my-corner')
-        }
-        break
-      case 'review_comment':
-        if (notification.reference_name === 'reply') {
-          navigate(`/friend/${notification.actor_id}`)
-        } else {
-          navigate('/my-corner')
-        }
-        break
-      default:
-        break
-    }
+    const route = getNotificationRoute(notification)
+    if (route) navigate(route)
   }
 
   const groupByDate = (notifications) => {
@@ -132,245 +170,10 @@ export const Notifications = () => {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-          {/* Today */}
-          {grouped.today.length > 0 && (
-            <section>
-              <h2 style={{
-                fontSize: '18px',
-                marginBottom: '16px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.06em',
-                color: '#666'
-              }}>
-                Today
-              </h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {grouped.today.map((notification) => (
-                  <button
-                    key={notification.id}
-                    onClick={() => handleNotificationClick(notification)}
-                    style={{
-                      width: '100%',
-                      background: notification.read ? '#FFFEFA' : '#FFF9E6',
-                      border: 'none',
-                      borderRadius: '3px',
-                      padding: '16px',
-                      textAlign: 'left',
-                      cursor: 'pointer',
-                      boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)',
-                      transition: 'all 0.2s'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = '#F5F1EB'
-                      e.currentTarget.style.boxShadow = '2px 2px 0 #2C2C2C'
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = notification.read ? '#FFFEFA' : '#FFF9E6'
-                      e.currentTarget.style.boxShadow = '2px 3px 8px rgba(0, 0, 0, 0.1)'
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                      {!notification.read && (
-                        <span style={{
-                          width: '8px',
-                          height: '8px',
-                          borderRadius: '50%',
-                          background: '#E8534F',
-                          flexShrink: 0
-                        }} />
-                      )}
-                      <div style={{ fontSize: '15px', lineHeight: 1.4, flex: 1 }}>
-                        {notification.message}
-                      </div>
-                    </div>
-                    <div style={{ fontSize: '13px', color: '#999', marginLeft: notification.read ? '0' : '16px' }}>
-                      {getRelativeTime(notification.created_at)}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* Yesterday */}
-          {grouped.yesterday.length > 0 && (
-            <section>
-              <h2 style={{
-                fontSize: '18px',
-                marginBottom: '16px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.06em',
-                color: '#666'
-              }}>
-                Yesterday
-              </h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {grouped.yesterday.map((notification) => (
-                  <button
-                    key={notification.id}
-                    onClick={() => handleNotificationClick(notification)}
-                    style={{
-                      width: '100%',
-                      background: notification.read ? '#FFFEFA' : '#FFF9E6',
-                      border: 'none',
-                      borderRadius: '3px',
-                      padding: '16px',
-                      textAlign: 'left',
-                      cursor: 'pointer',
-                      boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)',
-                      transition: 'all 0.2s'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = '#F5F1EB'
-                      e.currentTarget.style.boxShadow = '2px 2px 0 #2C2C2C'
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = notification.read ? '#FFFEFA' : '#FFF9E6'
-                      e.currentTarget.style.boxShadow = '2px 3px 8px rgba(0, 0, 0, 0.1)'
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                      {!notification.read && (
-                        <span style={{
-                          width: '8px',
-                          height: '8px',
-                          borderRadius: '50%',
-                          background: '#E8534F',
-                          flexShrink: 0
-                        }} />
-                      )}
-                      <div style={{ fontSize: '15px', lineHeight: 1.4, flex: 1 }}>
-                        {notification.message}
-                      </div>
-                    </div>
-                    <div style={{ fontSize: '13px', color: '#999', marginLeft: notification.read ? '0' : '16px' }}>
-                      {getRelativeTime(notification.created_at)}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* This Week */}
-          {grouped.thisWeek.length > 0 && (
-            <section>
-              <h2 style={{
-                fontSize: '18px',
-                marginBottom: '16px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.06em',
-                color: '#666'
-              }}>
-                This Week
-              </h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {grouped.thisWeek.map((notification) => (
-                  <button
-                    key={notification.id}
-                    onClick={() => handleNotificationClick(notification)}
-                    style={{
-                      width: '100%',
-                      background: notification.read ? '#FFFEFA' : '#FFF9E6',
-                      border: 'none',
-                      borderRadius: '3px',
-                      padding: '16px',
-                      textAlign: 'left',
-                      cursor: 'pointer',
-                      boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)',
-                      transition: 'all 0.2s'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = '#F5F1EB'
-                      e.currentTarget.style.boxShadow = '2px 2px 0 #2C2C2C'
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = notification.read ? '#FFFEFA' : '#FFF9E6'
-                      e.currentTarget.style.boxShadow = '2px 3px 8px rgba(0, 0, 0, 0.1)'
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                      {!notification.read && (
-                        <span style={{
-                          width: '8px',
-                          height: '8px',
-                          borderRadius: '50%',
-                          background: '#E8534F',
-                          flexShrink: 0
-                        }} />
-                      )}
-                      <div style={{ fontSize: '15px', lineHeight: 1.4, flex: 1 }}>
-                        {notification.message}
-                      </div>
-                    </div>
-                    <div style={{ fontSize: '13px', color: '#999', marginLeft: notification.read ? '0' : '16px' }}>
-                      {getRelativeTime(notification.created_at)}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* Older */}
-          {grouped.older.length > 0 && (
-            <section>
-              <h2 style={{
-                fontSize: '18px',
-                marginBottom: '16px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.06em',
-                color: '#666'
-              }}>
-                Older
-              </h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {grouped.older.map((notification) => (
-                  <button
-                    key={notification.id}
-                    onClick={() => handleNotificationClick(notification)}
-                    style={{
-                      width: '100%',
-                      background: notification.read ? '#FFFEFA' : '#FFF9E6',
-                      border: 'none',
-                      borderRadius: '3px',
-                      padding: '16px',
-                      textAlign: 'left',
-                      cursor: 'pointer',
-                      boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)',
-                      transition: 'all 0.2s'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = '#F5F1EB'
-                      e.currentTarget.style.boxShadow = '2px 2px 0 #2C2C2C'
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = notification.read ? '#FFFEFA' : '#FFF9E6'
-                      e.currentTarget.style.boxShadow = '2px 3px 8px rgba(0, 0, 0, 0.1)'
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                      {!notification.read && (
-                        <span style={{
-                          width: '8px',
-                          height: '8px',
-                          borderRadius: '50%',
-                          background: '#E8534F',
-                          flexShrink: 0
-                        }} />
-                      )}
-                      <div style={{ fontSize: '15px', lineHeight: 1.4, flex: 1 }}>
-                        {notification.message}
-                      </div>
-                    </div>
-                    <div style={{ fontSize: '13px', color: '#999', marginLeft: notification.read ? '0' : '16px' }}>
-                      {getRelativeTime(notification.created_at)}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </section>
-          )}
+          <NotificationSection title="Today" notifications={grouped.today} onClick={handleNotificationClick} />
+          <NotificationSection title="Yesterday" notifications={grouped.yesterday} onClick={handleNotificationClick} />
+          <NotificationSection title="This Week" notifications={grouped.thisWeek} onClick={handleNotificationClick} />
+          <NotificationSection title="Older" notifications={grouped.older} onClick={handleNotificationClick} />
         </div>
       )}
     </div>

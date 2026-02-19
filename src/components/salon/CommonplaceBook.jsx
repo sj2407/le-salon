@@ -37,7 +37,8 @@ export const CommonplaceBook = ({ isOpen, onClose, entries, userId, onSubmit, on
   useEffect(() => {
     if (isOpen && textareaRef.current) {
       // Small delay for animation
-      setTimeout(() => textareaRef.current?.focus(), 300)
+      const timerId = setTimeout(() => textareaRef.current?.focus(), 300)
+      return () => clearTimeout(timerId)
     }
   }, [isOpen])
 
