@@ -70,7 +70,7 @@ export const ParlorResponses = ({ responses, userId, onSubmit, onEdit, onDelete,
           padding: compact ? '4px 0' : '8px 0',
           fontFamily: "'Caveat', cursive",
           fontSize: compact ? '20px' : '24px',
-          color: '#4A7BA7',
+          color: '#7A3B2E',
           display: 'flex',
           alignItems: 'center',
           gap: '8px',
@@ -117,7 +117,7 @@ export const ParlorResponses = ({ responses, userId, onSubmit, onEdit, onDelete,
                     width: '100%',
                     minHeight: '80px',
                     padding: '12px',
-                    border: '1px solid #ccc',
+                    border: '1px solid #D4C9B8',
                     borderRadius: '3px',
                     fontSize: '15px',
                     fontFamily: "'Source Serif 4', Georgia, serif",
@@ -134,7 +134,7 @@ export const ParlorResponses = ({ responses, userId, onSubmit, onEdit, onDelete,
                     disabled={!inputText.trim() || submitting}
                     style={{
                       padding: '8px 20px',
-                      background: inputText.trim() ? '#2C2C2C' : '#ccc',
+                      background: inputText.trim() ? '#7A3B2E' : '#D4C9B8',
                       color: '#FFFEFA',
                       border: 'none',
                       borderRadius: '3px',
@@ -150,17 +150,17 @@ export const ParlorResponses = ({ responses, userId, onSubmit, onEdit, onDelete,
                       style={{
                         padding: '8px 16px',
                         background: 'none',
-                        border: '1px solid #ccc',
+                        border: '1px solid #D4C9B8',
                         borderRadius: '3px',
                         cursor: 'pointer',
                         fontSize: '14px',
-                        color: '#777'
+                        color: '#A89F91'
                       }}
                     >
                       Cancel
                     </button>
                   )}
-                  <span style={{ fontSize: '11px', color: '#999', marginLeft: 'auto' }}>
+                  <span style={{ fontSize: '11px', color: '#8C8578', marginLeft: 'auto' }}>
                     {navigator.platform?.includes('Mac') ? '⌘' : 'Ctrl'}+Enter to submit
                   </span>
                 </div>
@@ -180,7 +180,7 @@ export const ParlorResponses = ({ responses, userId, onSubmit, onEdit, onDelete,
                   ))}
                 </div>
               ) : (
-                <div style={{ textAlign: 'center', padding: '20px', color: '#999', fontStyle: 'italic', fontSize: '14px' }}>
+                <div style={{ textAlign: 'center', padding: '20px', color: '#8C8578', fontStyle: 'italic', fontSize: '14px' }}>
                   {/* Empty state: just the input is the invitation */}
                 </div>
               )}

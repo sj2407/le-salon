@@ -1014,6 +1014,50 @@ nav {
   100% { transform: translate(0, 0) rotate(0deg); }
 }
 
+/* Salon font-size slider — hair-thin track */
+.salon-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  border: none;
+  padding: 0;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.salon-slider::-webkit-slider-runnable-track {
+  height: 1px;
+  background: #D4C9B8;
+  border: none;
+  border-radius: 0;
+}
+
+.salon-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #7A3B2E;
+  border: none;
+  margin-top: -3.5px;
+}
+
+.salon-slider::-moz-range-track {
+  height: 1px;
+  background: #D4C9B8;
+  border: none;
+  border-radius: 0;
+}
+
+.salon-slider::-moz-range-thumb {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #7A3B2E;
+  border: none;
+}
+
 /* Mic pulse animation for dictation */
 @keyframes micPulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(232, 93, 117, 0.4); }

@@ -18,7 +18,7 @@ export const ResponseEntry = ({ entry, isOwn, onEdit, onDelete }) => {
         background: '#FFFEFA',
         borderRadius: '2px',
         padding: '14px 16px',
-        boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.08)',
+        boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.06)',
         position: 'relative'
       }}
     >
@@ -58,7 +58,7 @@ export const ResponseEntry = ({ entry, isOwn, onEdit, onDelete }) => {
         )}
         <div style={{ flex: 1, minWidth: 0 }}>
           <span style={{ fontSize: '14px', fontWeight: 600 }}>{displayName}</span>
-          <span style={{ fontSize: '12px', color: '#999', marginLeft: '8px' }}>
+          <span style={{ fontSize: '12px', color: '#8C8578', marginLeft: '8px' }}>
             {getRelativeTime(entry.created_at)}
             {entry.updated_at && entry.updated_at !== entry.created_at && ' (edited)'}
           </span>
@@ -75,7 +75,7 @@ export const ResponseEntry = ({ entry, isOwn, onEdit, onDelete }) => {
                 cursor: 'pointer',
                 padding: '2px 6px',
                 fontSize: '13px',
-                color: '#4A7BA7'
+                color: '#5C6B4A'
               }}
               title="Edit"
             >
@@ -105,7 +105,7 @@ export const ResponseEntry = ({ entry, isOwn, onEdit, onDelete }) => {
                     cursor: 'pointer',
                     padding: '2px 4px',
                     fontSize: '12px',
-                    color: '#777'
+                    color: '#A89F91'
                   }}
                 >
                   Cancel

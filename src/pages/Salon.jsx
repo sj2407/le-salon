@@ -394,7 +394,7 @@ export const Salon = () => {
         />
         <p style={{
           fontStyle: 'italic',
-          color: '#777',
+          color: '#A89F91',
           fontSize: '16px'
         }}>
           The Salon is being prepared for its first gathering...
@@ -413,12 +413,12 @@ export const Salon = () => {
         flexDirection: 'column',
         maxWidth: '720px',
         margin: '0 auto',
-        padding: '0 20px',
+        padding: '20px 20px 0',
         overflow: 'hidden'
       }}>
         {/* FIXED TOP: icon + date + title */}
         <div style={{ flexShrink: 0 }}>
-          <div style={{ textAlign: 'center', margin: '-16px 0 -40px' }}>
+          <div style={{ textAlign: 'center', margin: '-16px 0 -24px' }}>
             <img
               src="/images/salon-couch-ready.png"
               alt=""
@@ -431,14 +431,6 @@ export const Salon = () => {
               }}
             />
           </div>
-          <p style={{
-            fontSize: '10px',
-            color: '#777',
-            letterSpacing: '0.04em',
-            margin: '0 0 2px 0'
-          }}>
-            Semaine du {formatWeekDate(salonWeek.week_of)}
-          </p>
           <div style={{ display: 'flex', alignItems: 'center', margin: '0 0 8px 0' }}>
             <h2
               className="handwritten"
@@ -468,23 +460,23 @@ export const Salon = () => {
               }}
               aria-label={audioState === 'playing' ? 'Pause audio' : 'Listen to essay'}
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={audioState === 'playing' ? '#4A7BA7' : '#999'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={audioState === 'playing' ? '#5C6B4A' : '#8C8578'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
                 <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
                 {audioState === 'loading' && (
-                  <circle cx="12" cy="12" r="3" fill="#999" stroke="none" opacity="0.5">
+                  <circle cx="12" cy="12" r="3" fill="#8C8578" stroke="none" opacity="0.5">
                     <animate attributeName="opacity" values="0.3;1;0.3" dur="1s" repeatCount="indefinite" />
                   </circle>
                 )}
                 {audioState === 'playing' && (
                   <>
-                    <line x1="10" y1="10" x2="10" y2="14" stroke="#4A7BA7" strokeWidth="1.5">
+                    <line x1="10" y1="10" x2="10" y2="14" stroke="#5C6B4A" strokeWidth="1.5">
                       <animate attributeName="y1" values="10;8;10" dur="0.5s" repeatCount="indefinite" />
                     </line>
-                    <line x1="12" y1="9" x2="12" y2="14" stroke="#4A7BA7" strokeWidth="1.5">
+                    <line x1="12" y1="9" x2="12" y2="14" stroke="#5C6B4A" strokeWidth="1.5">
                       <animate attributeName="y1" values="9;7;9" dur="0.4s" repeatCount="indefinite" />
                     </line>
-                    <line x1="14" y1="10" x2="14" y2="14" stroke="#4A7BA7" strokeWidth="1.5">
+                    <line x1="14" y1="10" x2="14" y2="14" stroke="#5C6B4A" strokeWidth="1.5">
                       <animate attributeName="y1" values="10;8;10" dur="0.6s" repeatCount="indefinite" />
                     </line>
                   </>
@@ -493,7 +485,7 @@ export const Salon = () => {
             </button>
             {/* Text size slider */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-              <span style={{ fontSize: '11px', color: '#999', fontFamily: 'Georgia, serif' }}>A</span>
+              <span style={{ fontSize: '10px', color: '#8C8578', fontFamily: "'Source Serif 4', Georgia, serif", fontWeight: 300 }}>A</span>
               <input
                 type="range"
                 min="11"
@@ -505,23 +497,24 @@ export const Salon = () => {
                   setTextSize(val)
                   try { localStorage.setItem('salon_text_size', String(val)) } catch { /* ignore */ }
                 }}
-                style={{ width: '80px', height: '2px', accentColor: '#999', cursor: 'pointer' }}
+                className="salon-slider"
+                style={{ width: '70px' }}
                 aria-label="Text size"
               />
-              <span style={{ fontSize: '17px', color: '#999', fontFamily: 'Georgia, serif' }}>A</span>
+              <span style={{ fontSize: '16px', color: '#8C8578', fontFamily: "'Source Serif 4', Georgia, serif" }}>A</span>
             </div>
           </div>
         </div>
 
         {/* SCROLLABLE MIDDLE: essay body */}
         <div style={{
-          flex: 1,
+          maxHeight: '55vh',
           overflowY: 'auto',
-          minHeight: 0,
           WebkitOverflowScrolling: 'touch',
-          borderTop: '1px solid #eee',
+          borderTop: '1px solid #E8DCC8',
           paddingTop: '12px',
-          background: '#FFFFFF'
+          background: '#FFFEFA',
+          borderRadius: '4px'
         }}>
           <ParlorText salonWeek={salonWeek} hideTitle textSize={textSize} />
         </div>
@@ -531,16 +524,16 @@ export const Salon = () => {
           <div style={{
             flexShrink: 0,
             padding: '4px 0 0',
-            borderTop: '1px solid #eee'
+            borderTop: '1px solid #E8DCC8'
           }}>
             <p style={{
               fontSize: '11px',
-              color: '#999',
+              color: '#8C8578',
               fontStyle: 'italic',
               margin: 0,
               letterSpacing: '0.02em'
             }}>
-              Next week: <span style={{ color: '#666' }}>{nextWeekTitle}</span>
+              Next week: <span style={{ color: '#6B6156' }}>{nextWeekTitle}</span>
             </p>
           </div>
         )}
@@ -548,7 +541,7 @@ export const Salon = () => {
         {/* FIXED BOTTOM: responses */}
         <div style={{
           flexShrink: 0,
-          borderTop: nextWeekTitle ? 'none' : '1px solid #eee',
+          borderTop: nextWeekTitle ? 'none' : '1px solid #E8DCC8',
           paddingBottom: '4px'
         }}>
           <ParlorResponses
@@ -582,8 +575,8 @@ export const Salon = () => {
           src="/images/typewriter-ready.png"
           alt="Commonplace Book"
           style={{
-            width: '100px',
-            height: '100px',
+            width: '120px',
+            height: '120px',
             objectFit: 'contain',
             display: 'block'
           }}

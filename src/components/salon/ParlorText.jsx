@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { renderSimpleMarkdown } from '../../lib/markdownUtils'
 
 const dividerStyle = {
-  borderTop: '1px dashed #D0D0D0',
+  borderTop: '1px dashed #D4C9B8',
   margin: '32px 0'
 }
 
@@ -40,7 +40,7 @@ export const ParlorText = ({ salonWeek, hideTitle = false, textSize = 13 }) => {
           fontSize: `${textSize}px`,
           lineHeight: 1.8,
           color: '#2C2C2C',
-          fontWeight: 300
+          fontStyle: 'italic'
         }}
       >
         {renderSimpleMarkdown(salonWeek.parlor_body)}
@@ -71,7 +71,7 @@ export const ParlorText = ({ salonWeek, hideTitle = false, textSize = 13 }) => {
           style={{
             paddingLeft: '24px',
             fontSize: '10px',
-            color: '#777',
+            color: '#A89F91',
             fontStyle: 'normal'
           }}
         >
@@ -90,9 +90,9 @@ export const ParlorText = ({ salonWeek, hideTitle = false, textSize = 13 }) => {
               fontSize: '10px',
               textTransform: 'uppercase',
               letterSpacing: '0.06em',
-              color: '#666',
+              color: '#6B6156',
               marginBottom: '12px',
-              fontWeight: 600
+              fontWeight: 500
             }}
           >
             Further reading
@@ -113,7 +113,7 @@ export const ParlorText = ({ salonWeek, hideTitle = false, textSize = 13 }) => {
                   style={{
                     position: 'absolute',
                     left: 0,
-                    color: '#999'
+                    color: '#8C8578'
                   }}
                 >
                   ·
@@ -122,10 +122,10 @@ export const ParlorText = ({ salonWeek, hideTitle = false, textSize = 13 }) => {
                   {item.title}
                 </span>
                 {item.author && (
-                  <span style={{ color: '#666' }}>, {item.author}</span>
+                  <span style={{ color: '#6B6156' }}>, {item.author}</span>
                 )}
                 {item.description && (
-                  <span style={{ color: '#999', fontSize: '9px' }}> — {item.description}</span>
+                  <span style={{ color: '#8C8578', fontSize: '9px' }}> — {item.description}</span>
                 )}
               </li>
             ))}
@@ -144,10 +144,10 @@ export const ParlorText = ({ salonWeek, hideTitle = false, textSize = 13 }) => {
               cursor: 'pointer',
               padding: 0,
               fontSize: '9px',
-              color: '#999',
+              color: '#8C8578',
               letterSpacing: '0.04em',
               textDecoration: 'underline',
-              textDecorationColor: '#ccc'
+              textDecorationColor: '#D4C9B8'
             }}
           >
             Sources {sourcesExpanded ? '▾' : '▸'}
@@ -155,13 +155,13 @@ export const ParlorText = ({ salonWeek, hideTitle = false, textSize = 13 }) => {
           {sourcesExpanded && (
             <ul style={{ listStyle: 'none', padding: 0, margin: '8px 0 0 0' }}>
               {sources.map((source, index) => (
-                <li key={index} style={{ fontSize: '9px', lineHeight: 1.5, marginBottom: '4px', color: '#999' }}>
+                <li key={index} style={{ fontSize: '9px', lineHeight: 1.5, marginBottom: '4px', color: '#8C8578' }}>
                   {source.url ? (
                     <a
                       href={source.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{ color: '#4A7BA7', textDecoration: 'none' }}
+                      style={{ color: '#5C6B4A', textDecoration: 'none' }}
                     >
                       {source.label}
                     </a>

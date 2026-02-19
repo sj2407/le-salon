@@ -105,7 +105,7 @@ export const CommonplaceBook = ({ isOpen, onClose, entries, userId, onSubmit, on
             zIndex: 9999,
             overflowY: 'auto',
             // Subtle lined-paper effect
-            backgroundImage: 'repeating-linear-gradient(transparent, transparent 31px, rgba(173, 200, 220, 0.12) 31px, rgba(173, 200, 220, 0.12) 32px)',
+            backgroundImage: 'repeating-linear-gradient(transparent, transparent 31px, rgba(92, 107, 74, 0.08) 31px, rgba(92, 107, 74, 0.08) 32px)',
             backgroundSize: '100% 32px'
           }}
         >
@@ -129,7 +129,7 @@ export const CommonplaceBook = ({ isOpen, onClose, entries, userId, onSubmit, on
                   border: 'none',
                   cursor: 'pointer',
                   fontSize: '24px',
-                  color: '#999',
+                  color: '#8C8578',
                   padding: '4px 8px',
                   lineHeight: 1
                 }}
@@ -143,7 +143,7 @@ export const CommonplaceBook = ({ isOpen, onClose, entries, userId, onSubmit, on
             <p style={{
               fontStyle: 'italic',
               fontSize: '14px',
-              color: '#777',
+              color: '#A89F91',
               marginBottom: '24px',
               marginTop: 0
             }}>
@@ -163,7 +163,7 @@ export const CommonplaceBook = ({ isOpen, onClose, entries, userId, onSubmit, on
                   width: '100%',
                   minHeight: '80px',
                   padding: '12px',
-                  border: '1px solid #ccc',
+                  border: '1px solid #D4C9B8',
                   borderRadius: '3px',
                   fontSize: '15px',
                   fontFamily: "'Source Serif 4', Georgia, serif",
@@ -180,7 +180,7 @@ export const CommonplaceBook = ({ isOpen, onClose, entries, userId, onSubmit, on
                   disabled={!inputText.trim() || submitting}
                   style={{
                     padding: '8px 20px',
-                    background: inputText.trim() ? '#2C2C2C' : '#ccc',
+                    background: inputText.trim() ? '#7A3B2E' : '#D4C9B8',
                     color: '#FFFEFA',
                     border: 'none',
                     borderRadius: '3px',
@@ -196,17 +196,17 @@ export const CommonplaceBook = ({ isOpen, onClose, entries, userId, onSubmit, on
                     style={{
                       padding: '8px 16px',
                       background: 'none',
-                      border: '1px solid #ccc',
+                      border: '1px solid #D4C9B8',
                       borderRadius: '3px',
                       cursor: 'pointer',
                       fontSize: '14px',
-                      color: '#777'
+                      color: '#A89F91'
                     }}
                   >
                     Cancel
                   </button>
                 )}
-                <span style={{ fontSize: '11px', color: '#999', marginLeft: 'auto' }}>
+                <span style={{ fontSize: '11px', color: '#8C8578', marginLeft: 'auto' }}>
                   {navigator.platform?.includes('Mac') ? '⌘' : 'Ctrl'}+Enter to submit
                 </span>
               </div>
@@ -230,7 +230,7 @@ export const CommonplaceBook = ({ isOpen, onClose, entries, userId, onSubmit, on
                 textAlign: 'center',
                 padding: '40px 20px',
                 fontStyle: 'italic',
-                color: '#999',
+                color: '#8C8578',
                 fontSize: '14px'
               }}>
                 The Commonplace Book is empty this week.
