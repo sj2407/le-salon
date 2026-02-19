@@ -160,9 +160,6 @@ export const ParlorResponses = ({ responses, userId, onSubmit, onEdit, onDelete,
                       Cancel
                     </button>
                   )}
-                  <span style={{ fontSize: '11px', color: '#8C8578', marginLeft: 'auto' }}>
-                    {navigator.platform?.includes('Mac') ? '⌘' : 'Ctrl'}+Enter to submit
-                  </span>
                 </div>
               </div>
 

@@ -54,6 +54,7 @@ export const ParlorText = ({ salonWeek, hideTitle = false, textSize = 13 }) => {
         <blockquote
           style={{
             paddingLeft: '24px',
+            borderLeft: '2px solid #E8DCC8',
             margin: '0 0 8px 0',
             fontStyle: 'italic',
             fontSize: '12px',

@@ -206,9 +206,6 @@ export const CommonplaceBook = ({ isOpen, onClose, entries, userId, onSubmit, on
                     Cancel
                   </button>
                 )}
-                <span style={{ fontSize: '11px', color: '#8C8578', marginLeft: 'auto' }}>
-                  {navigator.platform?.includes('Mac') ? '⌘' : 'Ctrl'}+Enter to submit
-                </span>
               </div>
             </div>
 
@@ -225,17 +222,7 @@ export const CommonplaceBook = ({ isOpen, onClose, entries, userId, onSubmit, on
                   />
                 ))}
               </div>
-            ) : (
-              <div style={{
-                textAlign: 'center',
-                padding: '40px 20px',
-                fontStyle: 'italic',
-                color: '#8C8578',
-                fontSize: '14px'
-              }}>
-                The Commonplace Book is empty this week.
-              </div>
-            )}
+            ) : null}
           </div>
         </Motion.div>
       )}
