@@ -101,7 +101,11 @@ export const Profile = () => {
   }, [isDragging, handleDragMove, handleDragEnd])
 
   const handleSave = async (e) => {
-    e.preventDefault()
+    if (e) e.preventDefault()
+    if (!displayName.trim()) {
+      setMessage('Name is required')
+      return
+    }
     setLoading(true)
     setMessage('')
 
@@ -230,15 +234,14 @@ export const Profile = () => {
               </div>
             )}
 
-            <div style={{ marginTop: '16px' }}>
+            <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'center', gap: '12px' }}>
               <label htmlFor="photo-upload" style={{
                 padding: '8px 20px',
-                border: '1.5px solid #2C2C2C',
-                borderRadius: '3px',
-                background: '#FFFEFA',
+                border: 'none',
+                background: 'none',
                 cursor: 'pointer',
                 fontSize: '14px',
-                display: 'inline-block'
+                color: '#777',
               }}>
                 {photoUrl ? 'Change Photo' : 'Upload Photo'}
               </label>
@@ -249,6 +252,15 @@ export const Profile = () => {
                 onChange={handlePhotoChange}
                 style={{ display: 'none' }}
               />
+              <button
+                type="button"
+                disabled={loading}
+                onClick={handleSave}
+                className="primary"
+                style={{ padding: '8px 20px', fontSize: '14px' }}
+              >
+                {loading ? 'Saving...' : 'Save Profile'}
+              </button>
             </div>
           </div>
 
@@ -358,10 +370,6 @@ export const Profile = () => {
               {message}
             </div>
           )}
-
-          <button type="submit" disabled={loading} className="primary" style={{ width: '100%', marginTop: '16px' }}>
-            {loading ? 'Saving...' : 'Save Profile'}
-          </button>
         </form>
       </div>
     </div>

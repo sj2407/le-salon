@@ -419,6 +419,11 @@ input:focus, textarea:focus {
   border-color: #2C2C2C;
 }
 
+button:focus, button:active {
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
 textarea {
   resize: vertical;
   min-height: 80px;
