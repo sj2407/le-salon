@@ -153,7 +153,7 @@ export const MyCorner = () => {
         </div>
 
         {/* Tab Content */}
-        <div style={{ marginTop: '-20px', overflow: 'hidden' }}>
+        <div style={{ marginTop: '-20px', overflowX: 'clip' }}>
           <AnimatePresence mode="wait" initial={false} custom={direction.current}>
             <Motion.div
               key={activeTab}
