@@ -508,7 +508,7 @@ export const Salon = () => {
 
         {/* SCROLLABLE MIDDLE: essay body */}
         <div style={{
-          maxHeight: '55vh',
+          maxHeight: '50vh',
           overflowY: 'auto',
           WebkitOverflowScrolling: 'touch',
           borderTop: '1px solid #E8DCC8',
