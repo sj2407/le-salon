@@ -350,6 +350,7 @@ export const MyCard = () => {
             entries={entries}
             displayName={profile.display_name}
             photoUrl={profile.profile_photo_url}
+            photoPosition={profile.profile_photo_position}
             isEditable={true}
             onEdit={() => setIsEditing(true)}
             onDictate={() => setShowDictation(true)}

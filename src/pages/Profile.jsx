@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 
@@ -15,9 +15,12 @@ export const Profile = () => {
   const [favoriteQuote, setFavoriteQuote] = useState('')
   const [photoUrl, setPhotoUrl] = useState('')
   const [photoFile, setPhotoFile] = useState(null)
+  const [photoPosition, setPhotoPosition] = useState('50% 50%')
+  const [isDragging, setIsDragging] = useState(false)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
-
+  const dragRef = useRef(null)
+  const imgRef = useRef(null)
 
   useEffect(() => {
     if (profile) {
@@ -31,6 +34,7 @@ export const Profile = () => {
       setSpiritAnimal(profile.spirit_animal || '')
       setFavoriteQuote(profile.favorite_quote || '')
       setPhotoUrl(profile.profile_photo_url || '')
+      setPhotoPosition(profile.profile_photo_position || '50% 50%')
     }
   }, [profile])
 
@@ -46,6 +50,7 @@ export const Profile = () => {
         return
       }
       setPhotoFile(file)
+      setPhotoPosition('50% 50%')
       const reader = new FileReader()
       reader.onloadend = () => {
         setPhotoUrl(reader.result)
@@ -53,6 +58,50 @@ export const Profile = () => {
       reader.readAsDataURL(file)
     }
   }
+
+  // Drag-to-reposition: convert pointer movement to object-position %
+  const handleDragStart = useCallback((e) => {
+    e.preventDefault()
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX
+    const [startXPct, startYPct] = photoPosition.split(' ').map(v => parseFloat(v))
+    dragRef.current = { startY: clientY, startX: clientX, startXPct, startYPct }
+    setIsDragging(true)
+  }, [photoPosition])
+
+  const handleDragMove = useCallback((e) => {
+    if (!dragRef.current || !imgRef.current) return
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX
+    const rect = imgRef.current.getBoundingClientRect()
+    const deltaX = clientX - dragRef.current.startX
+    const deltaY = clientY - dragRef.current.startY
+    // Map pixel drag to % (negative because dragging down should show more top)
+    const xPct = Math.max(0, Math.min(100, dragRef.current.startXPct - (deltaX / rect.width) * 100))
+    const yPct = Math.max(0, Math.min(100, dragRef.current.startYPct - (deltaY / rect.height) * 100))
+    setPhotoPosition(`${Math.round(xPct)}% ${Math.round(yPct)}%`)
+  }, [])
+
+  const handleDragEnd = useCallback(() => {
+    dragRef.current = null
+    setIsDragging(false)
+  }, [])
+
+  useEffect(() => {
+    if (!isDragging) return
+    const onMove = (e) => handleDragMove(e)
+    const onEnd = () => handleDragEnd()
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onEnd)
+    window.addEventListener('touchmove', onMove, { passive: false })
+    window.addEventListener('touchend', onEnd)
+    return () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onEnd)
+      window.removeEventListener('touchmove', onMove)
+      window.removeEventListener('touchend', onEnd)
+    }
+  }, [isDragging, handleDragMove, handleDragEnd])
 
   const handleSave = async (e) => {
     e.preventDefault()
@@ -70,16 +119,16 @@ export const Profile = () => {
 
         const { error: uploadError } = await supabase.storage
           .from('profile-photo')
-          .upload(filePath, photoFile)
+          .upload(filePath, photoFile, { upsert: true })
 
         if (uploadError) throw uploadError
 
-        // Get public URL
+        // Get public URL with cache-busting timestamp
         const { data: { publicUrl } } = supabase.storage
           .from('profile-photo')
           .getPublicUrl(filePath)
 
-        uploadedPhotoUrl = publicUrl
+        uploadedPhotoUrl = `${publicUrl}?v=${Date.now()}`
       }
 
       // Update profile
@@ -94,15 +143,15 @@ export const Profile = () => {
           astro_sign: astroSign,
           spirit_animal: spiritAnimal,
           favorite_quote: favoriteQuote,
-          profile_photo_url: uploadedPhotoUrl
+          profile_photo_url: uploadedPhotoUrl,
+          profile_photo_position: photoPosition,
         })
         .eq('id', user.id)
 
       if (updateError) throw updateError
 
       setMessage('Profile updated successfully!')
-
-      // Refresh profile in context without hard reload
+      setPhotoFile(null)
       await refreshProfile()
     } catch (err) {
       setMessage(err.message || 'Failed to update profile')
@@ -123,20 +172,40 @@ export const Profile = () => {
           <div style={{ textAlign: 'center', marginBottom: '32px' }}>
             {photoUrl ? (
               <div style={{ position: 'relative', display: 'inline-block' }}>
-                <img
-                  src={photoUrl}
-                  alt="Profile"
+                <div
+                  ref={imgRef}
                   style={{
                     width: '150px',
                     height: '150px',
                     borderRadius: '50%',
-                    objectFit: 'cover',
+                    overflow: 'hidden',
                     border: '3px solid #2C2C2C',
                     boxShadow: '4px 4px 0 #2C2C2C',
-                    filter: 'contrast(1.1) saturate(1.2) brightness(1.05)',
-                    WebkitFilter: 'contrast(1.1) saturate(1.2) brightness(1.05)'
+                    cursor: 'grab',
+                    touchAction: 'none',
+                    position: 'relative',
                   }}
-                />
+                  onMouseDown={handleDragStart}
+                  onTouchStart={handleDragStart}
+                >
+                  <img
+                    src={photoUrl}
+                    alt="Profile"
+                    draggable={false}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      objectPosition: photoPosition,
+                      filter: 'contrast(1.1) saturate(1.2) brightness(1.05)',
+                      WebkitFilter: 'contrast(1.1) saturate(1.2) brightness(1.05)',
+                      pointerEvents: 'none',
+                    }}
+                  />
+                </div>
+                <div style={{ marginTop: '6px', fontSize: '11px', color: '#999', fontStyle: 'italic' }}>
+                  Drag to reposition
+                </div>
               </div>
             ) : (
               <div style={{

@@ -73,6 +73,7 @@ export const CardDisplay = ({
   entries,
   displayName,
   photoUrl,
+  photoPosition,
   isEditable = false,
   onEdit,
   onSectionEdit,
@@ -395,6 +396,7 @@ export const CardDisplay = ({
                 height: '109px',
                 borderRadius: '50%',
                 objectFit: 'cover',
+                objectPosition: photoPosition || '50% 50%',
                 border: '4px solid #2C2C2C',
                 boxShadow: '4px 4px 0 #2C2C2C',
                 filter: 'contrast(1.1) saturate(1.2) brightness(1.05)'

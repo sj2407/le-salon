@@ -46,6 +46,7 @@ export const ProfileDisplay = ({ profile, title }) => {
                 height: '150px',
                 borderRadius: '50%',
                 objectFit: 'cover',
+                objectPosition: profile.profile_photo_position || '50% 50%',
                 border: '3px solid #2C2C2C',
                 boxShadow: '4px 4px 0 #2C2C2C',
                 filter: 'contrast(1.1) saturate(1.2) brightness(1.05)',
