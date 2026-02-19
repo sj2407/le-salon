@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { supabase } from '../lib/supabase'
 import { MusicEntryDisplay } from './music/MusicEntryDisplay'
 import { CATEGORY_CONFIG } from '../lib/cardConstants'
 import { ReadingIcon } from './icons/ReadingIcon'
@@ -89,6 +90,51 @@ export const CardDisplay = ({
   cardOwnerName
 }) => {
   const [flippedSections, setFlippedSections] = useState({})
+  const [stats, setStats] = useState(null)
+  const [showStats, setShowStats] = useState(false)
+  const statsRef = useRef(null)
+  const nameRef = useRef(null)
+
+  // Fetch stats on first hover/tap (lazy load) — works for own card and friend card
+  const statsOwnerId = card?.user_id
+  const fetchStats = async () => {
+    if (stats || !statsOwnerId) return
+    const [reviews, wishlist, friends] = await Promise.all([
+      supabase.from('reviews').select('id', { count: 'exact', head: true }).eq('user_id', statsOwnerId),
+      supabase.from('wishlist_items').select('id', { count: 'exact', head: true }).eq('user_id', statsOwnerId),
+      supabase.from('friendships').select('id', { count: 'exact', head: true })
+        .eq('status', 'accepted')
+        .or(`requester_id.eq.${statsOwnerId},recipient_id.eq.${statsOwnerId}`),
+    ])
+    setStats({
+      reviews: reviews.count ?? 0,
+      wishlist: wishlist.count ?? 0,
+      friends: friends.count ?? 0,
+    })
+  }
+
+  // Close stats popover on click outside or Escape
+  useEffect(() => {
+    if (!showStats) return
+    const handleClick = (e) => {
+      if (
+        nameRef.current && !nameRef.current.contains(e.target) &&
+        statsRef.current && !statsRef.current.contains(e.target)
+      ) setShowStats(false)
+    }
+    const handleEscape = (e) => { if (e.key === 'Escape') setShowStats(false) }
+    document.addEventListener('mousedown', handleClick)
+    document.addEventListener('keydown', handleEscape)
+    return () => {
+      document.removeEventListener('mousedown', handleClick)
+      document.removeEventListener('keydown', handleEscape)
+    }
+  }, [showStats])
+
+  const handleNameInteraction = () => {
+    fetchStats()
+    setShowStats(prev => !prev)
+  }
 
   const formatDate = (date) => {
     const d = new Date(date)
@@ -290,7 +336,62 @@ export const CardDisplay = ({
     <div className="card" style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}>
       <header className="card-header" style={{ marginBottom: isEditable ? '0px' : '40px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', marginBottom: '12px', marginLeft: '100px' }}>
-          <h1 className="card-name" style={{ transform: 'translateY(12px)' }}>{displayName}</h1>
+          <div ref={nameRef} style={{ position: 'relative' }}>
+            <h1
+              className="card-name"
+              style={{
+                transform: 'translateY(12px)',
+                cursor: 'pointer',
+              }}
+              onClick={handleNameInteraction}
+              onMouseEnter={() => { fetchStats(); setShowStats(true) }}
+              onMouseLeave={() => setShowStats(false)}
+            >
+              {displayName}
+            </h1>
+            {showStats && (
+              <div
+                ref={statsRef}
+                onMouseEnter={() => setShowStats(true)}
+                onMouseLeave={() => setShowStats(false)}
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 8px)',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  background: '#FFFEFA',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.12)',
+                  padding: '10px 16px',
+                  display: 'flex',
+                  flexDirection: 'row',
+                  flexWrap: 'nowrap',
+                  gap: '20px',
+                  whiteSpace: 'nowrap',
+                  zIndex: 50,
+                }}
+              >
+                {stats ? (
+                  <>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontFamily: "'Caveat', cursive", fontSize: '22px', fontWeight: 600, color: '#2C2C2C', lineHeight: 1 }}>{stats.reviews}</div>
+                      <div style={{ fontSize: '10px', color: '#999', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '2px' }}>Reviews</div>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontFamily: "'Caveat', cursive", fontSize: '22px', fontWeight: 600, color: '#2C2C2C', lineHeight: 1 }}>{stats.wishlist}</div>
+                      <div style={{ fontSize: '10px', color: '#999', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '2px' }}>Wishlist</div>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontFamily: "'Caveat', cursive", fontSize: '22px', fontWeight: 600, color: '#2C2C2C', lineHeight: 1 }}>{stats.friends}</div>
+                      <div style={{ fontSize: '10px', color: '#999', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '2px' }}>Friends</div>
+                    </div>
+                  </>
+                ) : (
+                  <div style={{ fontSize: '12px', color: '#999', fontStyle: 'italic' }}>Loading...</div>
+                )}
+              </div>
+            )}
+          </div>
           {photoUrl && (
             <img
               src={photoUrl}
