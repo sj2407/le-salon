@@ -95,23 +95,24 @@ export const CardDisplay = ({
   const statsRef = useRef(null)
   const nameRef = useRef(null)
 
-  // Fetch stats on first hover/tap (lazy load) — works for own card and friend card
+  // Prefetch stats on mount — lightweight count-only queries
   const statsOwnerId = card?.user_id
-  const fetchStats = async () => {
-    if (stats || !statsOwnerId) return
-    const [reviews, wishlist, friends] = await Promise.all([
+  useEffect(() => {
+    if (!statsOwnerId) return
+    Promise.all([
       supabase.from('reviews').select('id', { count: 'exact', head: true }).eq('user_id', statsOwnerId),
       supabase.from('wishlist_items').select('id', { count: 'exact', head: true }).eq('user_id', statsOwnerId),
       supabase.from('friendships').select('id', { count: 'exact', head: true })
         .eq('status', 'accepted')
         .or(`requester_id.eq.${statsOwnerId},recipient_id.eq.${statsOwnerId}`),
-    ])
-    setStats({
-      reviews: reviews.count ?? 0,
-      wishlist: wishlist.count ?? 0,
-      friends: friends.count ?? 0,
+    ]).then(([reviews, wishlist, friends]) => {
+      setStats({
+        reviews: reviews.count ?? 0,
+        wishlist: wishlist.count ?? 0,
+        friends: friends.count ?? 0,
+      })
     })
-  }
+  }, [statsOwnerId])
 
   // Close stats popover on click outside or Escape
   useEffect(() => {
@@ -132,8 +133,7 @@ export const CardDisplay = ({
   }, [showStats])
 
   const handleNameInteraction = () => {
-    fetchStats()
-    setShowStats(prev => !prev)
+    if (stats) setShowStats(prev => !prev)
   }
 
   const formatDate = (date) => {
@@ -344,7 +344,7 @@ export const CardDisplay = ({
                 cursor: 'pointer',
               }}
               onClick={handleNameInteraction}
-              onPointerEnter={(e) => { if (e.pointerType === 'mouse') { fetchStats(); setShowStats(true) } }}
+              onPointerEnter={(e) => { if (e.pointerType === 'mouse' && stats) setShowStats(true) }}
               onPointerLeave={(e) => { if (e.pointerType === 'mouse') setShowStats(false) }}
             >
               {displayName}
@@ -371,24 +371,18 @@ export const CardDisplay = ({
                   zIndex: 50,
                 }}
               >
-                {stats ? (
-                  <>
-                    <div style={{ textAlign: 'center' }}>
-                      <div style={{ fontFamily: "'Caveat', cursive", fontSize: '22px', fontWeight: 600, color: '#2C2C2C', lineHeight: 1 }}>{stats.reviews}</div>
-                      <div style={{ fontSize: '10px', color: '#999', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '2px' }}>Reviews</div>
-                    </div>
-                    <div style={{ textAlign: 'center' }}>
-                      <div style={{ fontFamily: "'Caveat', cursive", fontSize: '22px', fontWeight: 600, color: '#2C2C2C', lineHeight: 1 }}>{stats.wishlist}</div>
-                      <div style={{ fontSize: '10px', color: '#999', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '2px' }}>Wishlist</div>
-                    </div>
-                    <div style={{ textAlign: 'center' }}>
-                      <div style={{ fontFamily: "'Caveat', cursive", fontSize: '22px', fontWeight: 600, color: '#2C2C2C', lineHeight: 1 }}>{stats.friends}</div>
-                      <div style={{ fontSize: '10px', color: '#999', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '2px' }}>Friends</div>
-                    </div>
-                  </>
-                ) : (
-                  <div style={{ fontSize: '12px', color: '#999', fontStyle: 'italic' }}>Loading...</div>
-                )}
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontFamily: "'Caveat', cursive", fontSize: '22px', fontWeight: 600, color: '#2C2C2C', lineHeight: 1 }}>{stats.reviews}</div>
+                  <div style={{ fontSize: '10px', color: '#999', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '2px' }}>Reviews</div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontFamily: "'Caveat', cursive", fontSize: '22px', fontWeight: 600, color: '#2C2C2C', lineHeight: 1 }}>{stats.wishlist}</div>
+                  <div style={{ fontSize: '10px', color: '#999', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '2px' }}>Wishlist</div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontFamily: "'Caveat', cursive", fontSize: '22px', fontWeight: 600, color: '#2C2C2C', lineHeight: 1 }}>{stats.friends}</div>
+                  <div style={{ fontSize: '10px', color: '#999', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '2px' }}>Friends</div>
+                </div>
               </div>
             )}
           </div>
