@@ -344,16 +344,16 @@ export const CardDisplay = ({
                 cursor: 'pointer',
               }}
               onClick={handleNameInteraction}
-              onMouseEnter={() => { fetchStats(); setShowStats(true) }}
-              onMouseLeave={() => setShowStats(false)}
+              onPointerEnter={(e) => { if (e.pointerType === 'mouse') { fetchStats(); setShowStats(true) } }}
+              onPointerLeave={(e) => { if (e.pointerType === 'mouse') setShowStats(false) }}
             >
               {displayName}
             </h1>
             {showStats && (
               <div
                 ref={statsRef}
-                onMouseEnter={() => setShowStats(true)}
-                onMouseLeave={() => setShowStats(false)}
+                onPointerEnter={(e) => { if (e.pointerType === 'mouse') setShowStats(true) }}
+                onPointerLeave={(e) => { if (e.pointerType === 'mouse') setShowStats(false) }}
                 style={{
                   position: 'absolute',
                   top: 'calc(100% + 8px)',
