@@ -27,6 +27,7 @@
 import { readFileSync } from 'fs'
 import { createClient } from '@supabase/supabase-js'
 import { config } from 'dotenv'
+import { parseMarkdown } from './lib/parse-markdown.js'
 
 config()
 
@@ -35,79 +36,6 @@ const supabase = createClient(
   // Use service role key if available, otherwise anon key
   process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY
 )
-
-function parseMarkdown(content) {
-  const sections = content.split(/\n---\n/)
-
-  // Section 0: Title + Body
-  const titleAndBody = sections[0].trim()
-  const titleMatch = titleAndBody.match(/^#\s+(.+)\n/)
-  const title = titleMatch ? titleMatch[1].trim() : 'Untitled'
-  const body = titleAndBody.replace(/^#\s+.+\n+/, '').trim()
-
-  // Section 1: Quote
-  let quote = null
-  let quoteAttribution = null
-  if (sections[1]) {
-    const quoteSection = sections[1].trim()
-    // Match **"quote"** or **Defining Quote**\n\n"quote"
-    const quoteParts = quoteSection.split('\n')
-    const quoteLines = []
-    let attrLine = null
-
-    for (const line of quoteParts) {
-      const trimmed = line.trim()
-      if (!trimmed) continue
-      if (trimmed.startsWith('—') || trimmed.startsWith('--') || trimmed.startsWith('—')) {
-        attrLine = trimmed.replace(/^[—–-]+\s*/, '').trim()
-      } else if (trimmed === '**Defining Quote**') {
-        continue // skip header
-      } else {
-        quoteLines.push(trimmed.replace(/^\*\*[""]?|[""]?\*\*$/g, '').replace(/^[""]|[""]$/g, ''))
-      }
-    }
-
-    quote = quoteLines.join(' ').trim()
-    quoteAttribution = attrLine
-  }
-
-  // Section 2: Further reading / Key Works
-  const furtherReading = []
-  if (sections[2]) {
-    const lines = sections[2].trim().split('\n')
-    for (const line of lines) {
-      const match = line.match(/^-\s+(?:(.+?),\s+)?\*(.+?)\*(?:\s*\((.+?)\))?/)
-      if (match) {
-        furtherReading.push({
-          author: match[1] || '',
-          title: match[2],
-          description: match[3] || '',
-        })
-      }
-    }
-  }
-
-  // Section 3: Sources
-  const sources = []
-  if (sections[3]) {
-    const lines = sections[3].trim().split('\n')
-    for (const line of lines) {
-      // [Label](URL) format
-      const linkMatch = line.match(/\[(.+?)\]\((.+?)\)/)
-      if (linkMatch) {
-        sources.push({ label: linkMatch[1], url: linkMatch[2] })
-      } else {
-        // Plain text source
-        const textMatch = line.match(/^-\s+(.+)/)
-        if (textMatch) {
-          sources.push({ label: textMatch[1] })
-        }
-      }
-    }
-  }
-
-  return { title, body, quote, quoteAttribution, furtherReading, sources }
-}
 
 async function loadWeek(filePath, weekOf) {
   const content = readFileSync(filePath, 'utf-8')
