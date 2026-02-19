@@ -4,10 +4,14 @@ import { AnimatePresence, motion as Motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { TAG_ICONS, TAG_OPTIONS, TAG_LABELS } from '../lib/reviewConstants'
+import { TagAutocomplete } from '../components/TagAutocomplete'
 import { EmptyStateFantom } from '../components/EmptyStateFantom'
 import { FilterDropdown } from '../components/FilterDropdown'
 import { DictationModal } from '../components/DictationModal'
 import { isSpeechSupported } from '../lib/useSpeechRecognition'
+import { CoverSearchModal } from '../components/cover-search/CoverSearchModal'
+import { CoverThumbnail } from '../components/cover-search/CoverThumbnail'
+import { TAG_TO_MEDIA_TYPE } from '../lib/coverSearchApis'
 
 export const LaListe = () => {
   const { profile } = useAuth()
@@ -28,11 +32,15 @@ export const LaListe = () => {
   const [newTag, setNewTag] = useState('other')
   const [newNote, setNewNote] = useState('')
   const [newDate, setNewDate] = useState('')
+  const [newImageUrl, setNewImageUrl] = useState('')
   const [editingId, setEditingId] = useState(null)
   const [editTitle, setEditTitle] = useState('')
   const [editTag, setEditTag] = useState('other')
   const [editNote, setEditNote] = useState('')
   const [editDate, setEditDate] = useState('')
+  const [editImageUrl, setEditImageUrl] = useState('')
+  const [showCoverSearch, setShowCoverSearch] = useState(false)
+  const [coverSearchContext, setCoverSearchContext] = useState('add') // 'add' or 'edit'
 
   useEffect(() => {
     if (profile) {
@@ -96,7 +104,8 @@ export const LaListe = () => {
           title: newTitle.trim(),
           tag: newTag,
           note: newNote.trim() || null,
-          item_date: newDate || null
+          item_date: newDate || null,
+          image_url: newImageUrl || null
         })
 
       if (error) throw error
@@ -105,6 +114,7 @@ export const LaListe = () => {
       setNewTag('other')
       setNewNote('')
       setNewDate('')
+      setNewImageUrl('')
       setShowAddForm(false)
       await fetchItems()
     } catch (_err) {
@@ -149,6 +159,7 @@ export const LaListe = () => {
     setEditTag(item.tag)
     setEditNote(item.note || '')
     setEditDate(item.item_date || '')
+    setEditImageUrl(item.image_url || '')
   }
 
   const handleEdit = async () => {
@@ -161,7 +172,8 @@ export const LaListe = () => {
           title: editTitle.trim(),
           tag: editTag,
           note: editNote.trim() || null,
-          item_date: editDate || null
+          item_date: editDate || null,
+          image_url: editImageUrl || null
         })
         .eq('id', editingId)
 
@@ -387,25 +399,11 @@ export const LaListe = () => {
             }}
           />
           <div style={{ display: 'flex', gap: '10px', marginBottom: '10px', flexWrap: 'wrap' }}>
-            <select
+            <TagAutocomplete
               value={newTag}
-              onChange={(e) => setNewTag(e.target.value)}
-              style={{
-                fontFamily: "'Source Serif 4', Georgia, serif",
-                padding: '6px 10px',
-                border: '1px solid #ccc',
-                borderRadius: '3px',
-                background: '#FFFEFA',
-                fontSize: '14px',
-                cursor: 'pointer'
-              }}
-            >
-              {TAG_OPTIONS.map((option) => (
-                <option key={option} value={option}>
-                  {TAG_ICONS[option]} {TAG_LABELS[option]}
-                </option>
-              ))}
-            </select>
+              onChange={setNewTag}
+              style={{ width: '160px' }}
+            />
             <input
               type="text"
               value={newDate}
@@ -442,6 +440,64 @@ export const LaListe = () => {
               }}
             />
           </div>
+          {newTag !== 'other' && (
+            <div style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              {newImageUrl ? (
+                <>
+                  <CoverThumbnail imageUrl={newImageUrl} tag={newTag} />
+                  {TAG_TO_MEDIA_TYPE[newTag] && (
+                    <button
+                      type="button"
+                      onClick={() => { setCoverSearchContext('add'); setShowCoverSearch(true) }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: '#4A7BA7', padding: '2px 0' }}
+                    >
+                      Change
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setNewImageUrl('')}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: '#999', padding: '2px 0' }}
+                  >
+                    Remove
+                  </button>
+                </>
+              ) : TAG_TO_MEDIA_TYPE[newTag] ? (
+                <button
+                  type="button"
+                  onClick={() => { setCoverSearchContext('add'); setShowCoverSearch(true) }}
+                  style={{
+                    background: 'none',
+                    border: '1px dashed #ccc',
+                    borderRadius: '3px',
+                    cursor: 'pointer',
+                    padding: '6px 10px',
+                    fontSize: '12px',
+                    color: '#999',
+                    fontStyle: 'italic'
+                  }}
+                >
+                  Search cover...
+                </button>
+              ) : (
+                <input
+                  type="url"
+                  value={newImageUrl}
+                  onChange={(e) => setNewImageUrl(e.target.value)}
+                  placeholder="Paste image URL..."
+                  style={{
+                    padding: '6px 10px',
+                    border: '1px solid #ccc',
+                    borderRadius: '3px',
+                    fontSize: '12px',
+                    fontStyle: 'italic',
+                    background: '#FFFEFA',
+                    width: '200px'
+                  }}
+                />
+              )}
+            </div>
+          )}
           <div style={{ display: 'flex', gap: '8px' }}>
             <button
               onClick={handleAdd}
@@ -459,7 +515,7 @@ export const LaListe = () => {
               Add
             </button>
             <button
-              onClick={() => { setShowAddForm(false); setNewTitle(''); setNewTag('other'); setNewNote(''); setNewDate('') }}
+              onClick={() => { setShowAddForm(false); setNewTitle(''); setNewTag('other'); setNewNote(''); setNewDate(''); setNewImageUrl('') }}
               style={{
                 padding: '8px 16px',
                 background: '#F5F1EB',
@@ -522,25 +578,11 @@ export const LaListe = () => {
                       }}
                     />
                     <div style={{ display: 'flex', gap: '10px', marginBottom: '8px', flexWrap: 'wrap' }}>
-                      <select
+                      <TagAutocomplete
                         value={editTag}
-                        onChange={(e) => setEditTag(e.target.value)}
-                        style={{
-                          fontFamily: "'Source Serif 4', Georgia, serif",
-                          padding: '4px 8px',
-                          border: '1px solid #ccc',
-                          borderRadius: '3px',
-                          background: '#FFFEFA',
-                          fontSize: '13px',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        {TAG_OPTIONS.map((option) => (
-                          <option key={option} value={option}>
-                            {TAG_ICONS[option]} {TAG_LABELS[option]}
-                          </option>
-                        ))}
-                      </select>
+                        onChange={setEditTag}
+                        style={{ width: '160px' }}
+                      />
                       <input
                         type="text"
                         value={editDate}
@@ -577,6 +619,64 @@ export const LaListe = () => {
                         }}
                       />
                     </div>
+                    {editTag !== 'other' && (
+                      <div style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        {editImageUrl ? (
+                          <>
+                            <CoverThumbnail imageUrl={editImageUrl} tag={editTag} />
+                            {TAG_TO_MEDIA_TYPE[editTag] && (
+                              <button
+                                type="button"
+                                onClick={() => { setCoverSearchContext('edit'); setShowCoverSearch(true) }}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: '#4A7BA7', padding: '2px 0' }}
+                              >
+                                Change
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => setEditImageUrl('')}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: '#999', padding: '2px 0' }}
+                            >
+                              Remove
+                            </button>
+                          </>
+                        ) : TAG_TO_MEDIA_TYPE[editTag] ? (
+                          <button
+                            type="button"
+                            onClick={() => { setCoverSearchContext('edit'); setShowCoverSearch(true) }}
+                            style={{
+                              background: 'none',
+                              border: '1px dashed #ccc',
+                              borderRadius: '3px',
+                              cursor: 'pointer',
+                              padding: '6px 10px',
+                              fontSize: '12px',
+                              color: '#999',
+                              fontStyle: 'italic'
+                            }}
+                          >
+                            Search cover...
+                          </button>
+                        ) : (
+                          <input
+                            type="url"
+                            value={editImageUrl}
+                            onChange={(e) => setEditImageUrl(e.target.value)}
+                            placeholder="Paste image URL..."
+                            style={{
+                              padding: '4px 8px',
+                              border: '1px solid #ccc',
+                              borderRadius: '3px',
+                              fontSize: '12px',
+                              fontStyle: 'italic',
+                              background: '#FFFEFA',
+                              width: '200px'
+                            }}
+                          />
+                        )}
+                      </div>
+                    )}
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <button
                         onClick={handleEdit}
@@ -648,7 +748,7 @@ export const LaListe = () => {
                     {/* Content */}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontSize: '16px', flexShrink: 0 }}>{TAG_ICONS[item.tag] || TAG_ICONS.other}</span>
+                        <CoverThumbnail imageUrl={item.image_url} tag={item.tag} />
                         <span style={{ fontSize: '14px', fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {item.title}
                         </span>
@@ -776,7 +876,7 @@ export const LaListe = () => {
                         ✓
                       </button>
 
-                      <span style={{ fontSize: '16px', flexShrink: 0 }}>{TAG_ICONS[item.tag] || TAG_ICONS.other}</span>
+                      <CoverThumbnail imageUrl={item.image_url} tag={item.tag} />
                       <span style={{
                         fontSize: '14px',
                         fontStyle: 'italic',
@@ -887,7 +987,7 @@ export const LaListe = () => {
                       </div>
 
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontSize: '18px' }}>{TAG_ICONS[review.tag] || TAG_ICONS.other}</span>
+                        <CoverThumbnail imageUrl={review.image_url} tag={review.tag} />
                         <h3 style={{ fontSize: '14px', fontStyle: 'italic', fontWeight: 400, margin: 0, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {review.title}
                         </h3>
@@ -967,6 +1067,20 @@ export const LaListe = () => {
           </AnimatePresence>
         </div>
       )}
+
+      <CoverSearchModal
+        isOpen={showCoverSearch}
+        onClose={() => setShowCoverSearch(false)}
+        onSelect={({ imageUrl: url }) => {
+          if (coverSearchContext === 'edit') {
+            setEditImageUrl(url)
+          } else {
+            setNewImageUrl(url)
+          }
+        }}
+        initialQuery={coverSearchContext === 'edit' ? editTitle : newTitle}
+        mediaType={TAG_TO_MEDIA_TYPE[coverSearchContext === 'edit' ? editTag : newTag]}
+      />
 
       <DictationModal
         isOpen={showDictation}

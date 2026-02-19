@@ -2,6 +2,9 @@ import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { WishlistDisplay } from '../components/WishlistDisplay'
+import { CoverSearchModal } from '../components/cover-search/CoverSearchModal'
+import { CoverThumbnail } from '../components/cover-search/CoverThumbnail'
+import { typeToMediaType } from '../lib/coverSearchApis'
 
 export const Wishlist = () => {
   const { profile } = useAuth()
@@ -13,6 +16,8 @@ export const Wishlist = () => {
   const [type, setType] = useState('')
   const [link, setLink] = useState('')
   const [error, setError] = useState('')
+  const [imageUrl, setImageUrl] = useState('')
+  const [showCoverSearch, setShowCoverSearch] = useState(false)
 
   // Track initial form values to detect dirty state
   const initialFormRef = useRef(null)
@@ -62,6 +67,7 @@ export const Wishlist = () => {
     setType('')
     setLink('')
     setError('')
+    setImageUrl('')
     initialFormRef.current = { name: '', type: '', link: '' }
     setShowModal(true)
   }
@@ -72,6 +78,7 @@ export const Wishlist = () => {
     setType(item.type || '')
     setLink(item.link || '')
     setError('')
+    setImageUrl(item.image_url || '')
     initialFormRef.current = { name: item.name, type: item.type || '', link: item.link || '' }
     setShowModal(true)
   }
@@ -90,6 +97,7 @@ export const Wishlist = () => {
             name,
             type: type.trim() || null,
             link: trimmedLink,
+            image_url: imageUrl || null,
             updated_at: new Date().toISOString()
           })
           .eq('id', editingItem.id)
@@ -102,7 +110,8 @@ export const Wishlist = () => {
             user_id: profile.id,
             name,
             type: type.trim() || null,
-            link: trimmedLink
+            link: trimmedLink,
+            image_url: imageUrl || null
           })
 
         if (error) throw error
@@ -224,6 +233,14 @@ export const Wishlist = () => {
         )}
       />
 
+      <CoverSearchModal
+        isOpen={showCoverSearch}
+        onClose={() => setShowCoverSearch(false)}
+        onSelect={({ imageUrl: url }) => setImageUrl(url)}
+        initialQuery={name}
+        mediaType={typeToMediaType(type)}
+      />
+
       {/* Add/Edit Modal */}
       {showModal && (
         <div
@@ -244,18 +261,18 @@ export const Wishlist = () => {
           <div
             style={{
               background: '#FFFEFA',
-              border: '2px solid #2C2C2C',
-              borderRadius: '4px',
-              padding: '32px',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '20px 24px',
               maxWidth: '500px',
               width: '90%',
               maxHeight: '90vh',
               overflowY: 'auto',
-              boxShadow: '4px 4px 0 #2C2C2C'
+              boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="handwritten" style={{ fontSize: '32px', marginBottom: '24px' }}>
+            <h2 className="handwritten" style={{ fontSize: '24px', marginBottom: '16px' }}>
               {editingItem ? 'Edit Item' : 'Add Item'}
             </h2>
 
@@ -280,6 +297,71 @@ export const Wishlist = () => {
                   placeholder="e.g., Book, Movie, Album, etc."
                 />
               </div>
+
+              {type.trim() && (
+                <div className="form-group">
+                  <label className="form-label">Cover Image (optional)</label>
+                  {imageUrl ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <CoverThumbnail imageUrl={imageUrl} tag={typeToMediaType(type) || 'other'} size="medium" />
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        {typeToMediaType(type) && (
+                          <button
+                            type="button"
+                            onClick={() => setShowCoverSearch(true)}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: '#4A7BA7', padding: '4px 0' }}
+                          >
+                            Change
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setImageUrl('')}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: '#999', padding: '4px 0' }}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  ) : typeToMediaType(type) ? (
+                    <button
+                      type="button"
+                      onClick={() => setShowCoverSearch(true)}
+                      style={{
+                        background: 'none',
+                        border: '1px dashed #ccc',
+                        borderRadius: '3px',
+                        cursor: 'pointer',
+                        padding: '8px 12px',
+                        fontSize: '13px',
+                        color: '#999',
+                        fontStyle: 'italic',
+                        width: '100%',
+                        textAlign: 'left'
+                      }}
+                    >
+                      Search cover...
+                    </button>
+                  ) : (
+                    <input
+                      type="url"
+                      value={imageUrl}
+                      onChange={(e) => setImageUrl(e.target.value)}
+                      placeholder="Paste image URL..."
+                      style={{
+                        width: '100%',
+                        padding: '8px 10px',
+                        border: '1px solid #ccc',
+                        borderRadius: '3px',
+                        fontSize: '13px',
+                        fontStyle: 'italic',
+                        boxSizing: 'border-box',
+                        background: '#FFFEFA'
+                      }}
+                    />
+                  )}
+                </div>
+              )}
 
               <div className="form-group">
                 <label className="form-label">Link (optional)</label>

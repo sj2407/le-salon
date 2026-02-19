@@ -1,4 +1,6 @@
 import { EmptyStateFantom } from './EmptyStateFantom'
+import { CoverThumbnail } from './cover-search/CoverThumbnail'
+import { typeToMediaType } from '../lib/coverSearchApis'
 
 /**
  * Shared wishlist display component
@@ -80,6 +82,9 @@ export const WishlistDisplay = ({
                 alignItems: 'center'
               }}
             >
+              {item.image_url && typeToMediaType(item.type) && (
+                <CoverThumbnail imageUrl={item.image_url} tag={typeToMediaType(item.type)} />
+              )}
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                   {item.type && (

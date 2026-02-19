@@ -4,9 +4,13 @@ import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { ReviewsDisplay } from '../components/ReviewsDisplay'
 import { TAG_ICONS, TAG_OPTIONS, TAG_LABELS } from '../lib/reviewConstants'
+import { TagAutocomplete } from '../components/TagAutocomplete'
 import { ExpandedReviewText } from '../components/review-comments/ExpandedReviewText'
 import { DictationModal } from '../components/DictationModal'
 import { isSpeechSupported } from '../lib/useSpeechRecognition'
+import { CoverSearchModal } from '../components/cover-search/CoverSearchModal'
+import { CoverThumbnail } from '../components/cover-search/CoverThumbnail'
+import { TAG_TO_MEDIA_TYPE } from '../lib/coverSearchApis'
 
 export const Reviews = () => {
   const { profile } = useAuth()
@@ -27,6 +31,8 @@ export const Reviews = () => {
   const [friendQuery, setFriendQuery] = useState('')
   const [error, setError] = useState('')
   const [reviewComments, setReviewComments] = useState([])
+  const [imageUrl, setImageUrl] = useState('')
+  const [showCoverSearch, setShowCoverSearch] = useState(false)
 
   // Track initial form values to detect dirty state
   const initialFormRef = useRef(null)
@@ -52,6 +58,7 @@ export const Reviews = () => {
       setRecommendToFriends([])
       setFriendQuery('')
       setError('')
+      setImageUrl('')
       initialFormRef.current = { title: prefillTitle, tag: prefillTag || 'other', rating: 7.0, reviewText: '', recommendToFriends: [] }
       setShowModal(true)
       // Clear prefill params from URL
@@ -185,6 +192,7 @@ export const Reviews = () => {
     setRecommendToFriends([])
     setFriendQuery('')
     setError('')
+    setImageUrl('')
     initialFormRef.current = { title: '', tag: 'other', rating: 7.0, reviewText: '', recommendToFriends: [] }
     setShowModal(true)
   }
@@ -195,6 +203,7 @@ export const Reviews = () => {
     setTag(review.tag)
     setRating(review.rating)
     setReviewText(review.review_text || '')
+    setImageUrl(review.image_url || '')
     setFriendQuery('')
     setError('')
 
@@ -245,6 +254,7 @@ export const Reviews = () => {
             tag,
             rating: parsedRating,
             review_text: reviewText.trim() || null,
+            image_url: imageUrl || null,
             updated_at: new Date().toISOString()
           })
           .eq('id', editingReview.id)
@@ -258,7 +268,8 @@ export const Reviews = () => {
             title,
             tag,
             rating: parsedRating,
-            review_text: reviewText.trim() || null
+            review_text: reviewText.trim() || null,
+            image_url: imageUrl || null
           })
           .select()
           .single()
@@ -484,6 +495,14 @@ export const Reviews = () => {
         onSaveDirectly={handleDictationSave}
       />
 
+      <CoverSearchModal
+        isOpen={showCoverSearch}
+        onClose={() => setShowCoverSearch(false)}
+        onSelect={({ imageUrl: url }) => setImageUrl(url)}
+        initialQuery={title}
+        mediaType={TAG_TO_MEDIA_TYPE[tag]}
+      />
+
       {/* Add/Edit Modal */}
       {showModal && (
         <div
@@ -504,18 +523,18 @@ export const Reviews = () => {
           <div
             style={{
               background: '#FFFEFA',
-              border: '2px solid #2C2C2C',
-              borderRadius: '4px',
-              padding: '32px',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '20px 24px',
               maxWidth: '500px',
               width: '90%',
               maxHeight: '90vh',
               overflowY: 'auto',
-              boxShadow: '4px 4px 0 #2C2C2C'
+              boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="handwritten" style={{ fontSize: '32px', marginBottom: '24px' }}>
+            <h2 className="handwritten" style={{ fontSize: '24px', marginBottom: '16px' }}>
               {editingReview ? 'Edit Review' : 'Add Review'}
             </h2>
 
@@ -534,27 +553,73 @@ export const Reviews = () => {
 
               <div className="form-group">
                 <label className="form-label">Tag *</label>
-                <select
-                  value={tag}
-                  onChange={(e) => setTag(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '8px 10px',
-                    border: '1px solid #ccc',
-                    borderRadius: '3px',
-                    background: '#FFFEFA',
-                    fontFamily: 'Source Serif 4, Georgia, serif',
-                    fontSize: '15px',
-                    fontStyle: 'italic'
-                  }}
-                >
-                  {TAG_OPTIONS.map((option) => (
-                    <option key={option} value={option}>
-                      {TAG_LABELS[option]}
-                    </option>
-                  ))}
-                </select>
+                <TagAutocomplete value={tag} onChange={setTag} />
               </div>
+
+              {tag !== 'other' && (
+                <div className="form-group">
+                  <label className="form-label">Cover Image (optional)</label>
+                  {imageUrl ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <CoverThumbnail imageUrl={imageUrl} tag={tag} size="medium" />
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        {TAG_TO_MEDIA_TYPE[tag] && (
+                          <button
+                            type="button"
+                            onClick={() => setShowCoverSearch(true)}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: '#4A7BA7', padding: '4px 0' }}
+                          >
+                            Change
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setImageUrl('')}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: '#999', padding: '4px 0' }}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  ) : TAG_TO_MEDIA_TYPE[tag] ? (
+                    <button
+                      type="button"
+                      onClick={() => setShowCoverSearch(true)}
+                      style={{
+                        background: 'none',
+                        border: '1px dashed #ccc',
+                        borderRadius: '3px',
+                        cursor: 'pointer',
+                        padding: '8px 12px',
+                        fontSize: '13px',
+                        color: '#999',
+                        fontStyle: 'italic',
+                        width: '100%',
+                        textAlign: 'left'
+                      }}
+                    >
+                      Search cover...
+                    </button>
+                  ) : (
+                    <input
+                      type="url"
+                      value={imageUrl}
+                      onChange={(e) => setImageUrl(e.target.value)}
+                      placeholder="Paste image URL..."
+                      style={{
+                        width: '100%',
+                        padding: '8px 10px',
+                        border: '1px solid #ccc',
+                        borderRadius: '3px',
+                        fontSize: '13px',
+                        fontStyle: 'italic',
+                        boxSizing: 'border-box',
+                        background: '#FFFEFA'
+                      }}
+                    />
+                  )}
+                </div>
+              )}
 
               <div className="form-group">
                 <label className="form-label">Rating (0-10) *</label>

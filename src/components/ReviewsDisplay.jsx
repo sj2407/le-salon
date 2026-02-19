@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { TAG_ICONS, TAG_OPTIONS, TAG_LABELS } from '../lib/reviewConstants'
 import { EmptyStateFantom } from './EmptyStateFantom'
 import { FilterDropdown } from './FilterDropdown'
+import { CoverThumbnail } from './cover-search/CoverThumbnail'
 
 /**
  * Shared reviews display component
@@ -108,7 +109,7 @@ export const ReviewsDisplay = ({
             >
               {/* Review content row */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '18px', flexShrink: 0 }}>{TAG_ICONS[review.tag]}</span>
+                <CoverThumbnail imageUrl={review.image_url} tag={review.tag} />
                 <h3 style={{ margin: 0, fontSize: '14px', fontStyle: 'italic', fontWeight: 400, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {review.title}
                 </h3>

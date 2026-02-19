@@ -1,9 +1,19 @@
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useDebounce } from '../../hooks/useDebounce'
-import { jsonpFetch } from '../../lib/coverSearchApis'
+import { searchByMediaType } from '../../lib/coverSearchApis'
 
-export const ITunesSearch = ({ isOpen, onClose, onSelect, initialQuery = '' }) => {
+/**
+ * Portal-based search modal for cover images.
+ * Follows the exact pattern of iTunesSearch.jsx.
+ *
+ * @param {boolean} isOpen
+ * @param {function} onClose
+ * @param {function} onSelect - receives { title, subtitle, imageUrl }
+ * @param {string} initialQuery - pre-fill search from item title
+ * @param {string} mediaType - 'book', 'album', 'movie', 'show', 'podcast'
+ */
+export const CoverSearchModal = ({ isOpen, onClose, onSelect, initialQuery = '', mediaType }) => {
   const [query, setQuery] = useState(initialQuery)
   const [results, setResults] = useState([])
   const [isLoading, setIsLoading] = useState(false)
@@ -11,7 +21,7 @@ export const ITunesSearch = ({ isOpen, onClose, onSelect, initialQuery = '' }) =
 
   const debouncedQuery = useDebounce(query, 500)
 
-  // Reset state when modal opens (adjust during render, not in effect)
+  // Reset state when modal opens
   const [prevIsOpen, setPrevIsOpen] = useState(isOpen)
   if (prevIsOpen !== isOpen) {
     setPrevIsOpen(isOpen)
@@ -22,7 +32,7 @@ export const ITunesSearch = ({ isOpen, onClose, onSelect, initialQuery = '' }) =
     }
   }
 
-  // Adjust state when debounced query changes (during render, not in effect)
+  // Trigger search when debounced query changes
   const [prevDebouncedQuery, setPrevDebouncedQuery] = useState(debouncedQuery)
   if (prevDebouncedQuery !== debouncedQuery) {
     setPrevDebouncedQuery(debouncedQuery)
@@ -36,17 +46,14 @@ export const ITunesSearch = ({ isOpen, onClose, onSelect, initialQuery = '' }) =
   }
 
   useEffect(() => {
-    if (!debouncedQuery || debouncedQuery.length < 2) {
-      return
-    }
+    if (!debouncedQuery || debouncedQuery.length < 2) return
 
     let cancelled = false
-    const encodedQuery = encodeURIComponent(debouncedQuery)
 
-    jsonpFetch(`https://api.deezer.com/search?q=${encodedQuery}&limit=8&output=jsonp`)
+    searchByMediaType(debouncedQuery, mediaType)
       .then(data => {
         if (cancelled) return
-        setResults(data.data || [])
+        setResults(data)
         setIsLoading(false)
       })
       .catch(() => {
@@ -56,22 +63,30 @@ export const ITunesSearch = ({ isOpen, onClose, onSelect, initialQuery = '' }) =
       })
 
     return () => { cancelled = true }
-  }, [debouncedQuery])
+  }, [debouncedQuery, mediaType])
 
-  const handleSelect = (track) => {
-    // Deezer format
+  const handleSelect = (result) => {
     onSelect({
-      trackId: track.id?.toString() || '',
-      trackName: track.title || '',
-      artistName: track.artist?.name || '',
-      albumName: track.album?.title || '',
-      previewUrl: track.preview || '',
-      artworkUrl: track.album?.cover_medium || track.album?.cover || ''
+      title: result.title,
+      subtitle: result.subtitle,
+      imageUrl: result.imageUrl,
     })
     onClose()
   }
 
   if (!isOpen) return null
+
+  const isSquare = mediaType === 'album' || mediaType === 'podcast'
+  const thumbW = 45
+  const thumbH = isSquare ? 45 : 63
+
+  const labels = {
+    book: 'Search Books',
+    album: 'Search Albums',
+    movie: 'Search Movies',
+    show: 'Search Shows',
+    podcast: 'Search Podcasts',
+  }
 
   return createPortal(
     <div
@@ -85,7 +100,7 @@ export const ITunesSearch = ({ isOpen, onClose, onSelect, initialQuery = '' }) =
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 9999
+        zIndex: 9999,
       }}
       onClick={onClose}
     >
@@ -100,13 +115,16 @@ export const ITunesSearch = ({ isOpen, onClose, onSelect, initialQuery = '' }) =
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+          boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
         }}
         onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
+        onKeyDown={(e) => {
+          e.stopPropagation()
+          if (e.key === 'Escape') onClose()
+        }}
       >
         <h3 style={{ fontSize: '18px', marginBottom: '12px', marginTop: 0, fontWeight: 600 }}>
-          Search Music
+          {labels[mediaType] || 'Search Cover'}
         </h3>
 
         <input
@@ -115,7 +133,7 @@ export const ITunesSearch = ({ isOpen, onClose, onSelect, initialQuery = '' }) =
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => e.stopPropagation()}
           onClick={(e) => e.stopPropagation()}
-          placeholder="Type artist or song name..."
+          placeholder="Type to search..."
           autoFocus
           style={{
             marginBottom: '12px',
@@ -125,7 +143,7 @@ export const ITunesSearch = ({ isOpen, onClose, onSelect, initialQuery = '' }) =
             borderRadius: '6px',
             fontSize: '15px',
             boxSizing: 'border-box',
-            outline: 'none'
+            outline: 'none',
           }}
         />
 
@@ -154,43 +172,33 @@ export const ITunesSearch = ({ isOpen, onClose, onSelect, initialQuery = '' }) =
             </div>
           )}
 
-          {results.map((track) => (
+          {results.map((result) => (
             <div
-              key={track.id}
-              onClick={() => {
-                if (track.preview) {
-                  handleSelect(track)
-                }
-              }}
+              key={result.id}
+              onClick={() => handleSelect(result)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '10px',
                 padding: '10px',
                 borderBottom: '1px solid #f0f0f0',
-                cursor: track.preview ? 'pointer' : 'not-allowed',
-                opacity: track.preview ? 1 : 0.4,
-                background: track.preview ? 'transparent' : '#fafafa'
+                cursor: 'pointer',
               }}
-              onMouseOver={(e) => {
-                if (track.preview) e.currentTarget.style.background = '#f5f5f5'
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.background = track.preview ? 'transparent' : '#fafafa'
-              }}
+              onMouseOver={(e) => { e.currentTarget.style.background = '#f5f5f5' }}
+              onMouseOut={(e) => { e.currentTarget.style.background = 'transparent' }}
             >
               <img
-                src={track.album?.cover_small || track.album?.cover || ''}
+                src={result.imageUrl}
                 alt=""
                 style={{
-                  width: '45px',
-                  height: '45px',
-                  borderRadius: '4px',
+                  width: `${thumbW}px`,
+                  height: `${thumbH}px`,
+                  borderRadius: '3px',
                   objectFit: 'cover',
                   background: '#eee',
-                  flexShrink: 0
+                  flexShrink: 0,
                 }}
-                onError={(e) => (e.target.src = '')}
+                onError={(e) => { e.target.style.display = 'none' }}
               />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{
@@ -199,19 +207,16 @@ export const ITunesSearch = ({ isOpen, onClose, onSelect, initialQuery = '' }) =
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
-                  marginBottom: '2px'
+                  marginBottom: '2px',
                 }}>
-                  {track.title}
+                  {result.title}
                 </div>
-                <div style={{ fontSize: '13px', color: '#666' }}>
-                  {track.artist?.name}
-                </div>
+                {result.subtitle && (
+                  <div style={{ fontSize: '13px', color: '#666' }}>
+                    {result.subtitle}
+                  </div>
+                )}
               </div>
-              {!track.preview && (
-                <span style={{ fontSize: '10px', color: '#aaa', whiteSpace: 'nowrap' }}>
-                  No preview
-                </span>
-              )}
             </div>
           ))}
         </div>
@@ -225,7 +230,7 @@ export const ITunesSearch = ({ isOpen, onClose, onSelect, initialQuery = '' }) =
             border: '1px solid #ccc',
             borderRadius: '4px',
             cursor: 'pointer',
-            fontSize: '14px'
+            fontSize: '14px',
           }}
         >
           Cancel
