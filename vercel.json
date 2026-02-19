@@ -21,7 +21,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' https://api.deezer.com https://itunes.apple.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*.supabase.co https://*.dzcdn.net https://covers.openlibrary.org https://archive.org https://*.archive.org https://image.tmdb.org https://static.tvmaze.com; media-src 'self' https://*.supabase.co https://*.dzcdn.net; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.deezer.com https://openlibrary.org https://api.themoviedb.org https://itunes.apple.com; frame-ancestors 'none'"
+          "value": "default-src 'self'; script-src 'self' https://api.deezer.com https://itunes.apple.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*.supabase.co https://*.dzcdn.net https://covers.openlibrary.org https://archive.org https://*.archive.org https://*.us.archive.org https://image.tmdb.org https://static.tvmaze.com https://*.mzstatic.com; media-src 'self' https://*.supabase.co https://*.dzcdn.net; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.deezer.com https://openlibrary.org https://api.themoviedb.org https://itunes.apple.com; frame-ancestors 'none'"
         }
       ]
     }
