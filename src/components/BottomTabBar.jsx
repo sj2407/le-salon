@@ -148,8 +148,8 @@ export const BottomTabBar = () => {
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
-                padding: '6px 12px',
-                minWidth: '56px',
+                padding: '4px 12px',
+                minWidth: '48px',
               }}
               aria-label={tab.label}
             >

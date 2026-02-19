@@ -688,14 +688,13 @@ nav {
     border-top: 1px solid #E8E8E8;
     justify-content: space-around;
     align-items: center;
-    min-height: 64px;
-    padding: 6px 0;
-    padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+    height: 49px;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
     z-index: 100;
   }
 
   body {
-    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(49px + env(safe-area-inset-bottom, 0px));
   }
 
   .nav-links-desktop {
@@ -753,7 +752,7 @@ nav {
 /* More menu popup (above bottom tab bar) */
 .more-menu {
   position: fixed;
-  bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(49px + env(safe-area-inset-bottom, 0px));
   right: 8px;
   min-width: 180px;
   background: #FFFEFA;
@@ -767,7 +766,7 @@ nav {
 /* Typewriter FAB — shift up on mobile to clear tab bar */
 @media (max-width: 767px) {
   .typewriter-fab {
-    bottom: calc(60px + env(safe-area-inset-bottom, 0px)) !important;
+    bottom: calc(45px + env(safe-area-inset-bottom, 0px)) !important;
   }
 }
 
