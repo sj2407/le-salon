@@ -397,8 +397,7 @@ export const CardDisplay = ({
                 borderRadius: '50%',
                 objectFit: 'cover',
                 objectPosition: photoPosition || '50% 50%',
-                border: '4px solid #2C2C2C',
-                boxShadow: '4px 4px 0 #2C2C2C',
+                border: 'none',
                 filter: 'contrast(1.1) saturate(1.2) brightness(1.05)'
               }}
             />
@@ -409,7 +408,7 @@ export const CardDisplay = ({
 
       {isEditable && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '0px' }}>
-          <button onClick={onEdit} className="edit-button" style={{ margin: 0, paddingLeft: 0, fontSize: '21px' }}>
+          <button onClick={onEdit} className="edit-button" style={{ margin: 0, paddingLeft: 0, paddingRight: '4px', fontSize: '21px' }}>
             Edit My Card
           </button>
           {showDictateButton && (
@@ -420,7 +419,7 @@ export const CardDisplay = ({
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
-                padding: '2px',
+                padding: '0px',
                 display: 'flex',
                 alignItems: 'center'
               }}

@@ -47,8 +47,7 @@ export const ProfileDisplay = ({ profile, title }) => {
                 borderRadius: '50%',
                 objectFit: 'cover',
                 objectPosition: profile.profile_photo_position || '50% 50%',
-                border: '3px solid #2C2C2C',
-                boxShadow: '4px 4px 0 #2C2C2C',
+                border: 'none',
                 filter: 'contrast(1.1) saturate(1.2) brightness(1.05)',
                 WebkitFilter: 'contrast(1.1) saturate(1.2) brightness(1.05)'
               }}
