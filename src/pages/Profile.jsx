@@ -41,16 +41,13 @@ export const Profile = () => {
   const handlePhotoChange = (e) => {
     const file = e.target.files[0]
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        setMessage('Photo must be under 5MB')
-        return
-      }
-      if (!file.type.startsWith('image/')) {
-        setMessage('File must be an image')
+      if (file.size > 10 * 1024 * 1024) {
+        setMessage('Photo must be under 10MB')
         return
       }
       setPhotoFile(file)
       setPhotoPosition('50% 50%')
+      setMessage('')
       const reader = new FileReader()
       reader.onloadend = () => {
         setPhotoUrl(reader.result)
@@ -109,26 +106,35 @@ export const Profile = () => {
     setMessage('')
 
     try {
-      let uploadedPhotoUrl = photoUrl
+      let uploadedPhotoUrl = profile?.profile_photo_url || ''
 
       // Upload photo if a new one was selected
       if (photoFile) {
-        const fileExt = photoFile.name.split('.').pop()
-        const fileName = `photo.${fileExt}`
+        // Use unique filename to avoid CDN cache serving stale images
+        const fileExt = photoFile.name.split('.').pop().toLowerCase()
+        const fileName = `photo-${Date.now()}.${fileExt}`
         const filePath = `${user.id}/${fileName}`
 
         const { error: uploadError } = await supabase.storage
           .from('profile-photo')
-          .upload(filePath, photoFile, { upsert: true })
+          .upload(filePath, photoFile)
 
-        if (uploadError) throw uploadError
+        if (uploadError) throw new Error(`Photo upload failed: ${uploadError.message}`)
 
-        // Get public URL with cache-busting timestamp
+        // Delete old photo file if it exists (cleanup)
+        const oldUrl = profile?.profile_photo_url
+        if (oldUrl) {
+          const oldPath = oldUrl.split('/profile-photo/')[1]?.split('?')[0]
+          if (oldPath && oldPath !== filePath) {
+            await supabase.storage.from('profile-photo').remove([oldPath])
+          }
+        }
+
         const { data: { publicUrl } } = supabase.storage
           .from('profile-photo')
           .getPublicUrl(filePath)
 
-        uploadedPhotoUrl = `${publicUrl}?v=${Date.now()}`
+        uploadedPhotoUrl = publicUrl
       }
 
       // Update profile
@@ -148,7 +154,7 @@ export const Profile = () => {
         })
         .eq('id', user.id)
 
-      if (updateError) throw updateError
+      if (updateError) throw new Error(`Profile update failed: ${updateError.message}`)
 
       setMessage('Profile updated successfully!')
       setPhotoFile(null)
