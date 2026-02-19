@@ -1,15 +1,21 @@
-import { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { NotificationBell } from './NotificationBell'
 import { NewsletterBell } from './NewsletterBell'
 import { FriendSearch } from './FriendSearch'
 
+const DESKTOP_LINKS = [
+  { label: 'My Corner', path: '/my-corner' },
+  { label: 'Activity', path: '/todo' },
+  { label: 'Friends', path: '/friends' },
+  { label: 'Account', path: '/account' },
+  { label: 'Help', path: '/help' },
+]
+
 export const Navigation = () => {
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   const handleSignOut = async () => {
     try {
@@ -20,113 +26,42 @@ export const Navigation = () => {
     }
   }
 
-  const closeMenu = () => setIsMenuOpen(false)
-
-  const handleNavClick = (path) => {
-    closeMenu()
-    navigate(path)
-  }
-
-  // Close menu on escape key
-  useEffect(() => {
-    const handleEscape = (e) => {
-      if (e.key === 'Escape') closeMenu()
-    }
-    if (isMenuOpen) {
-      window.addEventListener('keydown', handleEscape)
-      return () => window.removeEventListener('keydown', handleEscape)
-    }
-  }, [isMenuOpen])
-
-  // Prevent body scroll when menu is open
-  useEffect(() => {
-    if (isMenuOpen) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
-    return () => {
-      document.body.style.overflow = ''
-    }
-  }, [isMenuOpen])
-
-  // Close menu on location change (adjust state during render, not in effect)
-  const [prevLocation, setPrevLocation] = useState(location)
-  if (prevLocation !== location) {
-    setPrevLocation(location)
-    setIsMenuOpen(false)
-  }
-
   if (!user) return null
 
   return (
-    <>
-      <nav>
-        <div className="container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
-          {/* Centered title */}
-          <Link to="/" style={{ textDecoration: 'none', color: '#2C2C2C', display: 'flex', alignItems: 'center' }}>
-            <span className="nav-brand">Le Salon</span>
-          </Link>
+    <nav>
+      <div className="nav-inner">
+        {/* Brand */}
+        <Link to="/" className="nav-brand-link">
+          <span className="nav-brand">Le Salon</span>
+        </Link>
 
-          {/* Right side: Search + Bell + Newsletter + Hamburger - absolutely positioned */}
-          <div style={{ position: 'absolute', right: '4px', display: 'flex', alignItems: 'center', gap: '0px' }}>
-            <FriendSearch />
-            <NotificationBell />
-            <NewsletterBell />
-
-            {/* Hamburger Button (All Screens) */}
-            <button
-              className="hamburger-button hamburger-small"
-              onClick={() => setIsMenuOpen(true)}
-              aria-label="Toggle menu"
-              style={{ display: 'flex' }}
+        {/* Desktop nav links — hidden on mobile via CSS */}
+        <div className="nav-links-desktop">
+          {DESKTOP_LINKS.map(link => (
+            <Link
+              key={link.path}
+              to={link.path}
+              className={location.pathname.startsWith(link.path) ? 'active' : ''}
             >
-              <span></span>
-              <span></span>
-              <span></span>
-            </button>
-          </div>
+              {link.label}
+            </Link>
+          ))}
+          <button
+            onClick={handleSignOut}
+            className="nav-signout-btn"
+          >
+            Sign Out
+          </button>
         </div>
-      </nav>
 
-      {/* Mobile Dropdown Menu */}
-      {isMenuOpen && (
-        <>
-          {/* Invisible backdrop for click-outside-to-close */}
-          <div className="mobile-dropdown-backdrop" onClick={closeMenu}></div>
-
-          {/* Dropdown Menu */}
-          <div className="mobile-dropdown-menu">
-            <button onClick={() => handleNavClick('/')} className="mobile-dropdown-item">
-              Le Salon
-            </button>
-            <button onClick={() => handleNavClick('/my-corner')} className="mobile-dropdown-item">
-              My Corner
-            </button>
-            <button onClick={() => handleNavClick('/todo')} className="mobile-dropdown-item">
-              Activity Board
-            </button>
-            <button onClick={() => handleNavClick('/friends')} className="mobile-dropdown-item">
-              Friends
-            </button>
-            <button onClick={() => handleNavClick('/notifications')} className="mobile-dropdown-item">
-              Notifications
-            </button>
-            <button onClick={() => handleNavClick('/newsletter')} className="mobile-dropdown-item">
-              Newsletter
-            </button>
-            <button onClick={() => handleNavClick('/account')} className="mobile-dropdown-item">
-              Account Settings
-            </button>
-            <button onClick={() => handleNavClick('/help')} className="mobile-dropdown-item">
-              Help
-            </button>
-            <button onClick={handleSignOut} className="mobile-dropdown-item">
-              Sign Out
-            </button>
-          </div>
-        </>
-      )}
-    </>
+        {/* Right side: Search + Bells */}
+        <div className="nav-icons">
+          <FriendSearch />
+          <NotificationBell />
+          <NewsletterBell />
+        </div>
+      </div>
+    </nav>
   )
 }

@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { Navigation } from './components/Navigation'
+import { BottomTabBar } from './components/BottomTabBar'
 import { Footer } from './components/Footer'
 import { SignUp } from './pages/SignUp'
 import { SignIn } from './pages/SignIn'
@@ -62,6 +63,7 @@ function AppRoutes() {
     <BrowserRouter>
       <AuthProvider>
         <Navigation />
+        <BottomTabBar />
         <Suspense fallback={<div className="container"><div className="loading">Loading...</div></div>}>
         <Routes>
           <Route

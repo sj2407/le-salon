@@ -20,8 +20,12 @@ export const Salon = () => {
   const [hasNewCommonplaceEntries, setHasNewCommonplaceEntries] = useState(false)
   const [nextWeekTitle, setNextWeekTitle] = useState(null)
   const [textSize, setTextSize] = useState(() => {
-    const saved = localStorage.getItem('salon_text_size')
-    return saved ? Number(saved) : 13
+    try {
+      const saved = localStorage.getItem('salon_text_size')
+      return saved ? Number(saved) : 13
+    } catch {
+      return 13
+    }
   })
   const [audioState, setAudioState] = useState('idle') // idle | loading | playing | paused
   const audioRef = useRef(null)
@@ -43,12 +47,16 @@ export const Salon = () => {
     const thisMondayStr = thisMonday.toISOString().split('T')[0]
 
     // Cache is valid only if it was set during the same week
-    const cached = localStorage.getItem('salon_week_v2')
-    if (cached) {
-      const parsed = JSON.parse(cached)
-      if (parsed._weekMonday === thisMondayStr) {
-        return parsed
+    try {
+      const cached = localStorage.getItem('salon_week_v2')
+      if (cached) {
+        const parsed = JSON.parse(cached)
+        if (parsed._weekMonday === thisMondayStr) {
+          return parsed
+        }
       }
+    } catch {
+      // Corrupted cache or localStorage unavailable — fall through to network fetch
     }
 
     const { data, error } = await supabase
@@ -64,10 +72,14 @@ export const Salon = () => {
     }
 
     if (data) {
-      localStorage.setItem('salon_week_v2', JSON.stringify({
-        ...data,
-        _weekMonday: thisMondayStr
-      }))
+      try {
+        localStorage.setItem('salon_week_v2', JSON.stringify({
+          ...data,
+          _weekMonday: thisMondayStr
+        }))
+      } catch {
+        // localStorage full or unavailable — continue without caching
+      }
     }
 
     return data || null
@@ -119,6 +131,15 @@ export const Salon = () => {
         if (error) throw error
         if (!data?.url) throw new Error('No audio URL')
         audioUrl = data.url
+      }
+
+      // Clean up previous audio instance to prevent memory leak
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current.onended = null
+        audioRef.current.onerror = null
+        audioRef.current.src = ''
+        audioRef.current = null
       }
 
       const audio = new Audio(audioUrl)
@@ -254,6 +275,20 @@ export const Salon = () => {
       supabase.removeChannel(commonplaceChannel)
     }
   }, [salonWeek, fetchResponses, fetchCommonplaceEntries])
+
+  // --- Cleanup audio on unmount ---
+
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current.onended = null
+        audioRef.current.onerror = null
+        audioRef.current.src = ''
+        audioRef.current = null
+      }
+    }
+  }, [])
 
   // --- CRUD: Parlor responses ---
 
@@ -468,7 +503,7 @@ export const Salon = () => {
                 onChange={(e) => {
                   const val = Number(e.target.value)
                   setTextSize(val)
-                  localStorage.setItem('salon_text_size', String(val))
+                  try { localStorage.setItem('salon_text_size', String(val)) } catch { /* ignore */ }
                 }}
                 style={{ width: '80px', height: '2px', accentColor: '#999', cursor: 'pointer' }}
                 aria-label="Text size"
@@ -529,6 +564,7 @@ export const Salon = () => {
 
       {/* Typewriter — fixed bottom-right of screen */}
       <button
+        className="typewriter-fab"
         onClick={handleOpenCommonplace}
         style={{
           position: 'fixed',

@@ -520,25 +520,21 @@ nav {
   margin-bottom: 0;
 }
 
-nav .container {
+.nav-inner {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  position: relative;
+  justify-content: center;
 }
 
-nav a {
-  color: #2C2C2C;
+.nav-brand-link {
   text-decoration: none;
-  margin: 0 12px;
-  font-size: 14px;
-  white-space: nowrap;
-}
-
-nav a:hover {
-  text-decoration: underline;
+  color: #2C2C2C;
+  display: flex;
+  align-items: center;
 }
 
 .nav-brand {
@@ -546,6 +542,31 @@ nav a:hover {
   font-size: 36px;
   font-weight: 600;
   letter-spacing: 0.02em;
+}
+
+/* Icons group: always on the right */
+.nav-icons {
+  position: absolute;
+  right: 4px;
+  display: flex;
+  align-items: center;
+  gap: 0px;
+}
+
+.nav-signout-btn {
+  background: none;
+  border: none;
+  font-family: 'Caveat', cursive;
+  font-size: 18px;
+  color: #999;
+  cursor: pointer;
+  font-weight: 500;
+  padding: 0;
+  transition: color 0.2s;
+}
+
+.nav-signout-btn:hover {
+  color: #2C2C2C;
 }
 
 /* Edit Mode */
@@ -640,16 +661,8 @@ nav a:hover {
     padding: 12px 16px;
   }
 
-  nav .container {
+  .nav-inner {
     max-width: 100%;
-  }
-
-  nav a[href="/"] {
-    gap: 8px;
-  }
-
-  nav a[href="/"] img {
-    height: 32px !important;
   }
 
   .nav-brand {
@@ -657,111 +670,104 @@ nav a:hover {
     white-space: nowrap;
   }
 
-  nav div[style*="display: flex"] {
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
-  nav a {
-    font-size: 12px;
-    margin: 0 6px;
-  }
-
-  nav button {
-    padding: 6px 12px;
-    font-size: 12px;
-  }
 }
 
-/* Mobile Navigation Styles */
-
-/* Hamburger button - hidden on desktop */
-.hamburger-button {
+/* Bottom Tab Bar — mobile only */
+.bottom-tab-bar {
   display: none;
-  flex-direction: column;
-  justify-content: space-between;
-  width: 24px;
-  height: 18px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
 }
 
-.hamburger-button span {
-  display: block;
-  width: 100%;
-  height: 2px;
-  background-color: #2C2C2C;
-  transition: all 0.3s ease;
+@media (max-width: 767px) {
+  .bottom-tab-bar {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #FFFEFA;
+    border-top: 1px solid #E8E8E8;
+    justify-content: space-around;
+    align-items: center;
+    height: 56px;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    z-index: 100;
+  }
+
+  body {
+    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .nav-links-desktop {
+    display: none !important;
+  }
 }
 
-/* Smaller hamburger variant */
-.hamburger-small {
-  width: 18px;
-  height: 14px;
+/* Desktop nav layout */
+@media (min-width: 768px) {
+  .nav-inner {
+    justify-content: flex-start;
+    gap: 0;
+  }
+
+  .nav-brand-link {
+    flex-shrink: 0;
+    margin-right: 24px;
+  }
+
+  .nav-links-desktop {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex: 1;
+  }
+
+  .nav-links-desktop a {
+    font-family: 'Caveat', cursive;
+    font-size: 20px;
+    color: #999;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+    white-space: nowrap;
+    margin: 0;
+  }
+
+  .nav-links-desktop a:hover,
+  .nav-links-desktop a.active {
+    color: #2C2C2C;
+    font-weight: 600;
+  }
+
+  .nav-icons {
+    position: static;
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+
+  .bottom-tab-bar {
+    display: none;
+  }
 }
 
-.hamburger-small span {
-  height: 1.5px;
-}
-
-/* Mobile Dropdown - Invisible backdrop for click-outside-to-close */
-.mobile-dropdown-backdrop {
+/* More menu popup (above bottom tab bar) */
+.more-menu {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: transparent;
-  z-index: 998;
-}
-
-/* Mobile Dropdown Menu */
-.mobile-dropdown-menu {
-  position: absolute;
-  top: 60px;
-  right: 16px;
+  bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+  right: 8px;
   min-width: 180px;
-  width: auto;
   background: #FFFEFA;
-  border: 1px solid #2C2C2C;
-  border-radius: 4px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  padding: 12px 0;
-  z-index: 999;
-  animation: dropdownFadeIn 150ms ease-out;
-  transform-origin: top right;
+  border: 1px solid #E8E8E8;
+  border-radius: 8px;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.1);
+  padding: 8px 0;
+  z-index: 101;
 }
 
-@keyframes dropdownFadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
+/* Typewriter FAB — shift up on mobile to clear tab bar */
+@media (max-width: 767px) {
+  .typewriter-fab {
+    bottom: calc(52px + env(safe-area-inset-bottom, 0px)) !important;
   }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-/* Dropdown Menu Items */
-.mobile-dropdown-item {
-  display: block;
-  width: 100%;
-  background: none;
-  border: none;
-  font-family: 'Caveat', cursive;
-  font-size: 20px;
-  color: #2C2C2C;
-  cursor: pointer;
-  padding: 10px 20px;
-  text-align: left;
-  transition: background 100ms ease;
-}
-
-.mobile-dropdown-item:hover {
-  background: #F5F1EB;
 }
 
 /* Reviews Page - Post-it Style Cards */
@@ -946,22 +952,13 @@ nav a:hover {
 
 /* Media Queries */
 
-/* Always show hamburger menu for all screen sizes */
-.nav-links-desktop {
-  display: none;
-}
-
-.hamburger-button {
-  display: flex;
-}
-
 /* Mobile specific nav padding */
 @media (max-width: 767px) {
   nav {
     padding: 8px 20px;
   }
 
-  nav .container {
+  .nav-inner {
     padding: 0;
   }
 }
@@ -975,10 +972,6 @@ nav a:hover {
 
   .card-name {
     font-size: 42px;
-  }
-
-  nav img {
-    height: 36px !important;
   }
 
   .nav-brand {
