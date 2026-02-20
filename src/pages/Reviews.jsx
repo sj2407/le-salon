@@ -404,19 +404,11 @@ export const Reviews = () => {
             <button
               onClick={openAddModal}
               style={{
-                background: '#DCDCDC',
+                background: 'none',
                 border: 'none',
-                borderRadius: '50%',
-                fontSize: '12px',
-                color: '#333',
+                fontSize: '20px',
+                color: '#8C8578',
                 cursor: 'pointer',
-                width: '18px',
-                height: '18px',
-                minWidth: '18px',
-                minHeight: '18px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
                 padding: 0,
                 lineHeight: 1
               }}
@@ -446,46 +438,8 @@ export const Reviews = () => {
             )}
           </div>
         )}
-        renderActions={(review) => (
-          <>
-            <button
-              onClick={() => openEditModal(review)}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                padding: '4px',
-                fontSize: '16px',
-                opacity: 0.4,
-                transition: 'opacity 0.2s',
-                flexShrink: 0
-              }}
-              onMouseEnter={(e) => e.target.style.opacity = '0.8'}
-              onMouseLeave={(e) => e.target.style.opacity = '0.4'}
-              title="Edit"
-            >
-              <img src="/images/quill-ready.png" alt="Edit" style={{ width: '29px', height: '29px', objectFit: 'contain' }} />
-            </button>
-            <button
-              onClick={() => handleDelete(review.id)}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                padding: '4px',
-                opacity: 0.6,
-                transition: 'opacity 0.2s',
-                flexShrink: 0,
-                display: 'flex'
-              }}
-              onMouseEnter={(e) => e.target.style.opacity = '1'}
-              onMouseLeave={(e) => e.target.style.opacity = '0.6'}
-              title="Delete"
-            >
-              <img src="/images/eraser.jpeg" alt="Delete" style={{ width: '20px', height: '20px', objectFit: 'contain', transform: 'rotate(60deg)' }} />
-            </button>
-          </>
-        )}
+        onEdit={openEditModal}
+        onDelete={(reviewId) => handleDelete(reviewId)}
       />
 
       <DictationModal

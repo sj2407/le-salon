@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { TAG_ICONS, TAG_OPTIONS, TAG_LABELS } from '../lib/reviewConstants'
 import { EmptyStateFantom } from './EmptyStateFantom'
 import { FilterDropdown } from './FilterDropdown'
@@ -8,20 +8,23 @@ import { CoverThumbnail } from './cover-search/CoverThumbnail'
  * Shared reviews display component
  * Used by both My Corner (Reviews.jsx) and Friend View (FriendCard.jsx)
  *
- * Structure is fixed - renderHeaderActions and renderActions are absolute overlays
- * that don't affect the base layout.
+ * Actions (edit/delete) are handled via onEdit/onDelete callbacks.
+ * When provided, a ... overflow menu appears on each card.
  */
 export const ReviewsDisplay = ({
   reviews,
   title = 'Reviews',
   emptyMessage = 'No reviews yet.',
   emptyFilteredMessage,
-  renderActions,
+  onEdit,
+  onDelete,
   renderHeaderActions,
   renderExpandedText
 }) => {
   const [filterTag, setFilterTag] = useState('all')
   const [expandedReviews, setExpandedReviews] = useState(new Set())
+  const [openMenuId, setOpenMenuId] = useState(null)
+  const menuRef = useRef(null)
 
   const toggleExpanded = (reviewId) => {
     const newExpanded = new Set(expandedReviews)
@@ -33,45 +36,39 @@ export const ReviewsDisplay = ({
     setExpandedReviews(newExpanded)
   }
 
+  // Close menu on click outside or Escape
+  useEffect(() => {
+    if (openMenuId === null) return
+    const handleClick = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setOpenMenuId(null)
+      }
+    }
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') setOpenMenuId(null)
+    }
+    document.addEventListener('mousedown', handleClick)
+    document.addEventListener('keydown', handleEscape)
+    return () => {
+      document.removeEventListener('mousedown', handleClick)
+      document.removeEventListener('keydown', handleEscape)
+    }
+  }, [openMenuId])
+
   const filteredReviews = filterTag === 'all'
     ? reviews
     : reviews.filter(review => review.tag === filterTag)
 
+  const hasActions = onEdit || onDelete
+
   return (
     <div style={{ maxWidth: '720px', position: 'relative' }}>
-      {/* Gavel illustration - only when reviews exist */}
-      {reviews.length > 0 && (
-        <img
-          src="/images/gavel-ready.png"
-          alt=""
-          style={{
-            position: 'absolute',
-            top: '8px',
-            right: '15%',
-            width: '72px',
-            height: '72px',
-            opacity: 0.3,
-            pointerEvents: 'none',
-            zIndex: 0,
-            animation: 'gavelSway 5s ease-in-out infinite',
-            filter: 'contrast(2.5) brightness(1.35)'
-          }}
-        />
-      )}
-
       <h1 className="handwritten" style={{ fontSize: '42px', marginBottom: '0', marginTop: '8px', marginLeft: '10px', position: 'relative', zIndex: 1, transform: 'translateY(16px)' }}>
         {title}
       </h1>
 
-      {/* Add button - absolute positioned, doesn't affect layout */}
-      {renderHeaderActions && (
-        <div style={{ position: 'absolute', top: '48px', right: '0', zIndex: 1 }}>
-          {renderHeaderActions()}
-        </div>
-      )}
-
-      {/* Filter dropdown - fixed structure */}
-      <div style={{ marginTop: '16px', marginBottom: '20px' }}>
+      {/* Toolbar: filter left, header actions right */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '28px', marginBottom: '16px' }}>
         <FilterDropdown
           value={filterTag}
           onChange={setFilterTag}
@@ -80,6 +77,7 @@ export const ReviewsDisplay = ({
             ...TAG_OPTIONS.map(t => ({ value: t, label: `${TAG_ICONS[t]} ${TAG_LABELS[t]}` }))
           ]}
         />
+        {renderHeaderActions && renderHeaderActions()}
       </div>
 
       {/* Reviews list */}
@@ -104,9 +102,82 @@ export const ReviewsDisplay = ({
                 borderRadius: '2px',
                 padding: '7px 16px',
                 boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)',
-                position: 'relative'
+                position: 'relative',
+                zIndex: openMenuId === review.id ? 5 : 1
               }}
             >
+              {/* Overflow menu button */}
+              {hasActions && (
+                <div ref={openMenuId === review.id ? menuRef : null} style={{ position: 'absolute', top: '6px', right: '8px', zIndex: 2 }}>
+                  <button
+                    onClick={() => setOpenMenuId(openMenuId === review.id ? null : review.id)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: '2px 6px',
+                      fontSize: '16px',
+                      color: '#A89F91',
+                      lineHeight: 1,
+                      letterSpacing: '1px'
+                    }}
+                    aria-label="Actions"
+                  >
+                    &middot;&middot;&middot;
+                  </button>
+                  {openMenuId === review.id && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '100%',
+                      right: 0,
+                      background: '#FFFEFA',
+                      borderRadius: '4px',
+                      boxShadow: '0 2px 12px rgba(0, 0, 0, 0.12)',
+                      padding: '4px 0',
+                      minWidth: '100px',
+                      zIndex: 10
+                    }}>
+                      {onEdit && (
+                        <button
+                          onClick={() => { onEdit(review); setOpenMenuId(null) }}
+                          style={{
+                            display: 'block',
+                            width: '100%',
+                            background: 'none',
+                            border: 'none',
+                            padding: '8px 16px',
+                            fontSize: '14px',
+                            color: '#2C2C2C',
+                            cursor: 'pointer',
+                            textAlign: 'left'
+                          }}
+                        >
+                          Edit
+                        </button>
+                      )}
+                      {onDelete && (
+                        <button
+                          onClick={() => { onDelete(review.id); setOpenMenuId(null) }}
+                          style={{
+                            display: 'block',
+                            width: '100%',
+                            background: 'none',
+                            border: 'none',
+                            padding: '8px 16px',
+                            fontSize: '14px',
+                            color: '#C75D5D',
+                            cursor: 'pointer',
+                            textAlign: 'left'
+                          }}
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Review content row */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <CoverThumbnail imageUrl={review.image_url} tag={review.tag} />
@@ -116,11 +187,6 @@ export const ReviewsDisplay = ({
                 <div className="handwritten" style={{ fontSize: '18px', lineHeight: 1, color: '#2C2C2C', flexShrink: 0 }}>
                   {review.rating}/10
                 </div>
-                {renderActions && (
-                  <div style={{ display: 'flex', alignItems: 'center', height: 0, overflow: 'visible' }}>
-                    {renderActions(review)}
-                  </div>
-                )}
               </div>
 
               {/* Review text: one-line preview or full expanded */}
