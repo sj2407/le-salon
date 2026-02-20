@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { Link } from 'react-router-dom'
 import { EmptyStateFantom } from '../components/EmptyStateFantom'
+import { FilterDropdown } from '../components/FilterDropdown'
 
 // Parse date_text into date_parsed
 const parseDate = (dateText) => {
@@ -358,56 +359,36 @@ export const ToDo = () => {
         />
       )}
 
-      <div style={{ marginBottom: '24px', position: 'relative', zIndex: 1, marginLeft: '10px' }}>
-        <div className="handwritten" style={{ fontSize: '32px', marginBottom: '16px' }}>
+      <div style={{ marginBottom: '32px', position: 'relative', zIndex: 1, marginLeft: '10px' }}>
+        <div className="handwritten" style={{ fontSize: '32px' }}>
           {getTodayFormatted()}
         </div>
+      </div>
 
-        {/* Filter and Add Activity stacked */}
-        <div>
-          <div style={{ marginBottom: '8px' }}>
-            <label style={{ fontFamily: 'Caveat, cursive', fontSize: '18px', marginRight: '8px' }}>Filter by city:</label>
-            <select
-              value={cityFilter}
-              onChange={(e) => setCityFilter(e.target.value)}
-              style={{
-                padding: '6px 12px',
-                fontSize: '14px',
-                border: '1px solid #D0D0D0',
-                borderRadius: '16px',
-                background: '#FFFEFA',
-                cursor: 'pointer',
-                boxShadow: '1px 2px 4px rgba(0, 0, 0, 0.08)'
-              }}
-            >
-              <option value="all">All Cities</option>
-              {CITY_OPTIONS.map((cityOption) => (
-                <option key={cityOption} value={cityOption}>
-                  {cityOption}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <button
-            onClick={openAddModal}
-            style={{
-              background: 'none',
-              border: 'none',
-              fontFamily: 'Caveat, cursive',
-              fontSize: '18px',
-              color: '#4A7BA7',
-              cursor: 'pointer',
-              padding: '0',
-              fontWeight: 'bold',
-              transition: 'opacity 0.2s'
-            }}
-            onMouseEnter={(e) => e.target.style.opacity = '0.7'}
-            onMouseLeave={(e) => e.target.style.opacity = '1'}
-          >
-            + Add Activity
-          </button>
-        </div>
+      {/* Filter + Add toolbar */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', position: 'relative', zIndex: 1 }}>
+        <FilterDropdown
+          value={cityFilter}
+          onChange={setCityFilter}
+          options={[
+            { value: 'all', label: 'All Cities' },
+            ...CITY_OPTIONS.map(c => ({ value: c, label: c }))
+          ]}
+        />
+        <button
+          onClick={openAddModal}
+          style={{
+            background: 'none',
+            border: 'none',
+            fontSize: '20px',
+            color: '#8C8578',
+            cursor: 'pointer',
+            padding: 0,
+            lineHeight: 1
+          }}
+        >
+          +
+        </button>
       </div>
 
       {filteredActivities.length === 0 ? (
@@ -517,8 +498,8 @@ export const ToDo = () => {
         </div>
       )}
 
-      <div style={{ marginTop: '24px', textAlign: 'center' }}>
-        <Link to="/todo/past" style={{ color: '#4A7BA7', fontSize: '14px', textDecoration: 'underline' }}>
+      <div style={{ marginTop: '8px' }}>
+        <Link to="/todo/past" style={{ color: '#999', fontSize: '12px', textDecoration: 'none' }}>
           View past activities
         </Link>
       </div>
