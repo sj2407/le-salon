@@ -255,7 +255,7 @@ export const Newsletter = () => {
                                 height: '40px',
                                 borderRadius: '50%',
                                 objectFit: 'cover',
-                                border: '2px solid #2C2C2C'
+                                border: 'none'
                               }}
                             />
                           )}

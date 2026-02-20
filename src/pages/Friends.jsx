@@ -181,7 +181,7 @@ export const Friends = () => {
                         height: '48px',
                         borderRadius: '50%',
                         objectFit: 'cover',
-                        border: '2px solid #2C2C2C',
+                        border: 'none',
                         flexShrink: 0
                       }}
                     />
@@ -234,7 +234,7 @@ export const Friends = () => {
                       height: '48px',
                       borderRadius: '50%',
                       objectFit: 'cover',
-                      border: '2px solid #2C2C2C',
+                      border: 'none',
                       flexShrink: 0
                     }}
                   />
@@ -297,7 +297,7 @@ export const Friends = () => {
                         height: '48px',
                         borderRadius: '50%',
                         objectFit: 'cover',
-                        border: '2px solid #2C2C2C',
+                        border: 'none',
                         flexShrink: 0
                       }}
                     />
