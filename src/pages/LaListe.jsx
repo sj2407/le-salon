@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion as Motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
@@ -26,6 +26,8 @@ export const LaListe = () => {
   const [recsExpanded, setRecsExpanded] = useState(false)
   const [expandedRecs, setExpandedRecs] = useState(new Set())
   const [showDictation, setShowDictation] = useState(false)
+  const [openMenuId, setOpenMenuId] = useState(null)
+  const menuRef = useRef(null)
 
   // Add/edit form state
   const [newTitle, setNewTitle] = useState('')
@@ -48,6 +50,25 @@ export const LaListe = () => {
       fetchRecommendations()
     }
   }, [profile])
+
+  // Close menu on click outside or Escape
+  useEffect(() => {
+    if (openMenuId === null) return
+    const handleClick = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setOpenMenuId(null)
+      }
+    }
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') setOpenMenuId(null)
+    }
+    document.addEventListener('mousedown', handleClick)
+    document.addEventListener('keydown', handleEscape)
+    return () => {
+      document.removeEventListener('mousedown', handleClick)
+      document.removeEventListener('keydown', handleEscape)
+    }
+  }, [openMenuId])
 
   const fetchItems = async () => {
     try {
@@ -271,99 +292,73 @@ export const LaListe = () => {
 
   return (
     <div style={{ maxWidth: '720px', position: 'relative' }}>
-      {/* Scroll illustration */}
-      <img
-        src="/images/scroll-ready.png"
-        alt=""
-        style={{
-          position: 'absolute',
-          top: '0px',
-          right: '15%',
-          width: '70px',
-          height: 'auto',
-          opacity: 0.5,
-          pointerEvents: 'none',
-          zIndex: 0,
-          animation: 'bookFloat 4.5s ease-in-out infinite',
-          filter: 'contrast(1.3) brightness(1.1)'
-        }}
-      />
-
       <h1 className="handwritten" style={{ fontSize: '42px', marginBottom: '0', marginTop: '8px', marginLeft: '10px', position: 'relative', zIndex: 1, transform: 'translateY(16px)' }}>
         La Liste
       </h1>
 
-      {/* Add button - absolute positioned */}
-      <div style={{ position: 'absolute', top: '48px', right: '0', zIndex: 1, display: 'flex', alignItems: 'center', gap: '6px' }}>
-        <button
-          onClick={() => setShowAddForm(!showAddForm)}
-          style={{
-            background: '#DCDCDC',
-            border: 'none',
-            borderRadius: '50%',
-            fontSize: '12px',
-            color: '#333',
-            cursor: 'pointer',
-            width: '18px',
-            height: '18px',
-            minWidth: '18px',
-            minHeight: '18px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 0,
-            lineHeight: 1
-          }}
-        >
-          +
-        </button>
-        {isSpeechSupported && (
+      {/* Toolbar: filter + sort left, + and mic right */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '28px', marginBottom: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <FilterDropdown
+            value={filterTag}
+            onChange={setFilterTag}
+            options={[
+              { value: 'all', label: 'All' },
+              ...TAG_OPTIONS.map(t => ({ value: t, label: `${TAG_ICONS[t]} ${TAG_LABELS[t]}` }))
+            ]}
+          />
           <button
-            onClick={() => setShowDictation(true)}
-            title="Dictate items by voice"
+            onClick={() => setSortBy(sortBy === 'newest' ? 'oldest' : 'newest')}
             style={{
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              padding: '2px',
-              display: 'flex',
-              alignItems: 'center'
+              fontSize: '12px',
+              color: '#999',
+              padding: '4px 0',
+              whiteSpace: 'nowrap'
             }}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2C2C2C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-              <line x1="12" y1="19" x2="12" y2="23" />
-              <line x1="8" y1="23" x2="16" y2="23" />
-            </svg>
+            {sortBy === 'newest' ? 'Newest first' : 'Oldest first'}
           </button>
-        )}
-      </div>
-
-      {/* Filter + Sort */}
-      <div style={{ marginTop: '16px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <FilterDropdown
-          value={filterTag}
-          onChange={setFilterTag}
-          options={[
-            { value: 'all', label: 'All' },
-            ...TAG_OPTIONS.map(t => ({ value: t, label: `${TAG_ICONS[t]} ${TAG_LABELS[t]}` }))
-          ]}
-        />
-        <button
-          onClick={() => setSortBy(sortBy === 'newest' ? 'oldest' : 'newest')}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            fontSize: '12px',
-            color: '#999',
-            padding: '4px 0',
-            whiteSpace: 'nowrap'
-          }}
-        >
-          {sortBy === 'newest' ? 'Newest first' : 'Oldest first'}
-        </button>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <button
+            onClick={() => setShowAddForm(!showAddForm)}
+            style={{
+              background: 'none',
+              border: 'none',
+              fontSize: '20px',
+              color: '#8C8578',
+              cursor: 'pointer',
+              padding: 0,
+              lineHeight: 1
+            }}
+          >
+            +
+          </button>
+          {isSpeechSupported && (
+            <button
+              onClick={() => setShowDictation(true)}
+              title="Dictate items by voice"
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '2px',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2C2C2C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                <line x1="12" y1="19" x2="12" y2="23" />
+                <line x1="8" y1="23" x2="16" y2="23" />
+              </svg>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Add form */}
@@ -722,7 +717,9 @@ export const LaListe = () => {
                       boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)',
                       display: 'flex',
                       alignItems: 'flex-start',
-                      gap: '10px'
+                      gap: '10px',
+                      position: 'relative',
+                      zIndex: openMenuId === item.id ? 5 : 1
                     }}
                   >
                     {/* Checkbox */}
@@ -746,63 +743,81 @@ export const LaListe = () => {
                     />
 
                     {/* Content */}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <CoverThumbnail imageUrl={item.image_url} tag={item.tag} />
-                        <span style={{ fontSize: '14px', fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {item.title}
-                        </span>
-                      </div>
-                      {(item.note || item.item_date) && (
-                        <div style={{ fontSize: '12px', color: '#999', fontStyle: 'italic', marginTop: '2px', marginLeft: '24px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                          {item.item_date && (
-                            <span style={{ color: '#AAA' }}>{item.item_date}</span>
-                          )}
-                          {item.item_date && item.note && <span style={{ color: '#CCC' }}>·</span>}
-                          {item.note && <span>{item.note}</span>}
-                        </div>
+                    <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <CoverThumbnail imageUrl={item.image_url} tag={item.tag} />
+                      <span style={{ fontSize: '14px', fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>
+                        {item.title}
+                      </span>
+                      {item.item_date && (
+                        <span style={{ fontSize: '11px', color: '#A89F91', fontStyle: 'italic', flexShrink: 0 }}>{item.item_date}</span>
                       )}
                     </div>
 
-                    {/* Edit */}
-                    <button
-                      onClick={() => startEdit(item)}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        padding: '2px',
-                        opacity: 0.4,
-                        transition: 'opacity 0.2s',
-                        flexShrink: 0,
-                        display: 'flex'
-                      }}
-                      onMouseEnter={(e) => e.target.style.opacity = '0.8'}
-                      onMouseLeave={(e) => e.target.style.opacity = '0.4'}
-                      title="Edit"
-                    >
-                      <img src="/images/quill-ready.png" alt="Edit" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />
-                    </button>
-
-                    {/* Delete */}
-                    <button
-                      onClick={() => handleDelete(item.id)}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        padding: '2px',
-                        opacity: 0.6,
-                        transition: 'opacity 0.2s',
-                        flexShrink: 0,
-                        display: 'flex'
-                      }}
-                      onMouseEnter={(e) => e.target.style.opacity = '1'}
-                      onMouseLeave={(e) => e.target.style.opacity = '0.6'}
-                      title="Remove"
-                    >
-                      <img src="/images/eraser.jpeg" alt="Delete" style={{ width: '18px', height: '18px', objectFit: 'contain', transform: 'rotate(60deg)' }} />
-                    </button>
+                    {/* Overflow menu */}
+                    <div ref={openMenuId === item.id ? menuRef : null} style={{ position: 'relative', flexShrink: 0 }}>
+                      <button
+                        onClick={() => setOpenMenuId(openMenuId === item.id ? null : item.id)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          padding: '2px 6px',
+                          fontSize: '16px',
+                          color: '#A89F91',
+                          lineHeight: 1,
+                          letterSpacing: '1px'
+                        }}
+                        aria-label="Actions"
+                      >
+                        &middot;&middot;&middot;
+                      </button>
+                      {openMenuId === item.id && (
+                        <div style={{
+                          position: 'absolute',
+                          top: '100%',
+                          right: 0,
+                          background: '#FFFEFA',
+                          borderRadius: '4px',
+                          boxShadow: '0 2px 12px rgba(0, 0, 0, 0.12)',
+                          padding: '4px 0',
+                          minWidth: '100px',
+                          zIndex: 10
+                        }}>
+                          <button
+                            onClick={() => { startEdit(item); setOpenMenuId(null) }}
+                            style={{
+                              display: 'block',
+                              width: '100%',
+                              background: 'none',
+                              border: 'none',
+                              padding: '8px 16px',
+                              fontSize: '14px',
+                              color: '#2C2C2C',
+                              cursor: 'pointer',
+                              textAlign: 'left'
+                            }}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => { handleDelete(item.id); setOpenMenuId(null) }}
+                            style={{
+                              display: 'block',
+                              width: '100%',
+                              background: 'none',
+                              border: 'none',
+                              padding: '8px 16px',
+                              fontSize: '14px',
+                              color: '#C75D5D',
+                              cursor: 'pointer',
+                              textAlign: 'left'
+                            }}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )
               ))}
@@ -850,7 +865,9 @@ export const LaListe = () => {
                         display: 'flex',
                         alignItems: 'center',
                         gap: '10px',
-                        opacity: 0.6
+                        opacity: 0.6,
+                        position: 'relative',
+                        zIndex: openMenuId === item.id ? 5 : 1
                       }}
                     >
                       {/* Checked box */}
@@ -907,24 +924,55 @@ export const LaListe = () => {
                         Write a review?
                       </button>
 
-                      <button
-                        onClick={() => handleDelete(item.id)}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          cursor: 'pointer',
-                          padding: '2px',
-                          opacity: 0.6,
-                          transition: 'opacity 0.2s',
-                          flexShrink: 0,
-                          display: 'flex'
-                        }}
-                        onMouseEnter={(e) => e.target.style.opacity = '1'}
-                        onMouseLeave={(e) => e.target.style.opacity = '0.6'}
-                        title="Remove"
-                      >
-                        <img src="/images/eraser.jpeg" alt="Delete" style={{ width: '18px', height: '18px', objectFit: 'contain', transform: 'rotate(60deg)' }} />
-                      </button>
+                      {/* Overflow menu for done items */}
+                      <div ref={openMenuId === item.id ? menuRef : null} style={{ position: 'relative', flexShrink: 0 }}>
+                        <button
+                          onClick={() => setOpenMenuId(openMenuId === item.id ? null : item.id)}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            padding: '2px 6px',
+                            fontSize: '16px',
+                            color: '#A89F91',
+                            lineHeight: 1,
+                            letterSpacing: '1px'
+                          }}
+                          aria-label="Actions"
+                        >
+                          &middot;&middot;&middot;
+                        </button>
+                        {openMenuId === item.id && (
+                          <div style={{
+                            position: 'absolute',
+                            top: '100%',
+                            right: 0,
+                            background: '#FFFEFA',
+                            borderRadius: '4px',
+                            boxShadow: '0 2px 12px rgba(0, 0, 0, 0.12)',
+                            padding: '4px 0',
+                            minWidth: '100px',
+                            zIndex: 10
+                          }}>
+                            <button
+                              onClick={() => { handleDelete(item.id); setOpenMenuId(null) }}
+                              style={{
+                                display: 'block',
+                                width: '100%',
+                                background: 'none',
+                                border: 'none',
+                                padding: '8px 16px',
+                                fontSize: '14px',
+                                color: '#C75D5D',
+                                cursor: 'pointer',
+                                textAlign: 'left'
+                              }}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -999,19 +1047,11 @@ export const LaListe = () => {
                         <button
                           onClick={() => handleAdoptRec(review)}
                           style={{
-                            background: '#DCDCDC',
+                            background: 'none',
                             border: 'none',
-                            borderRadius: '50%',
-                            fontSize: '12px',
-                            color: '#333',
+                            fontSize: '20px',
+                            color: '#8C8578',
                             cursor: 'pointer',
-                            width: '18px',
-                            height: '18px',
-                            minWidth: '18px',
-                            minHeight: '18px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
                             padding: 0,
                             lineHeight: 1,
                             flexShrink: 0

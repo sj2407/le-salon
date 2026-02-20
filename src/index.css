@@ -445,12 +445,10 @@ button {
 
 button:hover {
   background: #F5F1EB;
-  box-shadow: 2px 2px 0 #2C2C2C;
 }
 
 button:active {
   box-shadow: none;
-  transform: translate(1px, 1px);
 }
 
 button.primary {

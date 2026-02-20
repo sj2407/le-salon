@@ -157,19 +157,11 @@ export const Wishlist = () => {
         description="Add items you'd like, and friends can anonymously claim them as gifts for you."
         renderHeaderActions={() => (
           <button onClick={openAddModal} style={{
-            background: '#DCDCDC',
+            background: 'none',
             border: 'none',
-            borderRadius: '50%',
-            fontSize: '12px',
-            color: '#333',
+            fontSize: '20px',
+            color: '#8C8578',
             cursor: 'pointer',
-            width: '18px',
-            height: '18px',
-            minWidth: '18px',
-            minHeight: '18px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
             padding: 0,
             lineHeight: 1
           }}>
@@ -193,44 +185,8 @@ export const Wishlist = () => {
             )}
           </span>
         )}
-        renderItemActions={(item) => (
-          <>
-            <button
-              onClick={() => openEditModal(item)}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                padding: '4px',
-                fontSize: '16px',
-                opacity: 0.4,
-                transition: 'opacity 0.2s'
-              }}
-              onMouseEnter={(e) => e.target.style.opacity = '0.8'}
-              onMouseLeave={(e) => e.target.style.opacity = '0.4'}
-              title="Edit"
-            >
-              <img src="/images/quill-ready.png" alt="Edit" style={{ width: '29px', height: '29px', objectFit: 'contain' }} />
-            </button>
-            <button
-              onClick={() => handleDelete(item.id)}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                padding: '4px',
-                opacity: 0.6,
-                transition: 'opacity 0.2s',
-                display: 'flex'
-              }}
-              onMouseEnter={(e) => e.target.style.opacity = '1'}
-              onMouseLeave={(e) => e.target.style.opacity = '0.6'}
-              title="Delete"
-            >
-              <img src="/images/eraser.jpeg" alt="Delete" style={{ width: '20px', height: '20px', objectFit: 'contain', transform: 'rotate(60deg)' }} />
-            </button>
-          </>
-        )}
+        onEdit={openEditModal}
+        onDelete={handleDelete}
       />
 
       <CoverSearchModal
