@@ -574,7 +574,7 @@ export const ToDo = () => {
                     border: '1px solid #ccc',
                     borderRadius: '3px',
                     background: '#FFFEFA',
-                    fontSize: '15px',
+                    fontSize: '16px',
                     fontFamily: 'Source Serif 4, Georgia, serif'
                   }}
                 >

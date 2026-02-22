@@ -141,7 +141,7 @@ export const CoverSearchModal = ({ isOpen, onClose, onSelect, initialQuery = '',
             padding: '10px 12px',
             border: '1px solid #999',
             borderRadius: '6px',
-            fontSize: '15px',
+            fontSize: '16px',
             boxSizing: 'border-box',
             outline: 'none',
           }}

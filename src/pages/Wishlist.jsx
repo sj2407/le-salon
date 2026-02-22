@@ -309,7 +309,7 @@ export const Wishlist = () => {
                         padding: '8px 10px',
                         border: '1px solid #ccc',
                         borderRadius: '3px',
-                        fontSize: '13px',
+                        fontSize: '16px',
                         fontStyle: 'italic',
                         boxSizing: 'border-box',
                         background: '#FFFEFA'

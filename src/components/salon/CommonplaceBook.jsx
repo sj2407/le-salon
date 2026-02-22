@@ -165,7 +165,7 @@ export const CommonplaceBook = ({ isOpen, onClose, entries, userId, onSubmit, on
                   padding: '12px',
                   border: '1px solid #D4C9B8',
                   borderRadius: '3px',
-                  fontSize: '15px',
+                  fontSize: '16px',
                   fontFamily: "'Source Serif 4', Georgia, serif",
                   fontStyle: 'italic',
                   resize: 'vertical',

@@ -83,7 +83,7 @@ export const TagAutocomplete = ({ value, onChange, style }) => {
           borderRadius: '3px',
           background: '#FFFEFA',
           fontFamily: "'Source Serif 4', Georgia, serif",
-          fontSize: '15px',
+          fontSize: '16px',
           fontStyle: 'italic',
           boxSizing: 'border-box'
         }}
