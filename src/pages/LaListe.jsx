@@ -8,6 +8,7 @@ import { TagAutocomplete } from '../components/TagAutocomplete'
 import { EmptyStateFantom } from '../components/EmptyStateFantom'
 import { FilterDropdown } from '../components/FilterDropdown'
 import { DictationModal } from '../components/DictationModal'
+import { scrollLock } from '../lib/scrollLock'
 import { isSpeechSupported } from '../lib/useSpeechRecognition'
 import { CoverSearchModal } from '../components/cover-search/CoverSearchModal'
 import { CoverThumbnail } from '../components/cover-search/CoverThumbnail'
@@ -70,6 +71,13 @@ export const LaListe = () => {
     }
   }, [openMenuId])
 
+  // Lock body scroll while any form is active (prevents iOS keyboard viewport shift)
+  useEffect(() => {
+    if (showAddForm || editingId) scrollLock.enable()
+    else scrollLock.disable()
+    return () => scrollLock.disable()
+  }, [showAddForm, editingId])
+
   const fetchItems = async () => {
     try {
       const { data, error } = await supabase
@@ -131,7 +139,6 @@ export const LaListe = () => {
 
       if (error) throw error
 
-      document.activeElement?.blur()
       setNewTitle('')
       setNewTag('other')
       setNewNote('')
@@ -139,7 +146,6 @@ export const LaListe = () => {
       setNewImageUrl('')
       setShowAddForm(false)
       await fetchItems()
-      setTimeout(() => window.scrollTo(0, window.scrollY), 50)
     } catch (_err) {
       alert('Could not add item. Please try again.')
     }
@@ -202,10 +208,8 @@ export const LaListe = () => {
 
       if (error) throw error
 
-      document.activeElement?.blur()
       setEditingId(null)
       await fetchItems()
-      setTimeout(() => window.scrollTo(0, window.scrollY), 50)
     } catch (_err) {
       // silently handled
     }

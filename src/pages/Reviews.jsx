@@ -10,6 +10,7 @@ import { DictationModal } from '../components/DictationModal'
 import { isSpeechSupported } from '../lib/useSpeechRecognition'
 import { CoverSearchModal } from '../components/cover-search/CoverSearchModal'
 import { CoverThumbnail } from '../components/cover-search/CoverThumbnail'
+import { scrollLock } from '../lib/scrollLock'
 import { TAG_TO_MEDIA_TYPE } from '../lib/coverSearchApis'
 
 export const Reviews = () => {
@@ -76,6 +77,13 @@ export const Reviews = () => {
       reviewText !== init.reviewText ||
       JSON.stringify(recommendToFriends) !== JSON.stringify(init.recommendToFriends)
   }
+
+  // Lock body scroll while modal is active (prevents iOS keyboard viewport shift)
+  useEffect(() => {
+    if (showModal) scrollLock.enable()
+    else scrollLock.disable()
+    return () => scrollLock.disable()
+  }, [showModal])
 
   // Escape key handler for modal - only close if form is clean
   useEffect(() => {
@@ -322,10 +330,8 @@ export const Reviews = () => {
           .eq('review_id', reviewId)
       }
 
-      document.activeElement?.blur()
       setShowModal(false)
       fetchReviews()
-      setTimeout(() => window.scrollTo(0, window.scrollY), 50)
     } catch (err) {
       setError(err.message)
     }

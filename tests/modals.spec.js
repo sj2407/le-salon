@@ -286,20 +286,20 @@ test.describe('ToDo/Activity Modal', () => {
     await page.waitForSelector('.handwritten', { timeout: 10000 })
   })
 
-  test('opens add modal when + Add Activity clicked', async ({ page }) => {
-    await page.click('button:has-text("+ Add Activity")')
+  test('opens add modal when + clicked', async ({ page }) => {
+    await page.click('button:has-text("+")')
     await waitForModalOpen(page)
   })
 
   test('escape key closes modal', async ({ page }) => {
-    await page.click('button:has-text("+ Add Activity")')
+    await page.click('button:has-text("+")')
     await waitForModalOpen(page)
     await page.keyboard.press('Escape')
     await waitForModalClose(page)
   })
 
   test('click outside does NOT close modal when form is dirty', async ({ page }) => {
-    await page.click('button:has-text("+ Add Activity")')
+    await page.click('button:has-text("+")')
     await waitForModalOpen(page)
 
     // Make the form dirty
@@ -312,7 +312,7 @@ test.describe('ToDo/Activity Modal', () => {
   })
 
   test('escape does NOT close modal when form is dirty', async ({ page }) => {
-    await page.click('button:has-text("+ Add Activity")')
+    await page.click('button:has-text("+")')
     await waitForModalOpen(page)
 
     // Make the form dirty

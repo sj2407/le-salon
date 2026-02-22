@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { Link } from 'react-router-dom'
 import { EmptyStateFantom } from '../components/EmptyStateFantom'
 import { FilterDropdown } from '../components/FilterDropdown'
+import { scrollLock } from '../lib/scrollLock'
 
 // Parse date_text into date_parsed
 const parseDate = (dateText) => {
@@ -77,6 +78,13 @@ export const ToDo = () => {
     return description !== init.description || dateText !== init.dateText ||
       city !== init.city || location !== init.location || price !== init.price
   }
+
+  // Lock body scroll while modal is active (prevents iOS keyboard viewport shift)
+  useEffect(() => {
+    if (showModal) scrollLock.enable()
+    else scrollLock.disable()
+    return () => scrollLock.disable()
+  }, [showModal])
 
   // Escape key handler for modal - only close if form is clean
   useEffect(() => {
@@ -231,10 +239,8 @@ export const ToDo = () => {
         if (error) throw error
       }
 
-      document.activeElement?.blur()
       setShowModal(false)
       fetchActivities()
-      setTimeout(() => window.scrollTo(0, window.scrollY), 50)
     } catch (err) {
       setError(err.message)
     }

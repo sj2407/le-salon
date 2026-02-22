@@ -5,6 +5,7 @@ import { WishlistDisplay } from '../components/WishlistDisplay'
 import { CoverSearchModal } from '../components/cover-search/CoverSearchModal'
 import { CoverThumbnail } from '../components/cover-search/CoverThumbnail'
 import { typeToMediaType } from '../lib/coverSearchApis'
+import { scrollLock } from '../lib/scrollLock'
 
 export const Wishlist = () => {
   const { profile } = useAuth()
@@ -33,6 +34,13 @@ export const Wishlist = () => {
     const init = initialFormRef.current
     return name !== init.name || type !== init.type || link !== init.link
   }
+
+  // Lock body scroll while modal is active (prevents iOS keyboard viewport shift)
+  useEffect(() => {
+    if (showModal) scrollLock.enable()
+    else scrollLock.disable()
+    return () => scrollLock.disable()
+  }, [showModal])
 
   // Escape key handler for modal - only close if form is clean
   useEffect(() => {
@@ -117,10 +125,8 @@ export const Wishlist = () => {
         if (error) throw error
       }
 
-      document.activeElement?.blur()
       setShowModal(false)
       fetchWishlistItems()
-      setTimeout(() => window.scrollTo(0, window.scrollY), 50)
     } catch (err) {
       setError(err.message)
     }
