@@ -231,8 +231,10 @@ export const ToDo = () => {
         if (error) throw error
       }
 
+      document.activeElement?.blur()
       setShowModal(false)
       fetchActivities()
+      setTimeout(() => window.scrollTo(0, window.scrollY), 50)
     } catch (err) {
       setError(err.message)
     }

@@ -131,6 +131,7 @@ export const LaListe = () => {
 
       if (error) throw error
 
+      document.activeElement?.blur()
       setNewTitle('')
       setNewTag('other')
       setNewNote('')
@@ -138,6 +139,7 @@ export const LaListe = () => {
       setNewImageUrl('')
       setShowAddForm(false)
       await fetchItems()
+      setTimeout(() => window.scrollTo(0, window.scrollY), 50)
     } catch (_err) {
       alert('Could not add item. Please try again.')
     }
@@ -200,8 +202,10 @@ export const LaListe = () => {
 
       if (error) throw error
 
+      document.activeElement?.blur()
       setEditingId(null)
       await fetchItems()
+      setTimeout(() => window.scrollTo(0, window.scrollY), 50)
     } catch (_err) {
       // silently handled
     }

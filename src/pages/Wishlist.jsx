@@ -117,8 +117,10 @@ export const Wishlist = () => {
         if (error) throw error
       }
 
+      document.activeElement?.blur()
       setShowModal(false)
       fetchWishlistItems()
+      setTimeout(() => window.scrollTo(0, window.scrollY), 50)
     } catch (err) {
       setError(err.message)
     }

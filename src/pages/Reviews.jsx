@@ -322,8 +322,10 @@ export const Reviews = () => {
           .eq('review_id', reviewId)
       }
 
+      document.activeElement?.blur()
       setShowModal(false)
       fetchReviews()
+      setTimeout(() => window.scrollTo(0, window.scrollY), 50)
     } catch (err) {
       setError(err.message)
     }
