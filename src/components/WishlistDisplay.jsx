@@ -90,7 +90,9 @@ export const WishlistDisplay = ({
               }}
             >
               {item.image_url && typeToMediaType(item.type) && (
-                <CoverThumbnail imageUrl={item.image_url} tag={typeToMediaType(item.type)} />
+                <div style={{ marginRight: '12px', flexShrink: 0 }}>
+                  <CoverThumbnail imageUrl={item.image_url} tag={typeToMediaType(item.type)} />
+                </div>
               )}
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
