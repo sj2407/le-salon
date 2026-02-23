@@ -176,9 +176,6 @@ export const CardDisplay = ({
             position: 'absolute',
             ...iconPosition,
             zIndex: 10,
-            opacity: isFlipped ? 0 : 1,
-            transition: isFlipped ? 'opacity 100ms' : 'opacity 150ms ease-in-out 500ms',
-            pointerEvents: isFlipped ? 'none' : 'auto',
           }}>
             <Icon />
           </div>
@@ -195,8 +192,7 @@ export const CardDisplay = ({
               border: 'none',
               cursor: 'pointer',
               padding: '10px',
-              opacity: isFlipped ? 0 : (isFriendView ? 0.7 : 0.4),
-              transition: isFlipped ? 'opacity 100ms' : 'opacity 150ms ease-in-out 500ms',
+              opacity: isFriendView ? 0.7 : 0.4,
               fontSize: '14px',
               lineHeight: 1,
               zIndex: 15,
