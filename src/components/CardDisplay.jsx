@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
+import { linkifyText } from '../lib/linkifyText'
 import { MusicEntryDisplay } from './music/MusicEntryDisplay'
 import { CATEGORY_CONFIG } from '../lib/cardConstants'
 import { ReadingIcon } from './icons/ReadingIcon'
@@ -21,51 +22,6 @@ const CATEGORY_ICONS = {
   'Performing Arts and Exhibits': PerformingArtsIcon,
   'Obsessing Over': ObsessingIcon,
   'My latest AI prompt': AIPromptIcon
-}
-
-const linkifyText = (text) => {
-  // Check if text ends with a URL (most common pattern)
-  // Changed \s+ to \s* to handle URLs with no space before them
-  const urlAtEndRegex = /^(.+?)\s*(https?:\/\/[^\s]+)$/
-  const matchEnd = text.match(urlAtEndRegex)
-
-  if (matchEnd) {
-    const [, title, url] = matchEnd
-    return (
-      <a
-        href={url.trim()}
-        target="_blank"
-        rel="noopener noreferrer"
-        style={{
-          color: '#4A7BA7',
-          textDecoration: 'underline'
-        }}
-      >
-        {title.trim()}
-      </a>
-    )
-  }
-
-  // Check if text contains "Title | URL" format
-  if (text.includes(' | http')) {
-    const [title, url] = text.split(' | ')
-    return (
-      <a
-        href={url.trim()}
-        target="_blank"
-        rel="noopener noreferrer"
-        style={{
-          color: '#4A7BA7',
-          textDecoration: 'underline'
-        }}
-      >
-        {title.trim()}
-      </a>
-    )
-  }
-
-  // If no URL detected, return plain text
-  return text
 }
 
 export const CardDisplay = ({

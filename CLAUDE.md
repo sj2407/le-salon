@@ -36,9 +36,10 @@ Transformations: Data formatter shared between display and export
 
 ## Git Workflow
 
-- **NEVER ask to push to git until the user has tested changes locally.** Wait for the user to explicitly confirm they've tested and are ready to push.
+- **NEVER commit or push without explicit user approval.** Always wait for the user to say "push", "commit", or otherwise explicitly authorize git operations.
 - Do not suggest or offer to push changes proactively.
-- Only proceed with git operations (commit, push) when the user explicitly requests them.
+- Do not auto-commit after completing work — present the changes and wait for the user to decide.
+- The user will test changes locally first, then explicitly tell you when to push.
 
 ## Design System
 

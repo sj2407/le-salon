@@ -3,6 +3,7 @@
 export const TAG_ICONS = {
   movie: '🎬',
   book: '📖',
+  article: '📰',
   podcast: '🎧',
   show: '📺',
   album: '💿',
@@ -11,11 +12,12 @@ export const TAG_ICONS = {
   other: '✨'
 }
 
-export const TAG_OPTIONS = ['movie', 'book', 'podcast', 'show', 'album', 'performing_arts', 'exhibition', 'other']
+export const TAG_OPTIONS = ['movie', 'book', 'article', 'podcast', 'show', 'album', 'performing_arts', 'exhibition', 'other']
 
 export const TAG_LABELS = {
   movie: 'movie',
   book: 'book',
+  article: 'article',
   podcast: 'podcast',
   show: 'show',
   album: 'album',

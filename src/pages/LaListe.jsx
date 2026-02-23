@@ -13,6 +13,7 @@ import { isSpeechSupported } from '../lib/useSpeechRecognition'
 import { CoverSearchModal } from '../components/cover-search/CoverSearchModal'
 import { CoverThumbnail } from '../components/cover-search/CoverThumbnail'
 import { TAG_TO_MEDIA_TYPE } from '../lib/coverSearchApis'
+import { linkifyText } from '../lib/linkifyText'
 
 export const LaListe = () => {
   const { profile } = useAuth()
@@ -754,7 +755,7 @@ export const LaListe = () => {
                     <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <CoverThumbnail imageUrl={item.image_url} tag={item.tag} />
                       <span style={{ fontSize: '14px', fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>
-                        {item.title}
+                        {linkifyText(item.title)}
                       </span>
                       {item.item_date && (
                         <span style={{ fontSize: '11px', color: '#A89F91', fontStyle: 'italic', flexShrink: 0 }}>{item.item_date}</span>
@@ -912,7 +913,7 @@ export const LaListe = () => {
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap'
                       }}>
-                        {item.title}
+                        {linkifyText(item.title)}
                       </span>
 
                       {/* Write review link */}

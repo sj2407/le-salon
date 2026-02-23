@@ -159,13 +159,12 @@ export const MyCard = () => {
 
       if (cardError) throw cardError
 
-      // Insert entries
+      // Insert entries (strip DB-managed fields so defaults apply)
       if (newEntries.length > 0) {
-        const entriesWithCardId = newEntries.map((entry, index) => ({
-          ...entry,
-          card_id: newCard.id,
-          display_order: index
-        }))
+        const entriesWithCardId = newEntries.map((entry, index) => {
+          const { id: _id, card_id: _cid, created_at: _ca, ...fields } = entry
+          return { ...fields, card_id: newCard.id, display_order: index }
+        })
 
         const { data: insertedEntries, error: entriesError } = await supabase
           .from('entries')
@@ -202,10 +201,10 @@ export const MyCard = () => {
       // Don't set loading=true here - it causes the page to flash blank
       // The save happens quickly and we update state directly after
 
-      // Keep entries from other categories (strip id field), replace this category's entries
+      // Keep entries from other categories (strip DB-managed fields), replace this category's entries
       const otherEntries = entries
         .filter(e => e.category !== category)
-        .map(({ id, card_id, ...rest }) => rest)
+        .map(({ id, card_id, created_at, ...rest }) => rest)
       const allEntries = [...otherEntries, ...newCategoryEntries]
 
       // Use the same save logic as handleSave
@@ -219,11 +218,10 @@ export const MyCard = () => {
           .eq('card_id', card.id)
 
         if (allEntries.length > 0) {
-          const entriesWithCardId = allEntries.map((entry, index) => ({
-            ...entry,
-            card_id: card.id,
-            display_order: index
-          }))
+          const entriesWithCardId = allEntries.map((entry, index) => {
+            const { id: _id, card_id: _cid, created_at: _ca, ...fields } = entry
+            return { ...fields, card_id: card.id, display_order: index }
+          })
 
           const { data: insertedEntries, error: entriesError } = await supabase
             .from('entries')
@@ -264,13 +262,12 @@ export const MyCard = () => {
           .delete()
           .eq('card_id', card.id)
 
-        // Insert new entries
+        // Insert new entries (strip DB-managed fields so defaults apply)
         if (newEntries.length > 0) {
-          const entriesWithCardId = newEntries.map((entry, index) => ({
-            ...entry,
-            card_id: card.id,
-            display_order: index
-          }))
+          const entriesWithCardId = newEntries.map((entry, index) => {
+            const { id: _id, card_id: _cid, created_at: _ca, ...fields } = entry
+            return { ...fields, card_id: card.id, display_order: index }
+          })
 
           const { data: insertedEntries, error: entriesError } = await supabase
             .from('entries')
