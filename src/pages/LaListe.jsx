@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion as Motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
+import { StaggeredList, StaggerItem } from '../components/StaggeredList'
 import { TAG_ICONS, TAG_OPTIONS, TAG_LABELS } from '../lib/reviewConstants'
 import { TagAutocomplete } from '../components/TagAutocomplete'
 import { EmptyStateFantom } from '../components/EmptyStateFantom'
@@ -546,12 +547,12 @@ export const LaListe = () => {
               No {TAG_LABELS[filterTag] || filterTag} items yet.
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <StaggeredList style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {filteredPending.map((item, index) => (
-                editingId === item.id ? (
+                <StaggerItem key={item.id}>
+                {editingId === item.id ? (
                   /* Inline edit form */
                   <div
-                    key={item.id}
                     style={{
                       background: '#FFFEFA',
                       borderRadius: '2px',
@@ -716,7 +717,6 @@ export const LaListe = () => {
                 ) : (
                   /* Normal item display */
                   <div
-                    key={item.id}
                     className="review-card"
                     data-index={index}
                     style={{
@@ -828,9 +828,10 @@ export const LaListe = () => {
                       )}
                     </div>
                   </div>
-                )
+                )}
+                </StaggerItem>
               ))}
-            </div>
+            </StaggeredList>
           )}
 
           {/* Done section */}

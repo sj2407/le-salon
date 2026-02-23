@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { EmptyStateFantom } from './EmptyStateFantom'
 import { CoverThumbnail } from './cover-search/CoverThumbnail'
 import { typeToMediaType } from '../lib/coverSearchApis'
+import { StaggeredList, StaggerItem } from './StaggeredList'
 
 /**
  * Shared wishlist display component
@@ -70,10 +71,10 @@ export const WishlistDisplay = ({
       {items.length === 0 ? (
         <EmptyStateFantom />
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <StaggeredList style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {items.map((item, index) => (
+            <StaggerItem key={item.id}>
             <div
-              key={item.id}
               style={{
                 background: '#FFFEFA',
                 border: 'none',
@@ -209,8 +210,9 @@ export const WishlistDisplay = ({
                 </div>
               )}
             </div>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggeredList>
       )}
     </div>
   )

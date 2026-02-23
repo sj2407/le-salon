@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { AnimatePresence, motion as Motion } from 'framer-motion'
 import { ResponseEntry } from './ResponseEntry'
+import { StaggeredList, StaggerItem } from '../StaggeredList'
 
 /**
  * "Vos reflexions" — collapsible response section below the Parlor text.
@@ -165,17 +166,18 @@ export const ParlorResponses = ({ responses, userId, onSubmit, onEdit, onDelete,
 
               {/* Responses list — chronological (oldest first) */}
               {responses.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <StaggeredList style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {responses.map((response) => (
-                    <ResponseEntry
-                      key={response.id}
-                      entry={response}
-                      isOwn={response.user_id === userId}
-                      onEdit={handleEdit}
-                      onDelete={onDelete}
-                    />
+                    <StaggerItem key={response.id}>
+                      <ResponseEntry
+                        entry={response}
+                        isOwn={response.user_id === userId}
+                        onEdit={handleEdit}
+                        onDelete={onDelete}
+                      />
+                    </StaggerItem>
                   ))}
-                </div>
+                </StaggeredList>
               ) : (
                 <div style={{ textAlign: 'center', padding: '20px', color: '#8C8578', fontStyle: 'italic', fontSize: '14px' }}>
                   {/* Empty state: just the input is the invitation */}

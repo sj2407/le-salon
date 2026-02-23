@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
+import { StaggeredList, StaggerItem } from '../components/StaggeredList'
 
 export const Friends = () => {
   const { profile } = useAuth()
@@ -153,9 +154,10 @@ export const Friends = () => {
           <h2 style={{ fontSize: '18px', marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.06em', color: '#666' }}>
             Pending Requests
           </h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <StaggeredList style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {pendingRequests.map((req, index) => (
-              <div key={req.id} style={{
+              <StaggerItem key={req.id}>
+              <div style={{
                 padding: '16px',
                 border: 'none',
                 borderRadius: '3px',
@@ -196,8 +198,9 @@ export const Friends = () => {
                   </button>
                 </div>
               </div>
+              </StaggerItem>
             ))}
-          </div>
+          </StaggeredList>
         </section>
       )}
 
@@ -207,9 +210,10 @@ export const Friends = () => {
           <h2 style={{ fontSize: '18px', marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.06em', color: '#666' }}>
             Sent Requests
           </h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <StaggeredList style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {sentRequests.map((req, index) => (
-              <div key={req.id} style={{
+              <StaggerItem key={req.id}>
+              <div style={{
                 padding: '16px',
                 border: 'none',
                 borderRadius: '3px',
@@ -240,8 +244,9 @@ export const Friends = () => {
                   />
                 )}
               </div>
+              </StaggerItem>
             ))}
-          </div>
+          </StaggeredList>
         </section>
       )}
 
@@ -255,10 +260,10 @@ export const Friends = () => {
             No friends yet. Start by finding some friends!
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <StaggeredList style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {friends.map((friendship, index) => (
+              <StaggerItem key={friendship.id}>
               <Link
-                key={friendship.id}
                 to={`/friend/${friendship.friendProfile.id}`}
                 style={{ textDecoration: 'none', color: 'inherit' }}
               >
@@ -304,8 +309,9 @@ export const Friends = () => {
                   )}
                 </div>
               </Link>
+              </StaggerItem>
             ))}
-          </div>
+          </StaggeredList>
         )}
       </section>
     </div>

@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { getRelativeTime } from '../lib/timeUtils'
 import { getNotificationRoute } from '../lib/notificationUtils'
+import { StaggeredList, StaggerItem } from '../components/StaggeredList'
 
 const NotificationItem = ({ notification, onClick }) => (
   <button
@@ -61,15 +62,16 @@ const NotificationSection = ({ title, notifications, onClick }) => {
       }}>
         {title}
       </h2>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <StaggeredList style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
         {notifications.map((notification) => (
-          <NotificationItem
-            key={notification.id}
-            notification={notification}
-            onClick={onClick}
-          />
+          <StaggerItem key={notification.id}>
+            <NotificationItem
+              notification={notification}
+              onClick={onClick}
+            />
+          </StaggerItem>
         ))}
-      </div>
+      </StaggeredList>
     </section>
   )
 }

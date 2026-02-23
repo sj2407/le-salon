@@ -3,6 +3,7 @@ import { TAG_ICONS, TAG_OPTIONS, TAG_LABELS } from '../lib/reviewConstants'
 import { EmptyStateFantom } from './EmptyStateFantom'
 import { FilterDropdown } from './FilterDropdown'
 import { CoverThumbnail } from './cover-search/CoverThumbnail'
+import { StaggeredList, StaggerItem } from './StaggeredList'
 
 /**
  * Shared reviews display component
@@ -90,10 +91,10 @@ export const ReviewsDisplay = ({
           </div>
         )
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <StaggeredList style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {filteredReviews.map((review, index) => (
+            <StaggerItem key={review.id}>
             <div
-              key={review.id}
               className="review-card"
               data-index={index}
               style={{
@@ -259,8 +260,9 @@ export const ReviewsDisplay = ({
                 )
               )}
             </div>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggeredList>
       )}
     </div>
   )

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion as Motion } from 'framer-motion'
 import { ResponseEntry } from './ResponseEntry'
+import { StaggeredList, StaggerItem } from '../StaggeredList'
 
 /**
  * Full-screen overlay styled as a notebook page.
@@ -211,17 +212,18 @@ export const CommonplaceBook = ({ isOpen, onClose, entries, userId, onSubmit, on
 
             {/* Entries list — reverse chronological (newest first) */}
             {entries.length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingBottom: '40px' }}>
+              <StaggeredList style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingBottom: '40px' }}>
                 {entries.map((entry) => (
-                  <ResponseEntry
-                    key={entry.id}
-                    entry={entry}
-                    isOwn={entry.user_id === userId}
-                    onEdit={handleEdit}
-                    onDelete={onDelete}
-                  />
+                  <StaggerItem key={entry.id}>
+                    <ResponseEntry
+                      entry={entry}
+                      isOwn={entry.user_id === userId}
+                      onEdit={handleEdit}
+                      onDelete={onDelete}
+                    />
+                  </StaggerItem>
                 ))}
-              </div>
+              </StaggeredList>
             ) : null}
           </div>
         </Motion.div>
