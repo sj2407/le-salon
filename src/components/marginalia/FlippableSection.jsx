@@ -1,11 +1,18 @@
 // 3D flip — both front and back are always rendered; CSS handles the rotation.
-// Back face uses inline styles (not section-box class) to avoid sway animations
-// overriding the rotateY(180deg) transform.
+// The visible face is in normal flow (determines container height).
+// The hidden face is absolute-positioned so it doesn't affect sizing.
 export const FlippableSection = ({
   children,
   backContent,
   isFlipped,
 }) => {
+  const hiddenFaceStyles = {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+  }
+
   return (
     <div style={{ perspective: '1200px' }}>
       <div
@@ -16,20 +23,19 @@ export const FlippableSection = ({
           position: 'relative',
         }}
       >
-        {/* Front face */}
-        <div style={{ backfaceVisibility: 'hidden' }}>
+        {/* Front face — in flow when visible, absolute when flipped away */}
+        <div style={{
+          backfaceVisibility: 'hidden',
+          ...(isFlipped ? hiddenFaceStyles : {}),
+        }}>
           {children}
         </div>
-        {/* Back face — inline card styles to avoid .section-box sway animations */}
+        {/* Back face — in flow when flipped, absolute when hidden */}
         <div
           style={{
             backfaceVisibility: 'hidden',
             transform: 'rotateY(180deg)',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
+            ...(!isFlipped ? { ...hiddenFaceStyles, height: '100%' } : {}),
             overflow: 'auto',
             boxSizing: 'border-box',
             borderRadius: '2px',
