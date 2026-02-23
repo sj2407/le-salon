@@ -95,12 +95,6 @@ export const CardDisplay = ({
     if (stats) setShowStats(prev => !prev)
   }
 
-  const formatDate = (date) => {
-    const d = new Date(date)
-    const options = { month: 'long', day: 'numeric', year: 'numeric' }
-    return `Week of ${d.toLocaleDateString('en-US', options)}`
-  }
-
   const getEntriesForCategory = (category) => {
     return entries.filter(e => e.category === category)
   }
@@ -177,13 +171,14 @@ export const CardDisplay = ({
 
     const sectionContent = (
       <div className={isFullWidth ? 'full-width-section' : 'section-box'} style={{ position: 'relative', overflow: 'visible' }}>
-        {hasFloatingIcon && !isFlipped && (
+        {hasFloatingIcon && (
           <div style={{
             position: 'absolute',
             ...iconPosition,
             zIndex: 10,
             opacity: isFlipped ? 0 : 1,
-            transition: 'opacity 0.2s ease'
+            transition: isFlipped ? 'opacity 100ms' : 'opacity 150ms ease-in-out 500ms',
+            pointerEvents: isFlipped ? 'none' : 'auto',
           }}>
             <Icon />
           </div>
@@ -200,7 +195,8 @@ export const CardDisplay = ({
               border: 'none',
               cursor: 'pointer',
               padding: '10px',
-              opacity: isFriendView ? 0.7 : 0.4,
+              opacity: isFlipped ? 0 : (isFriendView ? 0.7 : 0.4),
+              transition: isFlipped ? 'opacity 100ms' : 'opacity 150ms ease-in-out 500ms',
               fontSize: '14px',
               lineHeight: 1,
               zIndex: 15,
@@ -284,7 +280,6 @@ export const CardDisplay = ({
         isFlipped={isFlipped}
         onFlip={() => handleFlipSection(categoryName)}
         backContent={backContent}
-        sectionClass={isFullWidth ? 'full-width-section' : 'section-box'}
       >
         {sectionContent}
       </FlippableSection>
@@ -379,7 +374,6 @@ export const CardDisplay = ({
             {bio}
           </p>
         )}
-        {card && <p className="card-date">{formatDate(card.created_at)}</p>}
       </header>
 
       {isEditable && (

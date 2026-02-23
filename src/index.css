@@ -100,32 +100,28 @@ body {
   opacity: 0.7;
 }
 
-/* Different rotation for each card */
-.section-box:nth-child(1) {
+/* Different rotation for each card (selectors account for flip wrapper) */
+.grid > :nth-child(1) .section-box {
   transform: rotate(-0.5deg);
   animation: gentleSway1 5s ease-in-out infinite;
 }
 
-.section-box:nth-child(2) {
+.grid > :nth-child(2) .section-box {
   transform: rotate(0.7deg);
   animation: gentleSway2 5.5s ease-in-out infinite;
 }
 
-.section-box:nth-child(3) {
+.grid > :nth-child(3) .section-box {
   transform: rotate(-0.3deg);
   animation: gentleSway3 6s ease-in-out infinite;
 }
 
-.section-box:nth-child(4) {
+.grid > :nth-child(4) .section-box {
   transform: rotate(0.5deg);
   animation: gentleSway4 4.5s ease-in-out infinite;
 }
 
 /* Hover: card lifts with 3D tilt effect - desktop only */
-.section-box {
-  perspective: 1000px;
-  transform-style: preserve-3d;
-}
 
 @media (hover: hover) and (pointer: fine) {
   .section-box:hover {
@@ -141,11 +137,11 @@ body {
     pointer-events: none;
   }
 
-  .grid .section-box:nth-child(odd):hover {
+  .grid > :nth-child(odd) .section-box:hover {
     transform: translateY(-6px) rotateX(-1deg) rotateY(-2deg) rotate(0deg);
   }
 
-  .grid .section-box:nth-child(even):hover {
+  .grid > :nth-child(even) .section-box:hover {
     transform: translateY(-6px) rotateX(-1deg) rotateY(2deg) rotate(0deg);
   }
 }
