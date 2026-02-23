@@ -13,6 +13,7 @@ import { DictationModal } from '../components/DictationModal'
 import { scrollLock } from '../lib/scrollLock'
 import { isSpeechSupported } from '../lib/useSpeechRecognition'
 import { CoverSearchModal } from '../components/cover-search/CoverSearchModal'
+import { Microphone, Plus } from '@phosphor-icons/react'
 import { CoverThumbnail } from '../components/cover-search/CoverThumbnail'
 import { TAG_TO_MEDIA_TYPE } from '../lib/coverSearchApis'
 import { linkifyText } from '../lib/linkifyText'
@@ -345,14 +346,14 @@ export const LaListe = () => {
             style={{
               background: 'none',
               border: 'none',
-              fontSize: '20px',
-              color: '#8C8578',
               cursor: 'pointer',
               padding: 0,
-              lineHeight: 1
+              lineHeight: 1,
+              display: 'flex',
+              alignItems: 'center'
             }}
           >
-            +
+            <Plus size={18} weight="duotone" color="#7A3B2E" />
           </button>
           {isSpeechSupported && (
             <button
@@ -367,12 +368,7 @@ export const LaListe = () => {
                 alignItems: 'center'
               }}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2C2C2C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                <line x1="12" y1="19" x2="12" y2="23" />
-                <line x1="8" y1="23" x2="16" y2="23" />
-              </svg>
+              <Microphone size={14} weight="duotone" color="#7A3B2E" />
             </button>
           )}
         </div>
@@ -1066,16 +1062,16 @@ export const LaListe = () => {
                           style={{
                             background: 'none',
                             border: 'none',
-                            fontSize: '20px',
-                            color: '#8C8578',
                             cursor: 'pointer',
                             padding: 0,
                             lineHeight: 1,
-                            flexShrink: 0
+                            flexShrink: 0,
+                            display: 'flex',
+                            alignItems: 'center'
                           }}
                           title="Add to my list"
                         >
-                          +
+                          <Plus size={18} weight="duotone" color="#7A3B2E" />
                         </button>
                       </div>
 

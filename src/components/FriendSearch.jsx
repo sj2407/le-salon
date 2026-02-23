@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import { MagnifyingGlass } from '@phosphor-icons/react'
 
 export const FriendSearch = () => {
   const { profile } = useAuth()
@@ -102,19 +103,7 @@ export const FriendSearch = () => {
         }}
         title="Search friends"
       >
-        <svg
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="#2C2C2C"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <circle cx="11" cy="11" r="7" />
-          <path d="M20 20l-4-4" />
-        </svg>
+        <MagnifyingGlass size={18} weight="duotone" color="#7A3B2E" />
       </button>
 
       {isOpen && (

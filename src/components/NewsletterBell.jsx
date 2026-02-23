@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
+import { EnvelopeSimple } from '@phosphor-icons/react'
 
 export const NewsletterBell = () => {
   const { profile } = useAuth()
@@ -47,20 +48,7 @@ export const NewsletterBell = () => {
       }}
       aria-label="Newsletter"
     >
-      {/* Letter/Envelope Icon SVG */}
-      <svg
-        width="18"
-        height="18"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="#2C2C2C"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <rect x="2" y="4" width="20" height="16" rx="2" />
-        <path d="m22 7-10 5L2 7" />
-      </svg>
+      <EnvelopeSimple size={18} weight="duotone" color="#7A3B2E" />
 
       {/* Badge */}
       {unreadCount > 0 && (

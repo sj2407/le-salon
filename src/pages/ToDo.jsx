@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom'
 import { EmptyStateFantom } from '../components/EmptyStateFantom'
 import { FilterDropdown } from '../components/FilterDropdown'
 import { scrollLock } from '../lib/scrollLock'
+import { Plus } from '@phosphor-icons/react'
 
 // Parse date_text into date_parsed
 const parseDate = (dateText) => {
@@ -393,14 +394,14 @@ export const ToDo = () => {
           style={{
             background: 'none',
             border: 'none',
-            fontSize: '20px',
-            color: '#8C8578',
             cursor: 'pointer',
             padding: 0,
-            lineHeight: 1
+            lineHeight: 1,
+            display: 'flex',
+            alignItems: 'center'
           }}
         >
-          +
+          <Plus size={18} weight="duotone" color="#7A3B2E" />
         </button>
       </div>
 

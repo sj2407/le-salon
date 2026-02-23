@@ -12,6 +12,7 @@ import { ObsessingIcon } from './icons/ObsessingIcon'
 import { AIPromptIcon } from './icons/AIPromptIcon'
 import { CardBack } from './marginalia/CardBack'
 import { CardFold } from './marginalia/CardFold'
+import { Eye, EyeSlash, Microphone } from '@phosphor-icons/react'
 
 const CATEGORY_ICONS = {
   'Reading': ReadingIcon,
@@ -36,6 +37,9 @@ export const CardDisplay = ({
   showDictateButton = false,
   // Profile props
   bio,
+  // Hide sections
+  hiddenSections = [],
+  onToggleHidden,
   // Marginalia props
   notes = [],
   isFriendView = false,
@@ -125,6 +129,76 @@ export const CardDisplay = ({
   }
 
   const renderCategorySection = (categoryName, isFullWidth = false) => {
+    const isHidden = hiddenSections.includes(categoryName)
+
+    // Friend view: don't render hidden sections at all
+    if (isFriendView && isHidden) return null
+
+    // Own card: show crease line when hidden
+    if (isEditable && isHidden) {
+      return (
+        <div
+          key={categoryName}
+          className={isFullWidth ? 'full-width-section' : 'section-box'}
+          style={{
+            position: 'relative',
+            overflow: 'visible',
+            minHeight: 'unset',
+            padding: '0',
+            background: 'transparent',
+            boxShadow: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '28px',
+            animation: 'none',
+            transform: 'none',
+          }}
+        >
+          {/* Crease line — folded page effect */}
+          <div style={{
+            width: '100%',
+            height: '4px',
+            background: 'linear-gradient(to bottom, rgba(0,0,0,0.06), transparent 40%, rgba(0,0,0,0.04))',
+            borderRadius: '2px',
+            position: 'relative',
+          }}>
+            <div style={{
+              position: 'absolute',
+              top: '-1px',
+              left: 0,
+              right: 0,
+              height: '1px',
+              background: 'rgba(0,0,0,0.08)',
+            }} />
+          </div>
+          {/* Eye icon to unhide */}
+          <button
+            type="button"
+            onClick={() => onToggleHidden?.(categoryName)}
+            style={{
+              position: 'absolute',
+              right: '8px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '4px',
+              opacity: 0.7,
+              lineHeight: 1,
+              zIndex: 15,
+              WebkitTapHighlightColor: 'transparent',
+              touchAction: 'manipulation',
+            }}
+            title={`Show ${categoryName}`}
+          >
+            <EyeSlash size={16} weight="duotone" color="#7A3B2E" />
+          </button>
+        </div>
+      )
+    }
+
     const config = CATEGORY_CONFIG[categoryName]
     const Icon = CATEGORY_ICONS[categoryName]
     const categoryEntries = getEntriesForCategory(categoryName)
@@ -201,6 +275,30 @@ export const CardDisplay = ({
             title={isFriendView ? 'Leave a note' : `Edit ${categoryName}`}
           >
             <img src="/images/quill-ready.png" alt={isFriendView ? 'Leave note' : 'Edit'} style={{ width: '29px', height: '29px', objectFit: 'contain', pointerEvents: 'none' }} />
+          </button>
+        )}
+        {/* Eye icon to hide section — own card only */}
+        {isEditable && onToggleHidden && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onToggleHidden(categoryName) }}
+            style={{
+              position: 'absolute',
+              bottom: '6px',
+              right: '6px',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '6px',
+              opacity: 0.6,
+              lineHeight: 1,
+              zIndex: 15,
+              WebkitTapHighlightColor: 'transparent',
+              touchAction: 'manipulation',
+            }}
+            title={`Hide ${categoryName}`}
+          >
+            <Eye size={14} weight="duotone" color="#7A3B2E" />
           </button>
         )}
         {/* Fold indicator for unread notes on own card */}
@@ -398,12 +496,7 @@ export const CardDisplay = ({
                 alignItems: 'center'
               }}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2C2C2C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                <line x1="12" y1="19" x2="12" y2="23" />
-                <line x1="8" y1="23" x2="16" y2="23" />
-              </svg>
+              <Microphone size={16} weight="duotone" color="#7A3B2E" />
             </button>
           )}
         </div>

@@ -536,6 +536,7 @@ export const FriendCard = () => {
                           bio={friendProfile.bio}
                           isEditable={false}
                           isFriendView={true}
+                          hiddenSections={card?.hidden_sections || []}
                           notes={myNotes}
                           currentUserId={profile.id}
                           onLeaveNote={handleLeaveNote}

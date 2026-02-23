@@ -7,6 +7,7 @@ import { CoverSearchModal } from '../components/cover-search/CoverSearchModal'
 import { CoverThumbnail } from '../components/cover-search/CoverThumbnail'
 import { typeToMediaType } from '../lib/coverSearchApis'
 import { scrollLock } from '../lib/scrollLock'
+import { Plus } from '@phosphor-icons/react'
 
 export const Wishlist = () => {
   const { profile } = useAuth()
@@ -172,13 +173,13 @@ export const Wishlist = () => {
           <button onClick={openAddModal} style={{
             background: 'none',
             border: 'none',
-            fontSize: '20px',
-            color: '#8C8578',
             cursor: 'pointer',
             padding: 0,
-            lineHeight: 1
+            lineHeight: 1,
+            display: 'flex',
+            alignItems: 'center'
           }}>
-            +
+            <Plus size={18} weight="duotone" color="#7A3B2E" />
           </button>
         )}
         renderItemStatus={(item) => (

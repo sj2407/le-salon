@@ -149,12 +149,13 @@ export const MyCard = () => {
 
   const createNewCard = async (newEntries) => {
     try {
-      // Create new card
+      // Create new card — carry forward hidden_sections preference
       const { data: newCard, error: cardError } = await supabase
         .from('cards')
         .insert({
           user_id: profile.id,
-          is_current: true
+          is_current: true,
+          hidden_sections: card?.hidden_sections || []
         })
         .select()
         .single()
@@ -306,6 +307,27 @@ export const MyCard = () => {
     setIsEditing(true)
   }
 
+  const handleToggleHidden = async (categoryName) => {
+    if (!card) return
+    const current = card.hidden_sections || []
+    const next = current.includes(categoryName)
+      ? current.filter(s => s !== categoryName)
+      : [...current, categoryName]
+
+    // Optimistic update
+    setCard(prev => ({ ...prev, hidden_sections: next }))
+
+    const { error } = await supabase
+      .from('cards')
+      .update({ hidden_sections: next })
+      .eq('id', card.id)
+
+    if (error) {
+      // Revert on failure
+      setCard(prev => ({ ...prev, hidden_sections: current }))
+    }
+  }
+
   const handleEditCancel = () => {
     setIsEditing(false)
     setPendingDictation(null)
@@ -360,6 +382,8 @@ export const MyCard = () => {
             onDictate={() => setShowDictation(true)}
             showDictateButton={isSpeechSupported}
             onSectionEdit={(category) => setEditingSection(category)}
+            hiddenSections={card?.hidden_sections || []}
+            onToggleHidden={handleToggleHidden}
             notes={notes}
             currentUserId={profile.id}
             onMarkNotesRead={handleMarkNotesRead}

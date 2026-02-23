@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
+import { FilePdf } from '@phosphor-icons/react'
 
 export const History = () => {
   const { profile } = useAuth()
@@ -310,12 +311,7 @@ export const History = () => {
             onMouseEnter={(e) => e.target.style.opacity = '1'}
             onMouseLeave={(e) => e.target.style.opacity = '0.6'}
           >
-            {/* Simple PDF icon */}
-            <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
-              <rect x="6" y="2" width="20" height="28" rx="2" fill="#E74C3C" stroke="#2C2C2C" strokeWidth="1.5"/>
-              <path d="M10 12h12M10 16h12M10 20h8" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
-              <text x="16" y="10" fontSize="6" fill="white" textAnchor="middle" fontWeight="bold">PDF</text>
-            </svg>
+            <FilePdf size={28} weight="duotone" color="#7A3B2E" />
           </button>
         </div>
       )}

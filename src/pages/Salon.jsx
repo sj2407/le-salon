@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { ParlorText } from '../components/salon/ParlorText'
 import { ParlorResponses } from '../components/salon/ParlorResponses'
 import { CommonplaceBook } from '../components/salon/CommonplaceBook'
+import { Headphones } from '@phosphor-icons/react'
 
 const formatWeekDate = (dateStr) => {
   const date = new Date(dateStr + 'T00:00:00')
@@ -462,28 +463,32 @@ export const Salon = () => {
               }}
               aria-label={audioState === 'playing' ? 'Pause audio' : 'Listen to essay'}
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={audioState === 'playing' ? '#5C6B4A' : '#8C8578'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
-                <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
-                {audioState === 'loading' && (
-                  <circle cx="12" cy="12" r="3" fill="#8C8578" stroke="none" opacity="0.5">
-                    <animate attributeName="opacity" values="0.3;1;0.3" dur="1s" repeatCount="indefinite" />
-                  </circle>
-                )}
-                {audioState === 'playing' && (
-                  <>
-                    <line x1="10" y1="10" x2="10" y2="14" stroke="#5C6B4A" strokeWidth="1.5">
-                      <animate attributeName="y1" values="10;8;10" dur="0.5s" repeatCount="indefinite" />
-                    </line>
-                    <line x1="12" y1="9" x2="12" y2="14" stroke="#5C6B4A" strokeWidth="1.5">
-                      <animate attributeName="y1" values="9;7;9" dur="0.4s" repeatCount="indefinite" />
-                    </line>
-                    <line x1="14" y1="10" x2="14" y2="14" stroke="#5C6B4A" strokeWidth="1.5">
-                      <animate attributeName="y1" values="10;8;10" dur="0.6s" repeatCount="indefinite" />
-                    </line>
-                  </>
-                )}
-              </svg>
+              {audioState === 'idle' ? (
+                <Headphones size={20} weight="duotone" color="#7A3B2E" />
+              ) : (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={audioState === 'playing' ? '#5C6B4A' : '#7A3B2E'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
+                  <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+                  {audioState === 'loading' && (
+                    <circle cx="12" cy="12" r="3" fill="#7A3B2E" stroke="none" opacity="0.5">
+                      <animate attributeName="opacity" values="0.3;1;0.3" dur="1s" repeatCount="indefinite" />
+                    </circle>
+                  )}
+                  {audioState === 'playing' && (
+                    <>
+                      <line x1="10" y1="10" x2="10" y2="14" stroke="#5C6B4A" strokeWidth="1.5">
+                        <animate attributeName="y1" values="10;8;10" dur="0.5s" repeatCount="indefinite" />
+                      </line>
+                      <line x1="12" y1="9" x2="12" y2="14" stroke="#5C6B4A" strokeWidth="1.5">
+                        <animate attributeName="y1" values="9;7;9" dur="0.4s" repeatCount="indefinite" />
+                      </line>
+                      <line x1="14" y1="10" x2="14" y2="14" stroke="#5C6B4A" strokeWidth="1.5">
+                        <animate attributeName="y1" values="10;8;10" dur="0.6s" repeatCount="indefinite" />
+                      </line>
+                    </>
+                  )}
+                </svg>
+              )}
             </button>
             {/* Text size slider */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
