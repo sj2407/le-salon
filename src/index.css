@@ -457,7 +457,7 @@ button:hover {
 /* Universal press compression */
 button:active:not(:disabled) {
   box-shadow: none;
-  transform: scale(0.97);
+  transform: scale(0.95);
 }
 
 button.primary {
@@ -603,7 +603,7 @@ nav {
 }
 
 .edit-button:active {
-  transform: translateY(0) scale(0.97);
+  transform: translateY(0) scale(0.95);
   box-shadow: 0 0 12px rgba(232, 144, 164, 0.3);
 }
 
@@ -855,7 +855,7 @@ nav {
 }
 
 .filter-pill:active {
-  transform: scale(0.97);
+  transform: scale(0.95);
 }
 
 /* Tab Buttons - Green Glow */
@@ -873,7 +873,7 @@ nav {
 }
 
 .tab-button:active {
-  transform: translateY(0) scale(0.97);
+  transform: translateY(0) scale(0.95);
   box-shadow: 0 0 12px rgba(129, 199, 132, 0.3);
 }
 
