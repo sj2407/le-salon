@@ -7,6 +7,7 @@ import { Reviews } from './Reviews'
 import { LaListe } from './LaListe'
 import { Wishlist } from './Wishlist'
 // import { Profile } from './Profile' // Merged into Card tab — edit via gear icon
+import { ProfileEditModal } from '../components/ProfileEditModal'
 import { useSwipeNavigation, tabSlideVariants, tabSlideTransition } from '../lib/useSwipeNavigation'
 
 const MY_CORNER_TABS = ['card', 'reviews', 'liste', 'wishlist']
@@ -14,6 +15,7 @@ const MY_CORNER_TABS = ['card', 'reviews', 'liste', 'wishlist']
 export const MyCorner = () => {
   const [searchParams] = useSearchParams()
   const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'card')
+  const [showProfileEdit, setShowProfileEdit] = useState(false)
   const { containerRef, swipeHandlers, direction, handleTabClick } = useSwipeNavigation(MY_CORNER_TABS, activeTab, setActiveTab)
 
   // Update active tab when URL param changes (adjust state during render, not in effect)
@@ -35,82 +37,50 @@ export const MyCorner = () => {
     <div className="container">
       <div ref={containerRef} {...swipeHandlers} style={{ touchAction: 'pan-y', overscrollBehaviorX: 'none', minHeight: 'calc(100vh - 120px)' }}>
         {/* Tab Navigation */}
-        <div style={{ display: 'flex', gap: '1px', marginBottom: '8px', overflowX: 'auto', paddingLeft: '10px', scrollbarWidth: 'none', msOverflowStyle: 'none' }} className="hide-scrollbar">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', paddingLeft: '10px', paddingRight: '4px' }}>
+          {MY_CORNER_TABS.map(tab => (
+            <button
+              key={tab}
+              onClick={() => handleTabClick(tab)}
+              style={{
+                background: 'none',
+                border: 'none',
+                boxShadow: 'none',
+                outline: 'none',
+                padding: '8px 8px',
+                fontSize: '13px',
+                fontWeight: activeTab === tab ? 600 : 400,
+                color: activeTab === tab ? '#2C2C2C' : '#777',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              {tab === 'card' ? 'Card' : tab === 'reviews' ? 'Reviews' : tab === 'liste' ? 'La Liste' : 'Wishlist'}
+            </button>
+          ))}
           <button
-            onClick={() => handleTabClick('card')}
+            type="button"
+            onClick={() => setShowProfileEdit(true)}
             style={{
               background: 'none',
               border: 'none',
-              boxShadow: 'none',
-              outline: 'none',
-              padding: '8px 6px',
-              fontSize: '13px',
-              fontWeight: activeTab === 'card' ? 600 : 400,
-              color: activeTab === 'card' ? '#2C2C2C' : '#777',
-              marginBottom: '-2px',
               cursor: 'pointer',
-              transition: 'all 0.2s',
-              whiteSpace: 'nowrap'
+              padding: '6px',
+              opacity: 0.4,
+              marginLeft: 'auto',
+              flexShrink: 0,
+              display: 'flex',
+              alignItems: 'center',
+              WebkitTapHighlightColor: 'transparent',
+              touchAction: 'manipulation'
             }}
+            title="Edit Profile"
           >
-            Card
-          </button>
-          <button
-            onClick={() => handleTabClick('reviews')}
-            style={{
-              background: 'none',
-              border: 'none',
-              boxShadow: 'none',
-              outline: 'none',
-              padding: '8px 6px',
-              fontSize: '13px',
-              fontWeight: activeTab === 'reviews' ? 600 : 400,
-              color: activeTab === 'reviews' ? '#2C2C2C' : '#777',
-              marginBottom: '-2px',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            Reviews
-          </button>
-          <button
-            onClick={() => handleTabClick('liste')}
-            style={{
-              background: 'none',
-              border: 'none',
-              boxShadow: 'none',
-              outline: 'none',
-              padding: '8px 6px',
-              fontSize: '13px',
-              fontWeight: activeTab === 'liste' ? 600 : 400,
-              color: activeTab === 'liste' ? '#2C2C2C' : '#777',
-              marginBottom: '-2px',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            La Liste
-          </button>
-          <button
-            onClick={() => handleTabClick('wishlist')}
-            style={{
-              background: 'none',
-              border: 'none',
-              boxShadow: 'none',
-              outline: 'none',
-              padding: '8px 6px',
-              fontSize: '13px',
-              fontWeight: activeTab === 'wishlist' ? 600 : 400,
-              color: activeTab === 'wishlist' ? '#2C2C2C' : '#777',
-              marginBottom: '-2px',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            Wishlist
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2C2C2C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
           </button>
         </div>
 
@@ -134,6 +104,9 @@ export const MyCorner = () => {
           </AnimatePresence>
         </div>
       </div>
+      {showProfileEdit && (
+        <ProfileEditModal onClose={() => setShowProfileEdit(false)} />
+      )}
     </div>
   )
 }

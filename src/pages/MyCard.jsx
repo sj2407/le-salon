@@ -5,11 +5,10 @@ import { CardDisplay } from '../components/CardDisplay'
 import { CardEdit } from '../components/CardEdit'
 import { SectionEditModal } from '../components/SectionEditModal'
 import { DictationModal } from '../components/DictationModal'
-import { ProfileEditModal } from '../components/ProfileEditModal'
 import { isSpeechSupported } from '../lib/useSpeechRecognition'
 
 export const MyCard = () => {
-  const { profile, user, refreshProfile } = useAuth()
+  const { profile } = useAuth()
   const [card, setCard] = useState(null)
   const [entries, setEntries] = useState([])
   const [notes, setNotes] = useState([])
@@ -17,7 +16,6 @@ export const MyCard = () => {
   const [editingSection, setEditingSection] = useState(null)
   const [showDictation, setShowDictation] = useState(false)
   const [pendingDictation, setPendingDictation] = useState(null)
-  const [showProfileEdit, setShowProfileEdit] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -351,7 +349,6 @@ export const MyCard = () => {
             photoUrl={profile.profile_photo_url}
             photoPosition={profile.profile_photo_position}
             bio={profile.bio}
-            onEditProfile={() => setShowProfileEdit(true)}
             isEditable={true}
             onEdit={() => setIsEditing(true)}
             onDictate={() => setShowDictation(true)}
@@ -375,9 +372,6 @@ export const MyCard = () => {
             onClose={() => setShowDictation(false)}
             onAcceptEntries={handleDictationAccepted}
           />
-          {showProfileEdit && (
-            <ProfileEditModal onClose={() => setShowProfileEdit(false)} />
-          )}
         </>
       )}
     </div>
