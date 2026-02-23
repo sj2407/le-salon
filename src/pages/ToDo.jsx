@@ -10,17 +10,44 @@ import { Plus } from '@phosphor-icons/react'
 
 // Parse date_text into date_parsed
 const parseDate = (dateText) => {
-  if (!dateText || dateText.toLowerCase().includes('anytime')) {
+  if (!dateText || dateText.toLowerCase().includes('anytime') || dateText.toLowerCase().includes('every')) {
     return null
   }
 
-  const text = dateText.trim()
+  // Strip common prefixes: "Until Mar 15" → "Mar 15", "Starting Feb 24" → "Feb 24"
+  let text = dateText.trim().replace(/^(until|starting|from|by)\s+/i, '')
 
-  // Try specific date formats: "Feb 14, 2026" or "February 14, 2026"
+  // Try specific date with year: "Feb 14, 2026" or "February 14, 2026"
   const specificDateMatch = text.match(/(\w+)\s+(\d+),?\s+(\d{4})/)
   if (specificDateMatch) {
     const [, month, day, year] = specificDateMatch
     const date = new Date(`${month} ${day}, ${year}`)
+    if (!isNaN(date)) {
+      return date.toISOString().split('T')[0]
+    }
+  }
+
+  // Try comma-separated days: "Feb 19,20,11" or "Feb 19, 20, 11" — uses the latest date
+  const multiDayMatch = text.match(/^(\w+)\s+([\d,\s]+)$/)
+  if (multiDayMatch) {
+    const [, month, daysStr] = multiDayMatch
+    const days = daysStr.split(',').map(d => parseInt(d.trim())).filter(d => !isNaN(d))
+    if (days.length > 0) {
+      const maxDay = Math.max(...days)
+      const currentYear = new Date().getFullYear()
+      const date = new Date(`${month} ${maxDay}, ${currentYear}`)
+      if (!isNaN(date)) {
+        return date.toISOString().split('T')[0]
+      }
+    }
+  }
+
+  // Try month + day without year: "Mar 15" or "February 24"
+  const monthDayMatch = text.match(/^(\w+)\s+(\d{1,2})$/)
+  if (monthDayMatch) {
+    const [, month, day] = monthDayMatch
+    const currentYear = new Date().getFullYear()
+    const date = new Date(`${month} ${day}, ${currentYear}`)
     if (!isNaN(date)) {
       return date.toISOString().split('T')[0]
     }
@@ -101,11 +128,36 @@ export const ToDo = () => {
   const autoArchiveActivities = async () => {
     try {
       const today = new Date().toISOString().split('T')[0]
+
+      // Archive activities with parsed dates in the past
       await supabase
         .from('activities')
         .update({ is_archived: true })
         .lt('date_parsed', today)
         .eq('is_archived', false)
+
+      // Re-parse activities with null date_parsed (handles parser improvements)
+      const { data: unparsed } = await supabase
+        .from('activities')
+        .select('id, date_text')
+        .is('date_parsed', null)
+        .eq('is_archived', false)
+        .not('date_text', 'is', null)
+
+      if (unparsed?.length) {
+        for (const activity of unparsed) {
+          const parsed = parseDate(activity.date_text)
+          if (parsed) {
+            await supabase
+              .from('activities')
+              .update({
+                date_parsed: parsed,
+                is_archived: parsed < today
+              })
+              .eq('id', activity.id)
+          }
+        }
+      }
     } catch (_err) {
       // silently handled
     }

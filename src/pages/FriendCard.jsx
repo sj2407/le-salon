@@ -537,6 +537,7 @@ export const FriendCard = () => {
                           isEditable={false}
                           isFriendView={true}
                           hiddenSections={card?.hidden_sections || []}
+                          sectionOrder={card?.section_order || []}
                           notes={myNotes}
                           currentUserId={profile.id}
                           onLeaveNote={handleLeaveNote}

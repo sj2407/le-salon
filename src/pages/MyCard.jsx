@@ -155,7 +155,8 @@ export const MyCard = () => {
         .insert({
           user_id: profile.id,
           is_current: true,
-          hidden_sections: card?.hidden_sections || []
+          hidden_sections: card?.hidden_sections || [],
+          section_order: card?.section_order || []
         })
         .select()
         .single()
@@ -328,6 +329,17 @@ export const MyCard = () => {
     }
   }
 
+  const handleSectionOrderChange = async (newOrder) => {
+    if (!card) return
+    const previous = card.section_order || []
+    setCard(prev => ({ ...prev, section_order: newOrder }))
+    const { error } = await supabase
+      .from('cards')
+      .update({ section_order: newOrder })
+      .eq('id', card.id)
+    if (error) setCard(prev => ({ ...prev, section_order: previous }))
+  }
+
   const handleEditCancel = () => {
     setIsEditing(false)
     setPendingDictation(null)
@@ -384,6 +396,8 @@ export const MyCard = () => {
             onSectionEdit={(category) => setEditingSection(category)}
             hiddenSections={card?.hidden_sections || []}
             onToggleHidden={handleToggleHidden}
+            sectionOrder={card?.section_order || []}
+            onSectionOrderChange={handleSectionOrderChange}
             notes={notes}
             currentUserId={profile.id}
             onMarkNotesRead={handleMarkNotesRead}

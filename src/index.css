@@ -99,32 +99,14 @@ body {
   opacity: 0.7;
 }
 
-/* Different rotation for each card */
-.section-box:nth-child(1) {
-  transform: rotate(-0.5deg);
-  animation: gentleSway1 5s ease-in-out infinite;
-}
-
-.section-box:nth-child(2) {
-  transform: rotate(0.7deg);
-  animation: gentleSway2 5.5s ease-in-out infinite;
-}
-
-.section-box:nth-child(3) {
-  transform: rotate(-0.3deg);
-  animation: gentleSway3 6s ease-in-out infinite;
-}
-
-.section-box:nth-child(4) {
-  transform: rotate(0.5deg);
-  animation: gentleSway4 4.5s ease-in-out infinite;
-}
+/* Sway rotation and animation applied inline via SWAY_STYLES in CardDisplay.jsx */
+/* (nth-child selectors don't work with Reorder.Item wrappers) */
 
 @media (hover: hover) and (pointer: fine) {
   .section-box:hover {
-    transform: translateY(-6px) rotateX(-1deg) rotateY(1deg) rotate(0deg);
+    transform: translateY(-6px) rotateX(-1deg) rotateY(1deg) rotate(0deg) !important;
     box-shadow: 6px 8px 20px rgba(0, 0, 0, 0.18);
-    animation: none;
+    animation: none !important;
   }
 
   .section-box:hover::after {
@@ -132,14 +114,6 @@ body {
     position: absolute;
     inset: 0;
     pointer-events: none;
-  }
-
-  .section-box:nth-child(odd):hover {
-    transform: translateY(-6px) rotateX(-1deg) rotateY(-2deg) rotate(0deg);
-  }
-
-  .section-box:nth-child(even):hover {
-    transform: translateY(-6px) rotateX(-1deg) rotateY(2deg) rotate(0deg);
   }
 }
 

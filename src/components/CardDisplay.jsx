@@ -12,7 +12,8 @@ import { ObsessingIcon } from './icons/ObsessingIcon'
 import { AIPromptIcon } from './icons/AIPromptIcon'
 import { CardBack } from './marginalia/CardBack'
 import { CardFold } from './marginalia/CardFold'
-import { Eye, EyeSlash, Microphone } from '@phosphor-icons/react'
+import { Eye, EyeSlash, Microphone, DotsSixVertical } from '@phosphor-icons/react'
+import { Reorder, useDragControls } from 'framer-motion'
 
 const CATEGORY_ICONS = {
   'Reading': ReadingIcon,
@@ -22,6 +23,37 @@ const CATEGORY_ICONS = {
   'Performing Arts and Exhibits': PerformingArtsIcon,
   'Obsessing Over': ObsessingIcon,
   'My latest AI prompt': AIPromptIcon
+}
+
+const DEFAULT_GRID_SECTIONS = [
+  'Reading', 'Listening', 'Watching',
+  'Looking Forward To', 'Performing Arts and Exhibits', 'Obsessing Over',
+  'My latest AI prompt'
+]
+
+const FULL_WIDTH_SECTIONS = new Set(['My latest AI prompt'])
+
+const SWAY_STYLES = [
+  { transform: 'rotate(-0.5deg)', animation: 'gentleSway1 5s ease-in-out infinite' },
+  { transform: 'rotate(0.7deg)', animation: 'gentleSway2 5.5s ease-in-out infinite' },
+  { transform: 'rotate(-0.3deg)', animation: 'gentleSway3 6s ease-in-out infinite' },
+  { transform: 'rotate(0.5deg)', animation: 'gentleSway4 4.5s ease-in-out infinite' },
+]
+
+const SortableSection = ({ value, children, style }) => {
+  const dragControls = useDragControls()
+  return (
+    <Reorder.Item
+      value={value}
+      as="div"
+      style={style}
+      dragListener={false}
+      dragControls={dragControls}
+      whileDrag={{ scale: 1.03, boxShadow: '0 8px 25px rgba(0,0,0,0.15)', zIndex: 50 }}
+    >
+      {children(dragControls)}
+    </Reorder.Item>
+  )
 }
 
 export const CardDisplay = ({
@@ -40,6 +72,9 @@ export const CardDisplay = ({
   // Hide sections
   hiddenSections = [],
   onToggleHidden,
+  // Section order
+  sectionOrder = [],
+  onSectionOrderChange,
   // Marginalia props
   notes = [],
   isFriendView = false,
@@ -51,6 +86,10 @@ export const CardDisplay = ({
   onReplyToNote,
   cardOwnerName
 }) => {
+  // Merge saved order with defaults: keep saved order, append any new sections, remove stale ones
+  const gridOrder = sectionOrder.length > 0
+    ? [...sectionOrder.filter(s => DEFAULT_GRID_SECTIONS.includes(s)), ...DEFAULT_GRID_SECTIONS.filter(s => !sectionOrder.includes(s))]
+    : DEFAULT_GRID_SECTIONS
   const [flippedSections, setFlippedSections] = useState({})
   const [stats, setStats] = useState(null)
   const [showStats, setShowStats] = useState(false)
@@ -128,7 +167,7 @@ export const CardDisplay = ({
     }
   }
 
-  const renderCategorySection = (categoryName, isFullWidth = false) => {
+  const renderCategorySection = (categoryName, isFullWidth = false, index = 0, dragControls = null) => {
     const isHidden = hiddenSections.includes(categoryName)
 
     // Friend view: don't render hidden sections at all
@@ -243,7 +282,29 @@ export const CardDisplay = ({
     const showQuill = isEditable || isFriendView
 
     return (
-      <div key={categoryName} className={isFullWidth ? 'full-width-section' : 'section-box'} style={{ position: 'relative', overflow: 'visible' }}>
+      <div key={categoryName} className={isFullWidth ? 'full-width-section' : 'section-box'} style={{ position: 'relative', overflow: 'visible', ...(!isFullWidth ? SWAY_STYLES[index % SWAY_STYLES.length] : {}), ...(isFullWidth ? { gridColumn: '1 / -1' } : {}) }}>
+        {/* Drag handle for reordering — own card only */}
+        {dragControls && (
+          <div
+            onPointerDown={(e) => dragControls.start(e)}
+            style={{
+              position: 'absolute',
+              top: '6px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              cursor: 'grab',
+              padding: '4px 10px',
+              zIndex: 15,
+              opacity: 0.5,
+              touchAction: 'none',
+              transition: 'opacity 0.2s',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9' }}
+            onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.5' }}
+          >
+            <DotsSixVertical size={18} weight="bold" color="#7A3B2E" />
+          </div>
+        )}
         {hasFloatingIcon && (
           <div style={{
             position: 'absolute',
@@ -502,18 +563,35 @@ export const CardDisplay = ({
         </div>
       )}
 
-      <div className="grid">
-        {renderCategorySection('Reading')}
-        {renderCategorySection('Listening')}
-        {renderCategorySection('Watching')}
-        {renderCategorySection('Looking Forward To')}
-        {renderCategorySection('Performing Arts and Exhibits')}
-        {renderCategorySection('Obsessing Over')}
-      </div>
-
-      <div style={{ marginTop: '16px' }}>
-        {renderCategorySection('My latest AI prompt', true)}
-      </div>
+      {isEditable && onSectionOrderChange ? (
+        <Reorder.Group
+          values={gridOrder}
+          onReorder={onSectionOrderChange}
+          axis="y"
+          as="div"
+          className="grid"
+        >
+          {gridOrder.map((section, index) => {
+            const isFullWidth = FULL_WIDTH_SECTIONS.has(section)
+            return (
+              <SortableSection
+                key={section}
+                value={section}
+                style={isFullWidth ? { gridColumn: '1 / -1' } : undefined}
+              >
+                {(controls) => renderCategorySection(section, isFullWidth, index, controls)}
+              </SortableSection>
+            )
+          })}
+        </Reorder.Group>
+      ) : (
+        <div className="grid">
+          {gridOrder.map((section, index) => {
+            const isFullWidth = FULL_WIDTH_SECTIONS.has(section)
+            return renderCategorySection(section, isFullWidth, index)
+          })}
+        </div>
+      )}
 
     </div>
   )
