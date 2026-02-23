@@ -1,5 +1,5 @@
-// Crossfade between front and back faces.
-// Front fades out while back fades in over 400ms.
+// Crossfade — back face fades in as an overlay on top of the front.
+// Only one wrapper div so section-box stays close to the grid for CSS selectors.
 export const FlippableSection = ({
   children,
   backContent,
@@ -7,15 +7,7 @@ export const FlippableSection = ({
 }) => {
   return (
     <div style={{ position: 'relative' }}>
-      {/* Front face — always in flow, determines container height */}
-      <div style={{
-        opacity: isFlipped ? 0 : 1,
-        transition: 'opacity 400ms ease-in-out',
-        pointerEvents: isFlipped ? 'none' : 'auto',
-      }}>
-        {children}
-      </div>
-      {/* Back face — absolute, matches front face size */}
+      {children}
       <div
         style={{
           opacity: isFlipped ? 1 : 0,
@@ -34,6 +26,7 @@ export const FlippableSection = ({
           boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)',
           display: 'flex',
           flexDirection: 'column',
+          zIndex: 5,
         }}
       >
         {backContent}

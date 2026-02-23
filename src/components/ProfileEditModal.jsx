@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
+import { motion as Motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 
@@ -185,8 +186,12 @@ export const ProfileEditModal = ({ onClose }) => {
   }
 
   return createPortal(
-    <div
+    <Motion.div
       ref={backdropRef}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
       style={{
         position: 'fixed',
         top: 0,
@@ -199,34 +204,39 @@ export const ProfileEditModal = ({ onClose }) => {
         justifyContent: 'center',
         zIndex: 9999,
         overflowY: 'auto',
-        paddingTop: '40px',
-        paddingBottom: '40px'
+        paddingTop: '20px',
+        paddingBottom: '20px'
       }}
       onClick={handleBackdropClick}
     >
-      <div
+      <Motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
         style={{
           background: '#FFFEFA',
           borderRadius: '3px',
-          padding: '24px',
+          padding: '14px',
           width: '90%',
-          maxWidth: '480px',
+          maxWidth: '400px',
           boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)',
         }}
+        className="profile-edit-compact"
       >
-        <h3 className="handwritten" style={{ fontSize: '28px', marginBottom: '20px', marginTop: 0, textAlign: 'center' }}>
+        <h3 className="handwritten" style={{ fontSize: '22px', marginBottom: '10px', marginTop: 0, textAlign: 'center' }}>
           Edit Profile
         </h3>
 
         {/* Photo */}
-        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '6px' }}>
           {photoUrl ? (
             <div style={{ position: 'relative', display: 'inline-block' }}>
               <div
                 ref={imgRef}
                 style={{
-                  width: '120px',
-                  height: '120px',
+                  width: '70px',
+                  height: '70px',
                   borderRadius: '50%',
                   overflow: 'hidden',
                   cursor: 'grab',
@@ -256,10 +266,10 @@ export const ProfileEditModal = ({ onClose }) => {
             </div>
           ) : (
             <div style={{
-              width: '120px',
-              height: '120px',
+              width: '70px',
+              height: '70px',
               borderRadius: '50%',
-              border: '3px dashed #ccc',
+              border: '2px dashed #ccc',
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -271,7 +281,7 @@ export const ProfileEditModal = ({ onClose }) => {
             </div>
           )}
 
-          <div style={{ marginTop: '12px' }}>
+          <div style={{ marginTop: '8px' }}>
             <label htmlFor="profile-photo-upload" style={{
               padding: '6px 16px',
               background: 'none',
@@ -331,8 +341,8 @@ export const ProfileEditModal = ({ onClose }) => {
             value={bio}
             onChange={(e) => setBio(e.target.value)}
             placeholder="Tell friends a bit about yourself..."
-            rows={bio ? Math.max(2, Math.ceil(bio.length / 50)) : 2}
-            style={{ minHeight: '60px' }}
+            rows={bio ? Math.max(1, Math.ceil(bio.length / 50)) : 1}
+            style={{ minHeight: '36px' }}
           />
         </div>
 
@@ -387,8 +397,8 @@ export const ProfileEditModal = ({ onClose }) => {
             value={favoriteQuote}
             onChange={(e) => setFavoriteQuote(e.target.value)}
             placeholder="A quote or saying that inspires you..."
-            rows={favoriteQuote ? Math.max(2, Math.ceil(favoriteQuote.length / 50)) : 2}
-            style={{ minHeight: '60px' }}
+            rows={favoriteQuote ? Math.max(1, Math.ceil(favoriteQuote.length / 50)) : 1}
+            style={{ minHeight: '36px' }}
           />
         </div>
 
@@ -399,13 +409,13 @@ export const ProfileEditModal = ({ onClose }) => {
         )}
 
         {/* Actions */}
-        <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
+        <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
           <button
             onClick={handleSave}
             disabled={loading}
             style={{
               flex: 1,
-              padding: '10px 16px',
+              padding: '8px 14px',
               background: '#2C2C2C',
               color: '#FFFEFA',
               border: 'none',
@@ -421,7 +431,7 @@ export const ProfileEditModal = ({ onClose }) => {
             onClick={onClose}
             style={{
               flex: 1,
-              padding: '10px 16px',
+              padding: '8px 14px',
               background: '#FFFEFA',
               border: '1px solid #ccc',
               borderRadius: '3px',
@@ -433,8 +443,8 @@ export const ProfileEditModal = ({ onClose }) => {
             Cancel
           </button>
         </div>
-      </div>
-    </div>,
+      </Motion.div>
+    </Motion.div>,
     document.body
   )
 }

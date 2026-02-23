@@ -104,9 +104,11 @@ export const MyCorner = () => {
           </AnimatePresence>
         </div>
       </div>
-      {showProfileEdit && (
-        <ProfileEditModal onClose={() => setShowProfileEdit(false)} />
-      )}
+      <AnimatePresence>
+        {showProfileEdit && (
+          <ProfileEditModal key="profile-edit" onClose={() => setShowProfileEdit(false)} />
+        )}
+      </AnimatePresence>
     </div>
   )
 }

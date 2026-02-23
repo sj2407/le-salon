@@ -10,7 +10,6 @@ import { LookingForwardIcon } from './icons/LookingForwardIcon'
 import { PerformingArtsIcon } from './icons/PerformingArtsIcon'
 import { ObsessingIcon } from './icons/ObsessingIcon'
 import { AIPromptIcon } from './icons/AIPromptIcon'
-import { FlippableSection } from './marginalia/FlippableSection'
 import { CardBack } from './marginalia/CardBack'
 import { CardFold } from './marginalia/CardFold'
 
@@ -169,8 +168,8 @@ export const CardDisplay = ({
     // Show quill on own card if editable, or on friend's card for notes
     const showQuill = isEditable || isFriendView
 
-    const sectionContent = (
-      <div className={isFullWidth ? 'full-width-section' : 'section-box'} style={{ position: 'relative', overflow: 'visible' }}>
+    return (
+      <div key={categoryName} className={isFullWidth ? 'full-width-section' : 'section-box'} style={{ position: 'relative', overflow: 'visible' }}>
         {hasFloatingIcon && (
           <div style={{
             position: 'absolute',
@@ -250,35 +249,44 @@ export const CardDisplay = ({
             )
           )}
         </div>
+        {/* Crossfade overlay for back face (marginalia notes) */}
+        <div
+          style={{
+            opacity: isFlipped ? 1 : 0,
+            transition: 'opacity 400ms ease-in-out',
+            pointerEvents: isFlipped ? 'auto' : 'none',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            overflow: 'auto',
+            boxSizing: 'border-box',
+            borderRadius: '2px',
+            padding: '14px',
+            background: '#FFFEFA',
+            boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)',
+            display: 'flex',
+            flexDirection: 'column',
+            zIndex: 20,
+          }}
+        >
+          <CardBack
+            sectionName={categoryName}
+            notes={sectionNotes}
+            isOwner={!isFriendView}
+            currentUserId={currentUserId}
+            onFlipBack={() => handleFlipSection(categoryName)}
+            onMarkRead={onMarkNotesRead}
+            onLeaveNote={onLeaveNote}
+            onUpdateNote={onUpdateNote}
+            onDeleteNote={onDeleteNote}
+            onReplyToNote={onReplyToNote}
+            ownerName={displayName}
+            cardOwnerName={cardOwnerName}
+          />
+        </div>
       </div>
-    )
-
-    const backContent = (
-      <CardBack
-        sectionName={categoryName}
-        notes={sectionNotes}
-        isOwner={!isFriendView}
-        currentUserId={currentUserId}
-        onFlipBack={() => handleFlipSection(categoryName)}
-        onMarkRead={onMarkNotesRead}
-        onLeaveNote={onLeaveNote}
-        onUpdateNote={onUpdateNote}
-        onDeleteNote={onDeleteNote}
-        onReplyToNote={onReplyToNote}
-        ownerName={displayName}
-        cardOwnerName={cardOwnerName}
-      />
-    )
-
-    return (
-      <FlippableSection
-        key={categoryName}
-        isFlipped={isFlipped}
-        onFlip={() => handleFlipSection(categoryName)}
-        backContent={backContent}
-      >
-        {sectionContent}
-      </FlippableSection>
     )
   }
 

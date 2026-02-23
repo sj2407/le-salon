@@ -100,28 +100,26 @@ body {
   opacity: 0.7;
 }
 
-/* Different rotation for each card (selectors account for flip wrapper) */
-.grid > :nth-child(1) .section-box {
+/* Different rotation for each card */
+.section-box:nth-child(1) {
   transform: rotate(-0.5deg);
   animation: gentleSway1 5s ease-in-out infinite;
 }
 
-.grid > :nth-child(2) .section-box {
+.section-box:nth-child(2) {
   transform: rotate(0.7deg);
   animation: gentleSway2 5.5s ease-in-out infinite;
 }
 
-.grid > :nth-child(3) .section-box {
+.section-box:nth-child(3) {
   transform: rotate(-0.3deg);
   animation: gentleSway3 6s ease-in-out infinite;
 }
 
-.grid > :nth-child(4) .section-box {
+.section-box:nth-child(4) {
   transform: rotate(0.5deg);
   animation: gentleSway4 4.5s ease-in-out infinite;
 }
-
-/* Hover: card lifts with 3D tilt effect - desktop only */
 
 @media (hover: hover) and (pointer: fine) {
   .section-box:hover {
@@ -137,11 +135,11 @@ body {
     pointer-events: none;
   }
 
-  .grid > :nth-child(odd) .section-box:hover {
+  .section-box:nth-child(odd):hover {
     transform: translateY(-6px) rotateX(-1deg) rotateY(-2deg) rotate(0deg);
   }
 
-  .grid > :nth-child(even) .section-box:hover {
+  .section-box:nth-child(even):hover {
     transform: translateY(-6px) rotateX(-1deg) rotateY(2deg) rotate(0deg);
   }
 }
@@ -497,6 +495,26 @@ button.primary:hover {
   letter-spacing: 0.06em;
   color: #666;
   margin-bottom: 4px;
+}
+
+/* Compact spacing for profile edit modal — inputs stay 16px for iOS */
+.profile-edit-compact .form-group {
+  margin-bottom: 6px;
+}
+
+.profile-edit-compact .form-label {
+  margin-bottom: 1px;
+  font-size: 11px;
+}
+
+/* Visually shrink inputs without triggering iOS auto-zoom (needs font-size >= 16px) */
+.profile-edit-compact input,
+.profile-edit-compact textarea {
+  font-size: 16px;
+  transform: scale(0.85);
+  transform-origin: left top;
+  width: 117.65%;          /* 1/0.85 to fill the original width */
+  margin-bottom: -6px;     /* compensate for scale reducing visual height */
 }
 
 .error-message {
