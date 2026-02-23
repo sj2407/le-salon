@@ -40,13 +40,15 @@ const SWAY_STYLES = [
   { transform: 'rotate(0.5deg)', animation: 'gentleSway4 4.5s ease-in-out infinite' },
 ]
 
-const SortableSection = ({ value, children, style }) => {
+// Reorder.Item renders AS the section-box — no wrapper div, so it's a direct grid child
+const SortableSection = ({ value, className, style, children }) => {
   const dragControls = useDragControls()
   return (
     <Reorder.Item
       value={value}
       as="div"
-      style={{ width: '100%', ...style }}
+      className={className}
+      style={style}
       dragListener={false}
       dragControls={dragControls}
       whileDrag={{ scale: 1.03, boxShadow: '0 8px 25px rgba(0,0,0,0.15)', zIndex: 50 }}
@@ -167,7 +169,33 @@ export const CardDisplay = ({
     }
   }
 
-  const renderCategorySection = (categoryName, isFullWidth = false, index = 0, dragControls = null) => {
+  // Compute wrapper props for a section (className + style)
+  const getSectionWrapperProps = (categoryName, isFullWidth, isHidden, index) => {
+    const className = isFullWidth ? 'full-width-section' : 'section-box'
+    if (isHidden && isEditable) {
+      return {
+        className,
+        style: {
+          position: 'relative', overflow: 'visible',
+          minHeight: 'unset', padding: '0', background: 'transparent',
+          boxShadow: 'none', display: 'flex', alignItems: 'center',
+          justifyContent: 'center', height: '28px', animation: 'none', transform: 'none',
+          ...(isFullWidth ? { gridColumn: '1 / -1' } : {})
+        }
+      }
+    }
+    return {
+      className,
+      style: {
+        position: 'relative', overflow: 'visible',
+        ...(!isFullWidth ? SWAY_STYLES[index % SWAY_STYLES.length] : {}),
+        ...(isFullWidth ? { gridColumn: '1 / -1' } : {})
+      }
+    }
+  }
+
+  // Render just the inner content of a section (no wrapper div)
+  const renderSectionContent = (categoryName, isFullWidth, dragControls = null) => {
     const isHidden = hiddenSections.includes(categoryName)
 
     // Friend view: don't render hidden sections at all
@@ -176,24 +204,7 @@ export const CardDisplay = ({
     // Own card: show crease line when hidden
     if (isEditable && isHidden) {
       return (
-        <div
-          key={categoryName}
-          className={isFullWidth ? 'full-width-section' : 'section-box'}
-          style={{
-            position: 'relative',
-            overflow: 'visible',
-            minHeight: 'unset',
-            padding: '0',
-            background: 'transparent',
-            boxShadow: 'none',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: '28px',
-            animation: 'none',
-            transform: 'none',
-          }}
-        >
+        <>
           {/* Crease line — folded page effect */}
           <div style={{
             width: '100%',
@@ -234,7 +245,7 @@ export const CardDisplay = ({
           >
             <EyeSlash size={16} weight="duotone" color="#7A3B2E" />
           </button>
-        </div>
+        </>
       )
     }
 
@@ -282,7 +293,7 @@ export const CardDisplay = ({
     const showQuill = isEditable || isFriendView
 
     return (
-      <div key={categoryName} className={isFullWidth ? 'full-width-section' : 'section-box'} style={{ position: 'relative', overflow: 'visible', ...(!isFullWidth ? SWAY_STYLES[index % SWAY_STYLES.length] : {}), ...(isFullWidth ? { gridColumn: '1 / -1' } : {}) }}>
+      <>
         {/* Drag handle for reordering — own card only */}
         {dragControls && (
           <div
@@ -445,7 +456,7 @@ export const CardDisplay = ({
             cardOwnerName={cardOwnerName}
           />
         </div>
-      </div>
+      </>
     )
   }
 
@@ -573,13 +584,16 @@ export const CardDisplay = ({
         >
           {gridOrder.map((section, index) => {
             const isFullWidth = FULL_WIDTH_SECTIONS.has(section)
+            const isHidden = hiddenSections.includes(section)
+            const wrapperProps = getSectionWrapperProps(section, isFullWidth, isHidden, index)
             return (
               <SortableSection
                 key={section}
                 value={section}
-                style={isFullWidth ? { gridColumn: '1 / -1' } : undefined}
+                className={wrapperProps.className}
+                style={wrapperProps.style}
               >
-                {(controls) => renderCategorySection(section, isFullWidth, index, controls)}
+                {(controls) => renderSectionContent(section, isFullWidth, controls)}
               </SortableSection>
             )
           })}
@@ -588,7 +602,14 @@ export const CardDisplay = ({
         <div className="grid">
           {gridOrder.map((section, index) => {
             const isFullWidth = FULL_WIDTH_SECTIONS.has(section)
-            return renderCategorySection(section, isFullWidth, index)
+            const isHidden = hiddenSections.includes(section)
+            if (isFriendView && isHidden) return null
+            const wrapperProps = getSectionWrapperProps(section, isFullWidth, isHidden, index)
+            return (
+              <div key={section} className={wrapperProps.className} style={wrapperProps.style}>
+                {renderSectionContent(section, isFullWidth)}
+              </div>
+            )
           })}
         </div>
       )}
