@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import { supabase } from '../lib/supabase'
-import { StaggeredList, StaggerItem } from '../components/StaggeredList'
+import { PendingFold } from '../components/friends/PendingFold'
+import { FriendFanDeck } from '../components/friends/FriendFanDeck'
 
 export const Friends = () => {
   const { profile } = useAuth()
@@ -140,184 +141,41 @@ export const Friends = () => {
     )
   }
 
+  const hasPending = pendingRequests.length > 0 || sentRequests.length > 0
+
   return (
     <div className="container" style={{ maxWidth: '720px' }}>
-      <h1 className="handwritten" style={{ fontSize: '42px', marginBottom: '32px', textAlign: 'center' }}>
-        My Friends
-      </h1>
-
-      <div style={{ marginBottom: '32px', textAlign: 'center' }}>
-        <Link to="/find-friends">
-          <button className="primary">Find Friends</button>
+      {/* Header row: title + Find Friends link */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px' }}>
+        <h1 className="handwritten" style={{ fontSize: '42px', margin: 0 }}>
+          My Friends
+        </h1>
+        <Link
+          to="/find-friends"
+          style={{
+            textDecoration: 'none',
+            color: '#7A3B2E',
+            fontFamily: "'Caveat', cursive",
+            fontSize: '20px',
+            fontWeight: 600
+          }}
+        >
+          + Find Friends
         </Link>
       </div>
 
-      {/* Pending Requests */}
-      {pendingRequests.length > 0 && (
-        <section style={{ marginBottom: '32px' }}>
-          <h2 style={{ fontSize: '18px', marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.06em', color: '#666' }}>
-            Pending Requests
-          </h2>
-          <StaggeredList style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {pendingRequests.map((req, index) => (
-              <StaggerItem key={req.id}>
-              <div style={{
-                padding: '16px',
-                border: 'none',
-                borderRadius: '3px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                background: '#FFFEFA',
-                transform: `rotate(${index % 2 === 0 ? '-0.5' : '0.5'}deg)`,
-                boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)',
-                animation: `reviewSway${(index % 3) + 1} ${5 + index % 2}s ease-in-out infinite`
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div>
-                    <div style={{ fontWeight: 600 }}>{req.friendProfile.display_name}</div>
-                    <div style={{ fontSize: '14px', color: '#777' }}>@{req.friendProfile.username}</div>
-                  </div>
-                  {req.friendProfile.profile_photo_url && (
-                    <img
-                      src={req.friendProfile.profile_photo_url}
-                      alt={req.friendProfile.display_name}
-                      style={{
-                        width: '48px',
-                        height: '48px',
-                        borderRadius: '50%',
-                        objectFit: 'cover',
-                        border: 'none',
-                        flexShrink: 0
-                      }}
-                    />
-                  )}
-                </div>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button onClick={() => handleAccept(req.id)} className="primary" style={{ padding: '8px 16px' }}>
-                    Accept
-                  </button>
-                  <button onClick={() => handleDecline(req.id)} style={{ padding: '8px 16px' }}>
-                    Decline
-                  </button>
-                </div>
-              </div>
-              </StaggerItem>
-            ))}
-          </StaggeredList>
-        </section>
+      {/* Pending Fold — hidden when empty */}
+      {hasPending && (
+        <PendingFold
+          pendingRequests={pendingRequests}
+          sentRequests={sentRequests}
+          onAccept={handleAccept}
+          onDecline={handleDecline}
+        />
       )}
 
-      {/* Sent Requests */}
-      {sentRequests.length > 0 && (
-        <section style={{ marginBottom: '32px' }}>
-          <h2 style={{ fontSize: '18px', marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.06em', color: '#666' }}>
-            Sent Requests
-          </h2>
-          <StaggeredList style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {sentRequests.map((req, index) => (
-              <StaggerItem key={req.id}>
-              <div style={{
-                padding: '16px',
-                border: 'none',
-                borderRadius: '3px',
-                background: '#FFFEFA',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                transform: `rotate(${index % 2 === 0 ? '-0.5' : '0.5'}deg)`,
-                boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)',
-                animation: `reviewSway${(index % 3) + 1} ${5 + index % 2}s ease-in-out infinite`
-              }}>
-                <div>
-                  <div style={{ fontWeight: 600 }}>{req.friendProfile.display_name}</div>
-                  <div style={{ fontSize: '14px', color: '#777' }}>@{req.friendProfile.username} — Pending</div>
-                </div>
-                {req.friendProfile.profile_photo_url && (
-                  <img
-                    src={req.friendProfile.profile_photo_url}
-                    alt={req.friendProfile.display_name}
-                    style={{
-                      width: '48px',
-                      height: '48px',
-                      borderRadius: '50%',
-                      objectFit: 'cover',
-                      border: 'none',
-                      flexShrink: 0
-                    }}
-                  />
-                )}
-              </div>
-              </StaggerItem>
-            ))}
-          </StaggeredList>
-        </section>
-      )}
-
-      {/* Friends List */}
-      <section>
-        <h2 style={{ fontSize: '18px', marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.06em', color: '#666' }}>
-          Friends ({friends.length})
-        </h2>
-        {friends.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '40px', fontStyle: 'italic', color: '#777' }}>
-            No friends yet. Start by finding some friends!
-          </div>
-        ) : (
-          <StaggeredList style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {friends.map((friendship, index) => (
-              <StaggerItem key={friendship.id}>
-              <Link
-                to={`/friend/${friendship.friendProfile.id}`}
-                style={{ textDecoration: 'none', color: 'inherit' }}
-              >
-                <div style={{
-                  padding: '16px',
-                  border: 'none',
-                  borderRadius: '3px',
-                  background: '#FFFEFA',
-                  transition: 'all 0.2s',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  transform: `rotate(${index % 2 === 0 ? '-0.5' : '0.5'}deg)`,
-                  boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)',
-                  animation: `reviewSway${(index % 3) + 1} ${5 + index % 2}s ease-in-out infinite`
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#F5F1EB'
-                  e.currentTarget.style.boxShadow = '2px 2px 0 #2C2C2C'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = '#FFFEFA'
-                  e.currentTarget.style.boxShadow = 'none'
-                }}>
-                  <div>
-                    <div style={{ fontWeight: 600 }}>{friendship.friendProfile.display_name}</div>
-                    <div style={{ fontSize: '14px', color: '#777' }}>@{friendship.friendProfile.username}</div>
-                  </div>
-                  {friendship.friendProfile.profile_photo_url && (
-                    <img
-                      src={friendship.friendProfile.profile_photo_url}
-                      alt={friendship.friendProfile.display_name}
-                      style={{
-                        width: '48px',
-                        height: '48px',
-                        borderRadius: '50%',
-                        objectFit: 'cover',
-                        border: 'none',
-                        flexShrink: 0
-                      }}
-                    />
-                  )}
-                </div>
-              </Link>
-              </StaggerItem>
-            ))}
-          </StaggeredList>
-        )}
-      </section>
+      {/* Fan Deck — vertically centered */}
+      <FriendFanDeck friends={friends} />
     </div>
   )
 }
