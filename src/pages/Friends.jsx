@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { useToast } from '../contexts/ToastContext'
 import { supabase } from '../lib/supabase'
 import { StaggeredList, StaggerItem } from '../components/StaggeredList'
 
 export const Friends = () => {
   const { profile } = useAuth()
+  const toast = useToast()
   const [friends, setFriends] = useState([])
   const [pendingRequests, setPendingRequests] = useState([])
   const [sentRequests, setSentRequests] = useState([])
@@ -109,8 +111,9 @@ export const Friends = () => {
       }
 
       await fetchFriendships()
+      toast.success('Friend request accepted')
     } catch (_err) {
-      // silently handled
+      toast.error('Something went wrong')
     }
   }
 
@@ -123,8 +126,9 @@ export const Friends = () => {
 
       if (error) throw error
       await fetchFriendships()
+      toast.success('Request declined')
     } catch (_err) {
-      // silently handled
+      toast.error('Something went wrong')
     }
   }
 

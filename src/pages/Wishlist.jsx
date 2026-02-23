@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import { useToast } from '../contexts/ToastContext'
 import { supabase } from '../lib/supabase'
 import { WishlistDisplay } from '../components/WishlistDisplay'
 import { CoverSearchModal } from '../components/cover-search/CoverSearchModal'
@@ -9,6 +10,7 @@ import { scrollLock } from '../lib/scrollLock'
 
 export const Wishlist = () => {
   const { profile } = useAuth()
+  const toast = useToast()
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
@@ -127,8 +129,10 @@ export const Wishlist = () => {
 
       setShowModal(false)
       fetchWishlistItems()
+      toast.success(editingItem ? 'Item updated' : 'Added to wishlist')
     } catch (err) {
       setError(err.message)
+      toast.error('Failed to save item')
     }
   }
 
@@ -143,8 +147,9 @@ export const Wishlist = () => {
 
       if (error) throw error
       fetchWishlistItems()
+      toast.success('Removed from wishlist')
     } catch (_err) {
-      // silently handled
+      toast.error('Failed to delete item')
     }
   }
 

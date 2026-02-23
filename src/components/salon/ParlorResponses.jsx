@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { useToast } from '../../contexts/ToastContext'
 import { AnimatePresence, motion as Motion } from 'framer-motion'
 import { ResponseEntry } from './ResponseEntry'
 import { StaggeredList, StaggerItem } from '../StaggeredList'
@@ -8,6 +9,7 @@ import { StaggeredList, StaggerItem } from '../StaggeredList'
  * Collapsed by default. Shows count when friends have responded.
  */
 export const ParlorResponses = ({ responses, userId, onSubmit, onEdit, onDelete, compact = false }) => {
+  const toast = useToast()
   const [isExpanded, setIsExpanded] = useState(false)
   const [inputText, setInputText] = useState('')
   const [editingId, setEditingId] = useState(null)
@@ -33,8 +35,9 @@ export const ParlorResponses = ({ responses, userId, onSubmit, onEdit, onDelete,
         await onSubmit(trimmed)
       }
       setInputText('')
+      toast.success(editingId ? 'Response updated' : 'Response shared')
     } catch {
-      // silently handled
+      toast.error('Something went wrong. Try again.')
     } finally {
       setSubmitting(false)
     }

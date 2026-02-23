@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import { useToast } from '../contexts/ToastContext'
 import { supabase } from '../lib/supabase'
 import { CardDisplay } from '../components/CardDisplay'
 import { CardEdit } from '../components/CardEdit'
@@ -9,6 +10,7 @@ import { isSpeechSupported } from '../lib/useSpeechRecognition'
 
 export const MyCard = () => {
   const { profile } = useAuth()
+  const toast = useToast()
   const [card, setCard] = useState(null)
   const [entries, setEntries] = useState([])
   const [notes, setNotes] = useState([])
@@ -241,8 +243,10 @@ export const MyCard = () => {
       }
 
       setEditingSection(null)
+      toast.success('Card updated')
     } catch (err) {
       setError(err.message)
+      toast.error('Failed to save changes')
     }
   }
 
@@ -288,8 +292,10 @@ export const MyCard = () => {
       }
 
       setIsEditing(false)
+      toast.success('Card saved')
     } catch (err) {
       setError(err.message)
+      toast.error('Failed to save card')
     } finally {
       setLoading(false)
     }

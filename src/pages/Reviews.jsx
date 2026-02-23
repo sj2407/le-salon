@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { useToast } from '../contexts/ToastContext'
 import { supabase } from '../lib/supabase'
 import { ReviewsDisplay } from '../components/ReviewsDisplay'
 import { TAG_ICONS, TAG_OPTIONS, TAG_LABELS } from '../lib/reviewConstants'
@@ -15,6 +16,7 @@ import { TAG_TO_MEDIA_TYPE } from '../lib/coverSearchApis'
 
 export const Reviews = () => {
   const { profile } = useAuth()
+  const toast = useToast()
   const [searchParams, setSearchParams] = useSearchParams()
   const [reviews, setReviews] = useState([])
   const [friends, setFriends] = useState([])
@@ -332,8 +334,10 @@ export const Reviews = () => {
 
       setShowModal(false)
       fetchReviews()
+      toast.success(editingReview ? 'Review updated' : 'Review saved')
     } catch (err) {
       setError(err.message)
+      toast.error('Failed to save review')
     }
   }
 
@@ -348,8 +352,9 @@ export const Reviews = () => {
 
       if (error) throw error
       fetchReviews()
+      toast.success('Review deleted')
     } catch (_err) {
-      // silently handled
+      toast.error('Failed to delete review')
     }
   }
 

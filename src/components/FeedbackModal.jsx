@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import { useToast } from '../contexts/ToastContext'
 import { supabase } from '../lib/supabase'
 
 export const FeedbackModal = ({ onClose }) => {
   const { profile } = useAuth()
+  const toast = useToast()
   const [content, setContent] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
@@ -34,11 +36,13 @@ export const FeedbackModal = ({ onClose }) => {
       if (submitError) throw submitError
 
       setSubmitted(true)
+      toast.success('Feedback sent — thank you!')
       setTimeout(() => {
         onClose()
       }, 2000)
     } catch (err) {
       setError(err.message)
+      toast.error('Failed to send feedback')
       setSubmitting(false)
     }
   }

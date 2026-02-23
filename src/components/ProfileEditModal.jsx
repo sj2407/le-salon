@@ -2,10 +2,12 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { motion as Motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
+import { useToast } from '../contexts/ToastContext'
 import { supabase } from '../lib/supabase'
 
 export const ProfileEditModal = ({ onClose }) => {
   const { profile, user, refreshProfile } = useAuth()
+  const toast = useToast()
   const backdropRef = useRef(null)
   const imgRef = useRef(null)
   const dragRef = useRef(null)
@@ -177,9 +179,11 @@ export const ProfileEditModal = ({ onClose }) => {
       if (updateError) throw new Error(`Profile update failed: ${updateError.message}`)
 
       await refreshProfile()
+      toast.success('Profile updated')
       onClose()
     } catch (err) {
       setMessage(err.message || 'Failed to update profile')
+      toast.error('Failed to update profile')
     } finally {
       setLoading(false)
     }

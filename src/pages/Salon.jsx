@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import { useToast } from '../contexts/ToastContext'
 import { supabase } from '../lib/supabase'
 import { ParlorText } from '../components/salon/ParlorText'
 import { ParlorResponses } from '../components/salon/ParlorResponses'
@@ -12,6 +13,7 @@ const formatWeekDate = (dateStr) => {
 
 export const Salon = () => {
   const { user } = useAuth()
+  const toast = useToast()
   const [salonWeek, setSalonWeek] = useState(null)
   const [responses, setResponses] = useState([])
   const [commonplaceEntries, setCommonplaceEntries] = useState([])
@@ -316,7 +318,7 @@ export const Salon = () => {
       .eq('id', id)
 
     if (error) {
-      // silently handled
+      toast.error('Failed to delete response')
     }
   }
 
@@ -346,7 +348,7 @@ export const Salon = () => {
       .eq('id', id)
 
     if (error) {
-      // silently handled
+      toast.error('Failed to delete entry')
     }
   }
 

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion as Motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
+import { useToast } from '../contexts/ToastContext'
 import { supabase } from '../lib/supabase'
 import { StaggeredList, StaggerItem } from '../components/StaggeredList'
 import { TAG_ICONS, TAG_OPTIONS, TAG_LABELS } from '../lib/reviewConstants'
@@ -18,6 +19,7 @@ import { linkifyText } from '../lib/linkifyText'
 
 export const LaListe = () => {
   const { profile } = useAuth()
+  const toast = useToast()
   const navigate = useNavigate()
   const [items, setItems] = useState([])
   const [recommendations, setRecommendations] = useState([])
@@ -148,8 +150,9 @@ export const LaListe = () => {
       setNewImageUrl('')
       setShowAddForm(false)
       await fetchItems()
+      toast.success('Item added')
     } catch (_err) {
-      alert('Could not add item. Please try again.')
+      toast.error('Could not add item. Try again.')
     }
   }
 
@@ -165,8 +168,9 @@ export const LaListe = () => {
 
       if (error) throw error
       await fetchItems()
+      toast.success(item.is_done ? 'Marked as pending' : 'Marked as done')
     } catch (_err) {
-      // silently handled
+      toast.error('Failed to update item')
     }
   }
 
@@ -179,8 +183,9 @@ export const LaListe = () => {
 
       if (error) throw error
       await fetchItems()
+      toast.success('Item deleted')
     } catch (_err) {
-      // silently handled
+      toast.error('Failed to delete item')
     }
   }
 
@@ -212,8 +217,9 @@ export const LaListe = () => {
 
       setEditingId(null)
       await fetchItems()
+      toast.success('Item updated')
     } catch (_err) {
-      // silently handled
+      toast.error('Failed to update item')
     }
   }
 
@@ -230,8 +236,9 @@ export const LaListe = () => {
 
       if (error) throw error
       await fetchItems()
+      toast.success('Added to your list')
     } catch (_err) {
-      alert('Could not add to your list. Please try again.')
+      toast.error('Could not add to your list. Try again.')
     }
   }
 

@@ -1,6 +1,8 @@
 import { lazy, Suspense } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { AnimatePresence, motion as Motion } from 'framer-motion'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
+import { ToastProvider } from './contexts/ToastContext'
 import { Navigation } from './components/Navigation'
 import { BottomTabBar } from './components/BottomTabBar'
 import { Footer } from './components/Footer'
@@ -58,134 +60,156 @@ const PublicRoute = ({ children }) => {
   return children
 }
 
+function AppContent() {
+  const location = useLocation()
+
+  return (
+    <>
+      <Navigation />
+      <BottomTabBar />
+      <AnimatePresence mode="wait">
+        <Motion.div
+          key={location.pathname}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.15 }}
+        >
+          <Suspense fallback={<div className="container"><div className="loading">Loading...</div></div>}>
+          <Routes location={location}>
+            <Route
+              path="/signup"
+              element={
+                <PublicRoute>
+                  <SignUp />
+                </PublicRoute>
+              }
+            />
+            <Route
+              path="/signin"
+              element={
+                <PublicRoute>
+                  <SignIn />
+                </PublicRoute>
+              }
+            />
+            <Route
+              path="/reset-password"
+              element={<ResetPassword />}
+            />
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <Salon />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/my-corner"
+              element={
+                <ProtectedRoute>
+                  <MyCorner />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/todo"
+              element={
+                <ProtectedRoute>
+                  <ToDo />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/todo/past"
+              element={
+                <ProtectedRoute>
+                  <PastActivities />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/friends"
+              element={
+                <ProtectedRoute>
+                  <Friends />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/find-friends"
+              element={
+                <ProtectedRoute>
+                  <FindFriends />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/friend/:friendId"
+              element={
+                <ProtectedRoute>
+                  <FriendCard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/notifications"
+              element={
+                <ProtectedRoute>
+                  <Notifications />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/newsletter"
+              element={
+                <ProtectedRoute>
+                  <Newsletter />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/account"
+              element={
+                <ProtectedRoute>
+                  <AccountSettings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/help"
+              element={
+                <ProtectedRoute>
+                  <Help />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/feedback"
+              element={
+                <ProtectedRoute>
+                  <AdminFeedback />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+          </Suspense>
+        </Motion.div>
+      </AnimatePresence>
+      <Footer />
+    </>
+  )
+}
+
 function AppRoutes() {
   return (
     <BrowserRouter>
+      <ToastProvider>
       <AuthProvider>
-        <Navigation />
-        <BottomTabBar />
-        <Suspense fallback={<div className="container"><div className="loading">Loading...</div></div>}>
-        <Routes>
-          <Route
-            path="/signup"
-            element={
-              <PublicRoute>
-                <SignUp />
-              </PublicRoute>
-            }
-          />
-          <Route
-            path="/signin"
-            element={
-              <PublicRoute>
-                <SignIn />
-              </PublicRoute>
-            }
-          />
-          <Route
-            path="/reset-password"
-            element={<ResetPassword />}
-          />
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <Salon />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/my-corner"
-            element={
-              <ProtectedRoute>
-                <MyCorner />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/todo"
-            element={
-              <ProtectedRoute>
-                <ToDo />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/todo/past"
-            element={
-              <ProtectedRoute>
-                <PastActivities />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/friends"
-            element={
-              <ProtectedRoute>
-                <Friends />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/find-friends"
-            element={
-              <ProtectedRoute>
-                <FindFriends />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/friend/:friendId"
-            element={
-              <ProtectedRoute>
-                <FriendCard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/notifications"
-            element={
-              <ProtectedRoute>
-                <Notifications />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/newsletter"
-            element={
-              <ProtectedRoute>
-                <Newsletter />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/account"
-            element={
-              <ProtectedRoute>
-                <AccountSettings />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/help"
-            element={
-              <ProtectedRoute>
-                <Help />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/feedback"
-            element={
-              <ProtectedRoute>
-                <AdminFeedback />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
-        </Suspense>
-        <Footer />
+        <AppContent />
       </AuthProvider>
+      </ToastProvider>
     </BrowserRouter>
   )
 }

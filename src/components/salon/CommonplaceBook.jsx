@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useToast } from '../../contexts/ToastContext'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion as Motion } from 'framer-motion'
 import { ResponseEntry } from './ResponseEntry'
@@ -9,6 +10,7 @@ import { StaggeredList, StaggerItem } from '../StaggeredList'
  * Accessed via the typewriter FAB. Entries are reverse-chronological (newest first).
  */
 export const CommonplaceBook = ({ isOpen, onClose, entries, userId, onSubmit, onEdit, onDelete }) => {
+  const toast = useToast()
   const [inputText, setInputText] = useState('')
   const [editingId, setEditingId] = useState(null)
   const [submitting, setSubmitting] = useState(false)
@@ -56,8 +58,9 @@ export const CommonplaceBook = ({ isOpen, onClose, entries, userId, onSubmit, on
         await onSubmit(trimmed)
       }
       setInputText('')
+      toast.success(editingId ? 'Entry updated' : 'Entry saved')
     } catch {
-      // silently handled
+      toast.error('Something went wrong. Try again.')
     } finally {
       setSubmitting(false)
     }

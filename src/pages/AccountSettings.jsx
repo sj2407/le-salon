@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import { useToast } from '../contexts/ToastContext'
 import { supabase } from '../lib/supabase'
 
 export const AccountSettings = () => {
   const { user, refreshProfile } = useAuth()
+  const toast = useToast()
 
   // Email state
   const [newEmail, setNewEmail] = useState('')
@@ -49,12 +51,15 @@ export const AccountSettings = () => {
                   )
                   if (error) throw error
                   setEmailMessage('A confirmation link has been sent to your new email. Click it to complete the change.')
+                  toast.success('Confirmation email sent')
                   setNewEmail('')
                 } catch (err) {
                   if (err.status === 429 || err.message?.includes('rate limit')) {
                     setEmailMessage('Too many attempts. Please wait a few minutes and try again.')
+                    toast.error('Too many attempts. Wait a few minutes.')
                   } else {
                     setEmailMessage(err.message || 'Failed to update email')
+                    toast.error('Failed to update email')
                   }
                 } finally {
                   setEmailLoading(false)
@@ -113,10 +118,12 @@ export const AccountSettings = () => {
                 const { error } = await supabase.auth.updateUser({ password: newPassword })
                 if (error) throw error
                 setPasswordMessage('Password updated successfully!')
+                toast.success('Password updated')
                 setNewPassword('')
                 setConfirmPassword('')
               } catch (err) {
                 setPasswordMessage(err.message || 'Failed to update password')
+                toast.error('Failed to update password')
               } finally {
                 setPasswordLoading(false)
               }

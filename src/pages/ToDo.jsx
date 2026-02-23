@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import { useToast } from '../contexts/ToastContext'
 import { supabase } from '../lib/supabase'
 import { Link } from 'react-router-dom'
 import { EmptyStateFantom } from '../components/EmptyStateFantom'
@@ -45,6 +46,7 @@ const CITY_OPTIONS = ['New York', 'London', 'Paris']
 
 export const ToDo = () => {
   const { profile } = useAuth()
+  const toast = useToast()
   const [activities, setActivities] = useState([])
   const [profiles, setProfiles] = useState({})
   const [interests, setInterests] = useState({})
@@ -241,8 +243,10 @@ export const ToDo = () => {
 
       setShowModal(false)
       fetchActivities()
+      toast.success(editingActivity ? 'Activity updated' : 'Activity posted')
     } catch (err) {
       setError(err.message)
+      toast.error('Failed to save activity')
     }
   }
 
@@ -257,8 +261,9 @@ export const ToDo = () => {
 
       if (error) throw error
       fetchActivities()
+      toast.success('Activity deleted')
     } catch (_err) {
-      // silently handled
+      toast.error('Failed to delete activity')
     }
   }
 
@@ -308,7 +313,7 @@ export const ToDo = () => {
 
       fetchActivities()
     } catch (_err) {
-      // silently handled
+      toast.error('Something went wrong')
     }
   }
 
