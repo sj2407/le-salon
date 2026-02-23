@@ -176,7 +176,7 @@ export const CardBack = ({
 
   // Friend view: simple note input or display
   return (
-    <div style={{ padding: '8px 0' }}>
+    <div style={{ padding: '8px 0', flex: 1, display: 'flex', flexDirection: 'column' }}>
       {isEditing || editingNote ? (
         <NoteInput
           value={editingNote?.content || ''}

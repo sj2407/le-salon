@@ -6,7 +6,7 @@ export const NoteInput = ({
   onSubmit,
   onCancel,
   maxLength = 280,
-  submitLabel = 'Leave note',
+  submitLabel = 'Leave a note',
   isEditing = false,
   placeholder = 'Write a note for this section...'
 }) => {
@@ -28,18 +28,19 @@ export const NoteInput = ({
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%', flex: 1 }}>
       <textarea
         value={localValue}
         onChange={handleChange}
         placeholder={placeholder}
         style={{
           width: '100%',
-          minHeight: '80px',
-          padding: '12px',
+          flex: 1,
+          minHeight: '50px',
+          padding: '10px',
           border: '1px solid #DDD',
           borderRadius: '3px',
-          fontSize: '15px',
+          fontSize: '14px',
           fontFamily: 'Caveat, cursive',
           resize: 'vertical',
           background: '#FFFEFA',
@@ -62,14 +63,13 @@ export const NoteInput = ({
               type="button"
               onClick={onCancel}
               style={{
-                padding: '8px 20px',
+                padding: '4px 10px',
                 background: '#F5F1EB',
                 border: '1px solid #CCC',
                 borderRadius: '3px',
-                fontSize: '14px',
+                fontSize: '13px',
                 cursor: 'pointer',
                 color: '#555',
-                fontWeight: 500
               }}
             >
               Cancel
@@ -79,12 +79,12 @@ export const NoteInput = ({
             onClick={handleSubmit}
             disabled={!localValue.trim()}
             style={{
-              padding: '8px 16px',
+              padding: '4px 10px',
               background: localValue.trim() ? '#2C2C2C' : '#CCC',
               color: '#FFF',
               border: 'none',
               borderRadius: '3px',
-              fontSize: '14px',
+              fontSize: '13px',
               cursor: localValue.trim() ? 'pointer' : 'not-allowed'
             }}
           >
