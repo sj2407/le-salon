@@ -454,8 +454,9 @@ button:hover {
   }
 }
 
-/* Universal press compression */
-button:active:not(:disabled) {
+/* Universal press compression — .pressing for mobile, :active for desktop */
+button:active:not(:disabled),
+button.pressing {
   box-shadow: none;
   transform: scale(0.95);
 }
@@ -854,7 +855,8 @@ nav {
   box-shadow: 2px 3px 6px rgba(0, 0, 0, 0.06);
 }
 
-.filter-pill:active {
+.filter-pill:active,
+.filter-pill.pressing {
   transform: scale(0.95);
 }
 
