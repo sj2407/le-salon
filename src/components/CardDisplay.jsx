@@ -46,7 +46,7 @@ const SortableSection = ({ value, children, style }) => {
     <Reorder.Item
       value={value}
       as="div"
-      style={style}
+      style={{ width: '100%', ...style }}
       dragListener={false}
       dragControls={dragControls}
       whileDrag={{ scale: 1.03, boxShadow: '0 8px 25px rgba(0,0,0,0.15)', zIndex: 50 }}
