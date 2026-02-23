@@ -447,18 +447,8 @@ button:hover {
   background: #F5F1EB;
 }
 
-/* Desktop-only: subtle lift on hover */
-@media (hover: hover) and (pointer: fine) {
-  button:hover:not(:disabled) {
-    transform: translateY(-1px);
-  }
-}
-
-/* Universal press compression — .pressing for mobile, :active for desktop */
-button:active:not(:disabled),
-button.pressing {
+button:active {
   box-shadow: none;
-  transform: scale(0.95);
 }
 
 button.primary {
@@ -604,7 +594,7 @@ nav {
 }
 
 .edit-button:active {
-  transform: translateY(0) scale(0.95);
+  transform: translateY(0) scale(1);
   box-shadow: 0 0 12px rgba(232, 144, 164, 0.3);
 }
 
@@ -855,11 +845,6 @@ nav {
   box-shadow: 2px 3px 6px rgba(0, 0, 0, 0.06);
 }
 
-.filter-pill:active,
-.filter-pill.pressing {
-  transform: scale(0.95);
-}
-
 /* Tab Buttons - Green Glow */
 .tab-button {
   position: relative;
@@ -875,7 +860,7 @@ nav {
 }
 
 .tab-button:active {
-  transform: translateY(0) scale(0.95);
+  transform: translateY(0) scale(1);
   box-shadow: 0 0 12px rgba(129, 199, 132, 0.3);
 }
 
