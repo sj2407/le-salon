@@ -43,7 +43,7 @@ export const Help = () => {
             🪴 My Corner
           </h2>
           <p style={{ fontSize: '15px', lineHeight: '1.6' }}>
-            Your personal hub with six tabs: Card, History, Reviews, La Liste, Wishlist, and Profile.
+            Your personal hub with four tabs: Card, Reviews, La Liste, and Wishlist.
             Everything about you lives here.
           </p>
         </div>
@@ -65,20 +65,11 @@ export const Help = () => {
             <li><strong>Obsessing over</strong> - Whatever's capturing your attention</li>
             <li><strong>Latest AI prompt</strong> - Fun conversations with AI</li>
           </ul>
-          <p style={{ fontSize: '14px', fontStyle: 'italic', color: '#666' }}>
+          <p style={{ fontSize: '14px', fontStyle: 'italic', color: '#666', marginBottom: '12px' }}>
             💡 Tip: Tap the microphone icon to dictate entries by voice instead of typing!
           </p>
-        </div>
-
-        {/* History Section */}
-        <div style={{ marginBottom: '32px', borderTop: '1px dashed #E0E0E0', paddingTop: '24px' }}>
-          <h2 className="handwritten" style={{ fontSize: '32px', marginBottom: '16px', color: '#2C2C2C' }}>
-            📜 History
-          </h2>
-          <p style={{ fontSize: '15px', lineHeight: '1.6' }}>
-            Your history page keeps a record of all your past cards. See how your interests have evolved over time.
-            Each row shows what you were into on a specific day—like a personal time capsule of your cultural life.
-            Only you can see your history.
+          <p style={{ fontSize: '14px', fontStyle: 'italic', color: '#666' }}>
+            ⚙️ Tap the gear icon in the top-right corner of your card to edit your profile — name, photo, bio, and more.
           </p>
         </div>
 

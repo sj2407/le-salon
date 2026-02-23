@@ -533,6 +533,7 @@ export const FriendCard = () => {
                           displayName={friendProfile.display_name}
                           photoUrl={friendProfile.profile_photo_url}
                           photoPosition={friendProfile.profile_photo_position}
+                          bio={friendProfile.bio}
                           isEditable={false}
                           isFriendView={true}
                           notes={myNotes}

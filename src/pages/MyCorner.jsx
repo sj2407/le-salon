@@ -2,14 +2,14 @@ import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion as Motion } from 'framer-motion'
 import { MyCard } from './MyCard'
-import { History } from './History'
+// import { History } from './History' // Hidden for now — component preserved for future use
 import { Reviews } from './Reviews'
 import { LaListe } from './LaListe'
 import { Wishlist } from './Wishlist'
-import { Profile } from './Profile'
+// import { Profile } from './Profile' // Merged into Card tab — edit via gear icon
 import { useSwipeNavigation, tabSlideVariants, tabSlideTransition } from '../lib/useSwipeNavigation'
 
-const MY_CORNER_TABS = ['card', 'history', 'reviews', 'liste', 'wishlist', 'profile']
+const MY_CORNER_TABS = ['card', 'reviews', 'liste', 'wishlist']
 
 export const MyCorner = () => {
   const [searchParams] = useSearchParams()
@@ -54,25 +54,6 @@ export const MyCorner = () => {
             }}
           >
             Card
-          </button>
-          <button
-            onClick={() => handleTabClick('history')}
-            style={{
-              background: 'none',
-              border: 'none',
-              boxShadow: 'none',
-              outline: 'none',
-              padding: '8px 6px',
-              fontSize: '13px',
-              fontWeight: activeTab === 'history' ? 600 : 400,
-              color: activeTab === 'history' ? '#2C2C2C' : '#777',
-              marginBottom: '-2px',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            History
           </button>
           <button
             onClick={() => handleTabClick('reviews')}
@@ -131,25 +112,6 @@ export const MyCorner = () => {
           >
             Wishlist
           </button>
-          <button
-            onClick={() => handleTabClick('profile')}
-            style={{
-              background: 'none',
-              border: 'none',
-              boxShadow: 'none',
-              outline: 'none',
-              padding: '8px 6px',
-              fontSize: '13px',
-              fontWeight: activeTab === 'profile' ? 600 : 400,
-              color: activeTab === 'profile' ? '#2C2C2C' : '#777',
-              marginBottom: '-2px',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            Profile
-          </button>
         </div>
 
         {/* Tab Content */}
@@ -165,11 +127,9 @@ export const MyCorner = () => {
               transition={tabSlideTransition}
             >
               {activeTab === 'card' && <div style={{ marginTop: '-30px' }}><MyCard /></div>}
-              {activeTab === 'history' && <History />}
               {activeTab === 'reviews' && <Reviews />}
               {activeTab === 'liste' && <LaListe />}
               {activeTab === 'wishlist' && <Wishlist />}
-              {activeTab === 'profile' && <Profile />}
             </Motion.div>
           </AnimatePresence>
         </div>

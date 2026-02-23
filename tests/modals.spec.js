@@ -360,29 +360,26 @@ test.describe('FeedbackModal', () => {
   })
 })
 
-test.describe('Profile Save', () => {
+test.describe('Profile Edit Modal', () => {
   test.beforeEach(async ({ page }) => {
     await login(page)
     await page.waitForSelector('.card, .error-message', { timeout: 15000 })
-    await navigateToTab(page, 'Profile')
-    await page.waitForSelector('form', { timeout: 10000 })
+    // Open profile edit modal via gear icon
+    await page.click('button[title="Edit Profile"]')
+    await waitForModalOpen(page)
   })
 
-  test('saves without hard page reload', async ({ page }) => {
+  test('saves and closes modal', async ({ page }) => {
     // Change a field
     const locationInput = page.locator('input[placeholder="e.g., Paris, Brooklyn, Tokyo"]')
     const testValue = `Test City ${Date.now()}`
     await locationInput.fill(testValue)
 
     // Click Save
-    await page.click('button:has-text("Save Profile")')
+    await page.click('button:has-text("Save")')
 
-    // Success message should appear WITHOUT page reload
-    // If page reloaded, this would fail because the message wouldn't persist
-    await expect(page.locator('text=Profile updated successfully')).toBeVisible({ timeout: 10000 })
-
-    // The Profile tab should still be active (no reload back to Card tab)
-    await expect(page.locator('form')).toBeVisible()
+    // Modal should close after save
+    await waitForModalClose(page)
   })
 })
 

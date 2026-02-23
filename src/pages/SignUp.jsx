@@ -25,7 +25,7 @@ export const SignUp = () => {
 
       // If session exists, email confirmation is disabled — navigate directly
       if (result.session) {
-        navigate('/?tab=profile')
+        navigate('/my-corner')
       } else {
         // Email confirmation required — show message
         setConfirmationSent(true)
