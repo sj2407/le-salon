@@ -170,7 +170,8 @@ export const CardDisplay = ({
   }
 
   // Compute wrapper props for a section (className + style)
-  const getSectionWrapperProps = (categoryName, isFullWidth, isHidden, index) => {
+  // isDraggable=true disables CSS transition on transform and sway animation (they fight Framer Motion drag)
+  const getSectionWrapperProps = (categoryName, isFullWidth, isHidden, index, isDraggable = false) => {
     const className = isFullWidth ? 'full-width-section' : 'section-box'
     if (isHidden && isEditable) {
       return {
@@ -180,6 +181,7 @@ export const CardDisplay = ({
           minHeight: 'unset', padding: '0', background: 'transparent',
           boxShadow: 'none', display: 'flex', alignItems: 'center',
           justifyContent: 'center', height: '28px', animation: 'none', transform: 'none',
+          transition: 'box-shadow 200ms ease-out',
           ...(isFullWidth ? { gridColumn: '1 / -1' } : {})
         }
       }
@@ -188,7 +190,12 @@ export const CardDisplay = ({
       className,
       style: {
         position: 'relative', overflow: 'visible',
-        ...(!isFullWidth ? SWAY_STYLES[index % SWAY_STYLES.length] : {}),
+        // Draggable sections: no sway animation, no transform transition (fights Framer Motion drag)
+        // Non-draggable sections: keep sway for visual effect
+        ...(isDraggable
+          ? { animation: 'none', transition: 'box-shadow 200ms ease-out' }
+          : (!isFullWidth ? SWAY_STYLES[index % SWAY_STYLES.length] : {})
+        ),
         ...(isFullWidth ? { gridColumn: '1 / -1' } : {})
       }
     }
@@ -297,7 +304,7 @@ export const CardDisplay = ({
         {/* Drag handle for reordering — own card only */}
         {dragControls && (
           <div
-            onPointerDown={(e) => dragControls.start(e)}
+            onPointerDown={(e) => { e.preventDefault(); dragControls.start(e) }}
             style={{
               position: 'absolute',
               top: '6px',
@@ -585,7 +592,7 @@ export const CardDisplay = ({
           {gridOrder.map((section, index) => {
             const isFullWidth = FULL_WIDTH_SECTIONS.has(section)
             const isHidden = hiddenSections.includes(section)
-            const wrapperProps = getSectionWrapperProps(section, isFullWidth, isHidden, index)
+            const wrapperProps = getSectionWrapperProps(section, isFullWidth, isHidden, index, true)
             return (
               <SortableSection
                 key={section}
