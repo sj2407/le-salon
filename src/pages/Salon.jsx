@@ -49,10 +49,13 @@ export const Salon = () => {
   // Both directions sync via direct DOM manipulation (no React re-renders during drag).
   const scrollContainerRef = useRef(null)
   const sliderRef = useRef(null)
+  const titleRef = useRef(null)
+  const weekCounterRef = useRef(null)
   const activeWeekIdRef = useRef(null)
   const snapRestoreRef = useRef(null)
+  const activeWeekDebounceRef = useRef(null)
 
-  // Scroll event → sync slider + detect active week at midpoint crossings
+  // Scroll event → sync slider + title via direct DOM, debounce state for data fetching
   useEffect(() => {
     const container = scrollContainerRef.current
     if (!container || allWeeks.length === 0) return
@@ -67,27 +70,54 @@ export const Salon = () => {
         }
       }
 
-      // Detect active week when rounded index changes
-      const slideWidth = container.clientWidth
-      if (slideWidth > 0) {
-        const index = Math.round(container.scrollLeft / slideWidth)
-        const week = allWeeks[index]
-        if (week && week.id !== activeWeekIdRef.current) {
-          activeWeekIdRef.current = week.id
-          setActiveWeekId(week.id)
-          hapticTap()
+      // Detect active week: find which slide's left edge is closest to container's left edge
+      const containerLeft = container.getBoundingClientRect().left
+      const slides = container.querySelectorAll('[data-week-id]')
+      let closestSlide = null
+      let closestDist = Infinity
+
+      slides.forEach(slide => {
+        const dist = Math.abs(slide.getBoundingClientRect().left - containerLeft)
+        if (dist < closestDist) {
+          closestDist = dist
+          closestSlide = slide
         }
+      })
+
+      if (!closestSlide) return
+      const weekId = closestSlide.dataset.weekId
+      const weekTitle = closestSlide.dataset.weekTitle
+      const weekIndex = closestSlide.dataset.weekIndex
+
+      if (weekId && weekId !== activeWeekIdRef.current) {
+        activeWeekIdRef.current = weekId
+        hapticTap()
+
+        // Update title + counter via direct DOM (instant, like slider)
+        if (titleRef.current && weekTitle) titleRef.current.textContent = weekTitle
+        if (weekCounterRef.current && weekIndex) {
+          weekCounterRef.current.textContent = `${Number(weekIndex) + 1}/${allWeeks.length}`
+        }
+
+        // Debounce React state update (for responses/commonplace fetching)
+        clearTimeout(activeWeekDebounceRef.current)
+        activeWeekDebounceRef.current = setTimeout(() => {
+          setActiveWeekId(weekId)
+        }, 200)
       }
     }
 
     container.addEventListener('scroll', handleScroll, { passive: true })
-    return () => container.removeEventListener('scroll', handleScroll)
+    return () => {
+      container.removeEventListener('scroll', handleScroll)
+      clearTimeout(activeWeekDebounceRef.current)
+    }
   }, [allWeeks])
 
   // Initial scroll to latest week (instant, no haptic)
   useEffect(() => {
     if (allWeeks.length === 0) return
-    activeWeekIdRef.current = allWeeks[allWeeks.length - 1].id
+    activeWeekIdRef.current = String(allWeeks[allWeeks.length - 1].id)
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         const c = scrollContainerRef.current
@@ -600,6 +630,7 @@ export const Salon = () => {
 
           <div style={{ display: 'flex', alignItems: 'center', margin: '0 0 8px 0' }}>
             <h2
+              ref={titleRef}
               className="handwritten"
               style={{
                 fontSize: '26px',
@@ -701,9 +732,12 @@ export const Salon = () => {
             cursor: 'grab',
           }}
         >
-          {allWeeks.map(week => (
+          {allWeeks.map((week, idx) => (
             <div
               key={week.id}
+              data-week-id={String(week.id)}
+              data-week-title={week.parlor_title}
+              data-week-index={idx}
               style={{
                 flex: '0 0 100%',
                 width: '100%',
@@ -721,9 +755,7 @@ export const Salon = () => {
         </div>
 
         {/* Week slider */}
-        {allWeeks.length > 1 && (() => {
-          const activeIndex = allWeeks.findIndex(w => w.id === activeWeekId)
-          return (
+        {allWeeks.length > 1 && (
             <div style={{
               flexShrink: 0,
               padding: '4px 8px 2px',
@@ -731,7 +763,7 @@ export const Salon = () => {
               alignItems: 'center',
               gap: '8px',
             }}>
-              <span style={{
+              <span ref={weekCounterRef} style={{
                 fontSize: '8px',
                 color: '#A89F91',
                 whiteSpace: 'nowrap',
@@ -739,7 +771,7 @@ export const Salon = () => {
                 minWidth: '20px',
                 textAlign: 'right',
               }}>
-                {activeIndex + 1}/{allWeeks.length}
+                {allWeeks.length}/{allWeeks.length}
               </span>
               <input
                 ref={sliderRef}
@@ -754,8 +786,7 @@ export const Salon = () => {
                 aria-label="Browse weeks"
               />
             </div>
-          )
-        })()}
+        )}
 
         {/* Next week teaser — only when viewing the most recent week */}
         {nextWeekTitle && isLatestWeek && (
