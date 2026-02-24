@@ -21,7 +21,7 @@ const formatYear = (year) => {
 const shortTitle = (title) => {
   const abbrev = {
     'Augustine and Early Christian Philosophy': 'Augustine',
-    'Islamic Golden Age Philosophy': 'Golden Age',
+    'Islamic Golden Age Philosophy': 'Islamic Philosophy',
     'Scholasticism and Aquinas': 'Scholasticism',
     'Machiavelli and Political Realism': 'Machiavelli',
     'Descartes and the Method of Doubt': 'Descartes',
