@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { AnimatePresence, motion as Motion } from 'framer-motion'
+import { AnimatePresence } from 'framer-motion'
 import { MyCard } from './MyCard'
 // import { History } from './History' // Hidden for now — component preserved for future use
 import { Reviews } from './Reviews'
@@ -8,7 +8,6 @@ import { LaListe } from './LaListe'
 import { Wishlist } from './Wishlist'
 // import { Profile } from './Profile' // Merged into Card tab — edit via gear icon
 import { ProfileEditModal } from '../components/ProfileEditModal'
-import { useSwipeNavigation, tabSlideVariants, tabSlideTransition } from '../lib/useSwipeNavigation'
 import { GearSix } from '@phosphor-icons/react'
 
 const MY_CORNER_TABS = ['card', 'reviews', 'liste', 'wishlist']
@@ -17,32 +16,25 @@ export const MyCorner = () => {
   const [searchParams] = useSearchParams()
   const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'card')
   const [showProfileEdit, setShowProfileEdit] = useState(false)
-  const { containerRef, swipeHandlers, direction, handleTabClick } = useSwipeNavigation(MY_CORNER_TABS, activeTab, setActiveTab)
-
   // Update active tab when URL param changes (adjust state during render, not in effect)
   const [prevSearchParams, setPrevSearchParams] = useState(searchParams)
   if (prevSearchParams !== searchParams) {
     setPrevSearchParams(searchParams)
     const tabParam = searchParams.get('tab')
     if (tabParam && tabParam !== activeTab) {
-      const targetIndex = MY_CORNER_TABS.indexOf(tabParam)
-      const currentIndex = MY_CORNER_TABS.indexOf(activeTab)
-      if (targetIndex !== -1) {
-        direction.current = targetIndex > currentIndex ? 1 : -1
-      }
       setActiveTab(tabParam)
     }
   }
 
   return (
     <div className="container">
-      <div ref={containerRef} {...swipeHandlers} style={{ touchAction: 'pan-y', overscrollBehaviorX: 'none', minHeight: 'calc(100vh - 120px)' }}>
+      <div style={{ minHeight: 'calc(100vh - 120px)' }}>
         {/* Tab Navigation */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', paddingLeft: '10px', paddingRight: '4px' }}>
           {MY_CORNER_TABS.map(tab => (
             <button
               key={tab}
-              onClick={() => handleTabClick(tab)}
+              onClick={() => setActiveTab(tab)}
               style={{
                 background: 'none',
                 border: 'none',
@@ -82,23 +74,11 @@ export const MyCorner = () => {
         </div>
 
         {/* Tab Content */}
-        <div style={{ marginTop: '-20px', overflowX: 'clip' }}>
-          <AnimatePresence mode="wait" initial={false} custom={direction.current}>
-            <Motion.div
-              key={activeTab}
-              custom={direction.current}
-              variants={tabSlideVariants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={tabSlideTransition}
-            >
-              {activeTab === 'card' && <div style={{ marginTop: '-30px' }}><MyCard /></div>}
-              {activeTab === 'reviews' && <Reviews />}
-              {activeTab === 'liste' && <LaListe />}
-              {activeTab === 'wishlist' && <Wishlist />}
-            </Motion.div>
-          </AnimatePresence>
+        <div style={{ marginTop: '-20px' }}>
+          {activeTab === 'card' && <div style={{ marginTop: '-30px' }}><MyCard /></div>}
+          {activeTab === 'reviews' && <Reviews />}
+          {activeTab === 'liste' && <LaListe />}
+          {activeTab === 'wishlist' && <Wishlist />}
         </div>
       </div>
       <AnimatePresence>

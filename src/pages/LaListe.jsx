@@ -4,7 +4,6 @@ import { AnimatePresence, motion as Motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import { supabase } from '../lib/supabase'
-import { StaggeredList, StaggerItem } from '../components/StaggeredList'
 import { TAG_ICONS, TAG_OPTIONS, TAG_LABELS } from '../lib/reviewConstants'
 import { TagAutocomplete } from '../components/TagAutocomplete'
 import { EmptyStateFantom } from '../components/EmptyStateFantom'
@@ -15,8 +14,29 @@ import { isSpeechSupported } from '../lib/useSpeechRecognition'
 import { CoverSearchModal } from '../components/cover-search/CoverSearchModal'
 import { Microphone, Plus } from '@phosphor-icons/react'
 import { CoverThumbnail } from '../components/cover-search/CoverThumbnail'
+import { CoverflowCarousel } from '../components/CoverflowCarousel'
 import { TAG_TO_MEDIA_TYPE } from '../lib/coverSearchApis'
 import { linkifyText } from '../lib/linkifyText'
+
+// Extract a URL from a title string (same logic as CoverflowCarousel.parseTitle)
+const extractUrl = (title) => {
+  if (!title) return null
+  const urlAtEnd = title.match(/https?:\/\/[^\s]+/)
+  return urlAtEnd ? urlAtEnd[0] : null
+}
+
+// Fetch og:image for an article URL via edge function
+const fetchOgImage = async (url) => {
+  try {
+    const { data, error } = await supabase.functions.invoke('og-image', {
+      body: { url }
+    })
+    if (error) return null
+    return data?.imageUrl || null
+  } catch {
+    return null
+  }
+}
 
 export const LaListe = () => {
   const { profile } = useAuth()
@@ -131,6 +151,15 @@ export const LaListe = () => {
     if (!newTitle.trim()) return
 
     try {
+      // Auto-fetch og:image for articles with URLs (if no cover already set)
+      let imageUrl = newImageUrl || null
+      if (newTag === 'article' && !imageUrl) {
+        const articleUrl = extractUrl(newTitle)
+        if (articleUrl) {
+          imageUrl = await fetchOgImage(articleUrl)
+        }
+      }
+
       const { error } = await supabase
         .from('discovery_items')
         .insert({
@@ -139,7 +168,7 @@ export const LaListe = () => {
           tag: newTag,
           note: newNote.trim() || null,
           item_date: newDate || null,
-          image_url: newImageUrl || null
+          image_url: imageUrl
         })
 
       if (error) throw error
@@ -203,6 +232,15 @@ export const LaListe = () => {
     if (!editTitle.trim()) return
 
     try {
+      // Auto-fetch og:image for articles with URLs (if no cover already set)
+      let imageUrl = editImageUrl || null
+      if (editTag === 'article' && !imageUrl) {
+        const articleUrl = extractUrl(editTitle)
+        if (articleUrl) {
+          imageUrl = await fetchOgImage(articleUrl)
+        }
+      }
+
       const { error } = await supabase
         .from('discovery_items')
         .update({
@@ -210,7 +248,7 @@ export const LaListe = () => {
           tag: editTag,
           note: editNote.trim() || null,
           item_date: editDate || null,
-          image_url: editImageUrl || null
+          image_url: imageUrl
         })
         .eq('id', editingId)
 
@@ -540,7 +578,172 @@ export const LaListe = () => {
         </div>
       )}
 
-      {/* Pending items */}
+      {/* Edit form — shown above carousel when editing */}
+      {editingId && (
+        <div style={{
+          background: '#FFFEFA',
+          borderRadius: '2px',
+          padding: '12px 16px',
+          marginBottom: '12px',
+          boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)'
+        }}>
+          <input
+            type="text"
+            value={editTitle}
+            onChange={(e) => setEditTitle(e.target.value)}
+            autoFocus
+            style={{
+              width: '100%',
+              padding: '6px 10px',
+              border: '1px solid #ccc',
+              borderRadius: '3px',
+              fontSize: '16px',
+              fontFamily: "'Source Serif 4', Georgia, serif",
+              fontStyle: 'italic',
+              background: '#FFFEFA',
+              boxSizing: 'border-box',
+              marginBottom: '8px'
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && editTitle.trim()) handleEdit()
+              if (e.key === 'Escape') setEditingId(null)
+            }}
+          />
+          <div style={{ display: 'flex', gap: '10px', marginBottom: '8px', flexWrap: 'wrap' }}>
+            <TagAutocomplete
+              value={editTag}
+              onChange={setEditTag}
+              style={{ width: '160px' }}
+            />
+            <input
+              type="text"
+              value={editDate}
+              onChange={(e) => setEditDate(e.target.value)}
+              placeholder="Date"
+              maxLength={40}
+              style={{
+                padding: '4px 8px',
+                border: '1px solid #ccc',
+                borderRadius: '3px',
+                fontSize: '16px',
+                fontFamily: "'Source Serif 4', Georgia, serif",
+                fontStyle: 'italic',
+                background: '#FFFEFA',
+                width: '120px'
+              }}
+            />
+            <input
+              type="text"
+              value={editNote}
+              onChange={(e) => setEditNote(e.target.value)}
+              placeholder="Note (optional)"
+              maxLength={280}
+              style={{
+                flex: 1,
+                minWidth: '120px',
+                padding: '4px 8px',
+                border: '1px solid #ccc',
+                borderRadius: '3px',
+                fontSize: '16px',
+                fontFamily: "'Source Serif 4', Georgia, serif",
+                fontStyle: 'italic',
+                background: '#FFFEFA'
+              }}
+            />
+          </div>
+          {editTag !== 'other' && (
+            <div style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              {editImageUrl ? (
+                <>
+                  <CoverThumbnail imageUrl={editImageUrl} tag={editTag} />
+                  {TAG_TO_MEDIA_TYPE[editTag] && (
+                    <button
+                      type="button"
+                      onClick={() => { setCoverSearchContext('edit'); setShowCoverSearch(true) }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: '#4A7BA7', padding: '2px 0' }}
+                    >
+                      Change
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setEditImageUrl('')}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: '#999', padding: '2px 0' }}
+                  >
+                    Remove
+                  </button>
+                </>
+              ) : TAG_TO_MEDIA_TYPE[editTag] ? (
+                <button
+                  type="button"
+                  onClick={() => { setCoverSearchContext('edit'); setShowCoverSearch(true) }}
+                  style={{
+                    background: 'none',
+                    border: '1px dashed #ccc',
+                    borderRadius: '3px',
+                    cursor: 'pointer',
+                    padding: '6px 10px',
+                    fontSize: '12px',
+                    color: '#999',
+                    fontStyle: 'italic'
+                  }}
+                >
+                  Search cover...
+                </button>
+              ) : (
+                <input
+                  type="url"
+                  value={editImageUrl}
+                  onChange={(e) => setEditImageUrl(e.target.value)}
+                  placeholder="Paste image URL..."
+                  style={{
+                    padding: '4px 8px',
+                    border: '1px solid #ccc',
+                    borderRadius: '3px',
+                    fontSize: '16px',
+                    fontStyle: 'italic',
+                    background: '#FFFEFA',
+                    width: '200px'
+                  }}
+                />
+              )}
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={handleEdit}
+              disabled={!editTitle.trim()}
+              style={{
+                padding: '6px 16px',
+                background: editTitle.trim() ? '#7A3B2E' : '#ccc',
+                color: '#FFF',
+                border: 'none',
+                borderRadius: '3px',
+                fontSize: '13px',
+                cursor: editTitle.trim() ? 'pointer' : 'not-allowed'
+              }}
+            >
+              Save
+            </button>
+            <button
+              onClick={() => setEditingId(null)}
+              style={{
+                padding: '6px 12px',
+                background: '#F5F1EB',
+                border: '1px solid #CCC',
+                borderRadius: '3px',
+                fontSize: '13px',
+                cursor: 'pointer',
+                color: '#555'
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Pending items — coverflow carousel */}
       {filteredPending.length === 0 && filteredDone.length === 0 && recommendations.length === 0 ? (
         <EmptyStateFantom />
       ) : (
@@ -549,292 +752,24 @@ export const LaListe = () => {
             <div style={{ textAlign: 'center', padding: '20px', fontStyle: 'italic', color: '#777' }}>
               No {TAG_LABELS[filterTag] || filterTag} items yet.
             </div>
-          ) : (
-            <StaggeredList style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {filteredPending.map((item, index) => (
-                <StaggerItem key={item.id}>
-                {editingId === item.id ? (
-                  /* Inline edit form */
-                  <div
-                    style={{
-                      background: '#FFFEFA',
-                      borderRadius: '2px',
-                      padding: '12px 16px',
-                      boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)'
-                    }}
-                  >
-                    <input
-                      type="text"
-                      value={editTitle}
-                      onChange={(e) => setEditTitle(e.target.value)}
-                      autoFocus
-                      style={{
-                        width: '100%',
-                        padding: '6px 10px',
-                        border: '1px solid #ccc',
-                        borderRadius: '3px',
-                        fontSize: '16px',
-                        fontFamily: "'Source Serif 4', Georgia, serif",
-                        fontStyle: 'italic',
-                        background: '#FFFEFA',
-                        boxSizing: 'border-box',
-                        marginBottom: '8px'
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && editTitle.trim()) handleEdit()
-                        if (e.key === 'Escape') setEditingId(null)
-                      }}
-                    />
-                    <div style={{ display: 'flex', gap: '10px', marginBottom: '8px', flexWrap: 'wrap' }}>
-                      <TagAutocomplete
-                        value={editTag}
-                        onChange={setEditTag}
-                        style={{ width: '160px' }}
-                      />
-                      <input
-                        type="text"
-                        value={editDate}
-                        onChange={(e) => setEditDate(e.target.value)}
-                        placeholder="Date"
-                        maxLength={40}
-                        style={{
-                          padding: '4px 8px',
-                          border: '1px solid #ccc',
-                          borderRadius: '3px',
-                          fontSize: '16px',
-                          fontFamily: "'Source Serif 4', Georgia, serif",
-                          fontStyle: 'italic',
-                          background: '#FFFEFA',
-                          width: '120px'
-                        }}
-                      />
-                      <input
-                        type="text"
-                        value={editNote}
-                        onChange={(e) => setEditNote(e.target.value)}
-                        placeholder="Note (optional)"
-                        maxLength={280}
-                        style={{
-                          flex: 1,
-                          minWidth: '120px',
-                          padding: '4px 8px',
-                          border: '1px solid #ccc',
-                          borderRadius: '3px',
-                          fontSize: '16px',
-                          fontFamily: "'Source Serif 4', Georgia, serif",
-                          fontStyle: 'italic',
-                          background: '#FFFEFA'
-                        }}
-                      />
-                    </div>
-                    {editTag !== 'other' && (
-                      <div style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        {editImageUrl ? (
-                          <>
-                            <CoverThumbnail imageUrl={editImageUrl} tag={editTag} />
-                            {TAG_TO_MEDIA_TYPE[editTag] && (
-                              <button
-                                type="button"
-                                onClick={() => { setCoverSearchContext('edit'); setShowCoverSearch(true) }}
-                                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: '#4A7BA7', padding: '2px 0' }}
-                              >
-                                Change
-                              </button>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => setEditImageUrl('')}
-                              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: '#999', padding: '2px 0' }}
-                            >
-                              Remove
-                            </button>
-                          </>
-                        ) : TAG_TO_MEDIA_TYPE[editTag] ? (
-                          <button
-                            type="button"
-                            onClick={() => { setCoverSearchContext('edit'); setShowCoverSearch(true) }}
-                            style={{
-                              background: 'none',
-                              border: '1px dashed #ccc',
-                              borderRadius: '3px',
-                              cursor: 'pointer',
-                              padding: '6px 10px',
-                              fontSize: '12px',
-                              color: '#999',
-                              fontStyle: 'italic'
-                            }}
-                          >
-                            Search cover...
-                          </button>
-                        ) : (
-                          <input
-                            type="url"
-                            value={editImageUrl}
-                            onChange={(e) => setEditImageUrl(e.target.value)}
-                            placeholder="Paste image URL..."
-                            style={{
-                              padding: '4px 8px',
-                              border: '1px solid #ccc',
-                              borderRadius: '3px',
-                              fontSize: '16px',
-                              fontStyle: 'italic',
-                              background: '#FFFEFA',
-                              width: '200px'
-                            }}
-                          />
-                        )}
-                      </div>
-                    )}
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <button
-                        onClick={handleEdit}
-                        disabled={!editTitle.trim()}
-                        style={{
-                          padding: '6px 16px',
-                          background: editTitle.trim() ? '#7A3B2E' : '#ccc',
-                          color: '#FFF',
-                          border: 'none',
-                          borderRadius: '3px',
-                          fontSize: '13px',
-                          cursor: editTitle.trim() ? 'pointer' : 'not-allowed'
-                        }}
-                      >
-                        Save
-                      </button>
-                      <button
-                        onClick={() => setEditingId(null)}
-                        style={{
-                          padding: '6px 12px',
-                          background: '#F5F1EB',
-                          border: '1px solid #CCC',
-                          borderRadius: '3px',
-                          fontSize: '13px',
-                          cursor: 'pointer',
-                          color: '#555'
-                        }}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  /* Normal item display */
-                  <div
-                    className="review-card"
-                    data-index={index}
-                    style={{
-                      background: '#FFFEFA',
-                      borderRadius: '2px',
-                      padding: '10px 16px',
-                      boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)',
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      gap: '10px',
-                      position: 'relative',
-                      zIndex: openMenuId === item.id ? 5 : 1
-                    }}
-                  >
-                    {/* Checkbox */}
-                    <button
-                      onClick={() => handleToggleDone(item)}
-                      style={{
-                        background: 'none',
-                        border: '1.5px solid #BBB',
-                        borderRadius: '3px',
-                        width: '18px',
-                        height: '18px',
-                        minWidth: '18px',
-                        cursor: 'pointer',
-                        marginTop: '2px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        padding: 0
-                      }}
-                      title="Mark as done"
-                    />
-
-                    {/* Content */}
-                    <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <CoverThumbnail imageUrl={item.image_url} tag={item.tag} />
-                      <span style={{ fontSize: '14px', fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>
-                        {linkifyText(item.title)}
-                      </span>
-                      {item.item_date && (
-                        <span style={{ fontSize: '11px', color: '#A89F91', fontStyle: 'italic', flexShrink: 0 }}>{item.item_date}</span>
-                      )}
-                    </div>
-
-                    {/* Overflow menu */}
-                    <div ref={openMenuId === item.id ? menuRef : null} style={{ position: 'relative', flexShrink: 0 }}>
-                      <button
-                        onClick={() => setOpenMenuId(openMenuId === item.id ? null : item.id)}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          cursor: 'pointer',
-                          padding: '2px 6px',
-                          fontSize: '16px',
-                          color: '#A89F91',
-                          lineHeight: 1,
-                          letterSpacing: '1px'
-                        }}
-                        aria-label="Actions"
-                      >
-                        &middot;&middot;&middot;
-                      </button>
-                      {openMenuId === item.id && (
-                        <div style={{
-                          position: 'absolute',
-                          top: '100%',
-                          right: 0,
-                          background: '#FFFEFA',
-                          borderRadius: '4px',
-                          boxShadow: '0 2px 12px rgba(0, 0, 0, 0.12)',
-                          padding: '4px 0',
-                          minWidth: '100px',
-                          zIndex: 10
-                        }}>
-                          <button
-                            onClick={() => { startEdit(item); setOpenMenuId(null) }}
-                            style={{
-                              display: 'block',
-                              width: '100%',
-                              background: 'none',
-                              border: 'none',
-                              padding: '8px 16px',
-                              fontSize: '14px',
-                              color: '#2C2C2C',
-                              cursor: 'pointer',
-                              textAlign: 'left'
-                            }}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => { handleDelete(item.id); setOpenMenuId(null) }}
-                            style={{
-                              display: 'block',
-                              width: '100%',
-                              background: 'none',
-                              border: 'none',
-                              padding: '8px 16px',
-                              fontSize: '14px',
-                              color: '#C75D5D',
-                              cursor: 'pointer',
-                              textAlign: 'left'
-                            }}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-                </StaggerItem>
-              ))}
-            </StaggeredList>
+          ) : filteredPending.length > 0 && (
+            <CoverflowCarousel
+              items={filteredPending.map(i => ({
+                id: i.id,
+                imageUrl: i.image_url,
+                title: i.title,
+                tag: i.tag,
+              }))}
+              onToggleDone={(item) => {
+                const fullItem = items.find(i => i.id === item.id)
+                if (fullItem) handleToggleDone(fullItem)
+              }}
+              onEdit={(item) => {
+                const fullItem = items.find(i => i.id === item.id)
+                if (fullItem) startEdit(fullItem)
+              }}
+              onDelete={(id) => handleDelete(id)}
+            />
           )}
 
           {/* Done section */}

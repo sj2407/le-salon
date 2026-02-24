@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useParams, useNavigate } from 'react-router-dom'
-import { AnimatePresence, motion as Motion } from 'framer-motion'
+import { motion as Motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { CardDisplay } from '../components/CardDisplay'
@@ -9,7 +9,6 @@ import { FriendWishlist } from '../components/FriendWishlist'
 import { ReviewsDisplay } from '../components/ReviewsDisplay'
 import { TAG_ICONS } from '../lib/reviewConstants'
 import { ExpandedReviewText } from '../components/review-comments/ExpandedReviewText'
-import { useSwipeNavigation, tabSlideVariants, tabSlideTransition } from '../lib/useSwipeNavigation'
 import { GearSix } from '@phosphor-icons/react'
 
 const FRIEND_TABS = ['card', 'reviews', 'wishlist']
@@ -27,7 +26,6 @@ export const FriendCard = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [activeTab, setActiveTab] = useState('card')
-  const { containerRef, swipeHandlers, direction, handleTabClick } = useSwipeNavigation(FRIEND_TABS, activeTab, setActiveTab)
   const [showProfile, setShowProfile] = useState(false)
   const profileBackdropRef = useRef(null)
 
@@ -397,7 +395,7 @@ export const FriendCard = () => {
   return (
     <div className="container">
 
-      <div ref={containerRef} {...swipeHandlers} style={{ touchAction: 'pan-y', overscrollBehaviorX: 'none', minHeight: 'calc(100vh - 120px)' }}>
+      <div style={{ minHeight: 'calc(100vh - 120px)' }}>
         {loading ? (
           <div className="loading">Loading card...</div>
         ) : error ? (
@@ -431,7 +429,7 @@ export const FriendCard = () => {
               {FRIEND_TABS.map(tab => (
                 <button
                   key={tab}
-                  onClick={() => handleTabClick(tab)}
+                  onClick={() => setActiveTab(tab)}
                   style={{
                     background: 'none',
                     border: 'none',
@@ -471,17 +469,7 @@ export const FriendCard = () => {
             </div>
 
             {/* Tab Content */}
-            <div style={{ marginTop: '-20px', overflow: 'hidden' }}>
-              <AnimatePresence mode="wait" initial={false} custom={direction.current}>
-                <Motion.div
-                  key={activeTab}
-                  custom={direction.current}
-                  variants={tabSlideVariants}
-                  initial="enter"
-                  animate="center"
-                  exit="exit"
-                  transition={tabSlideTransition}
-                >
+            <div style={{ marginTop: '-20px' }}>
                   {activeTab === 'card' && (
                     <div style={{ marginTop: '-30px' }}>
                       <div className="container">
@@ -531,9 +519,6 @@ export const FriendCard = () => {
                   {activeTab === 'wishlist' && (
                     <FriendWishlist friendId={friendId} friendName={friendProfile?.display_name} />
                   )}
-
-                </Motion.div>
-              </AnimatePresence>
             </div>
           </>
         ) : null}
