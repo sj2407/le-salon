@@ -142,7 +142,7 @@ export const CardBack = ({
               onClick={handleMarkRead}
               style={{
                 padding: '8px 16px',
-                background: '#2C2C2C',
+                background: '#7A3B2E',
                 color: '#FFF',
                 border: 'none',
                 borderRadius: '3px',

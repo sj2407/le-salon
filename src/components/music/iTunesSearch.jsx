@@ -92,7 +92,7 @@ export const ITunesSearch = ({ isOpen, onClose, onSelect, initialQuery = '' }) =
       <div
         style={{
           background: '#FFFEFA',
-          border: '1px solid #333',
+          border: '1px solid #E8DCC8',
           borderRadius: '8px',
           padding: '16px',
           width: '300px',

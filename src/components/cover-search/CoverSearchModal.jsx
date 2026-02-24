@@ -107,7 +107,6 @@ export const CoverSearchModal = ({ isOpen, onClose, onSelect, initialQuery = '',
       <div
         style={{
           background: '#FFFEFA',
-          border: '1px solid #333',
           borderRadius: '8px',
           padding: '16px',
           width: '300px',
@@ -115,7 +114,7 @@ export const CoverSearchModal = ({ isOpen, onClose, onSelect, initialQuery = '',
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+          boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)',
         }}
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => {

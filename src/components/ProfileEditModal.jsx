@@ -420,7 +420,7 @@ export const ProfileEditModal = ({ onClose }) => {
             style={{
               flex: 1,
               padding: '8px 14px',
-              background: '#2C2C2C',
+              background: '#7A3B2E',
               color: '#FFFEFA',
               border: 'none',
               borderRadius: '3px',

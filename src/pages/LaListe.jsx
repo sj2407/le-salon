@@ -512,7 +512,7 @@ export const LaListe = () => {
               disabled={!newTitle.trim()}
               style={{
                 padding: '8px 20px',
-                background: newTitle.trim() ? '#2C2C2C' : '#ccc',
+                background: newTitle.trim() ? '#7A3B2E' : '#ccc',
                 color: '#FFF',
                 border: 'none',
                 borderRadius: '3px',
@@ -691,7 +691,7 @@ export const LaListe = () => {
                         disabled={!editTitle.trim()}
                         style={{
                           padding: '6px 16px',
-                          background: editTitle.trim() ? '#2C2C2C' : '#ccc',
+                          background: editTitle.trim() ? '#7A3B2E' : '#ccc',
                           color: '#FFF',
                           border: 'none',
                           borderRadius: '3px',

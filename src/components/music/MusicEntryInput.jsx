@@ -57,7 +57,7 @@ export const MusicEntryInput = ({ value, metadata, onChange, onRemove, placehold
         style={{
           padding: '8px 12px',
           background: '#F5F1EB',
-          border: '1.5px solid #2C2C2C',
+          border: '1px solid #ccc',
           borderRadius: '3px',
           cursor: 'pointer',
           fontSize: '13px',

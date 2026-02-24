@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { AnimatePresence, motion as Motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import { supabase } from '../lib/supabase'
@@ -7,7 +6,7 @@ import { ParlorText } from '../components/salon/ParlorText'
 import { ParlorResponses } from '../components/salon/ParlorResponses'
 import { CommonplaceBook } from '../components/salon/CommonplaceBook'
 import { HistoricalTimeline } from '../components/salon/HistoricalTimeline'
-import { useSwipeNavigation, tabSlideVariants, tabSlideTransition } from '../lib/useSwipeNavigation'
+import { hapticTap } from '../lib/haptics'
 import { Headphones } from '@phosphor-icons/react'
 
 export const Salon = () => {
@@ -44,10 +43,131 @@ export const Salon = () => {
   const showCommonplaceRef = useRef(false)
   useEffect(() => { showCommonplaceRef.current = showCommonplace }, [showCommonplace])
 
-  // --- Swipe navigation (reuses same hook as MyCorner tabs) ---
-  const weekIds = useMemo(() => allWeeks.map(w => w.id), [allWeeks])
-  const { containerRef, swipeHandlers, direction, handleTabClick } =
-    useSwipeNavigation(weekIds, activeWeekId, setActiveWeekId)
+  // --- Continuous scroll-snap carousel ---
+  // The scroll container is the single source of truth for position.
+  // The slider is a "scrollbar" — it maps 1:1 to scrollLeft in real-time.
+  // Both directions sync via direct DOM manipulation (no React re-renders during drag).
+  const scrollContainerRef = useRef(null)
+  const sliderRef = useRef(null)
+  const activeWeekIdRef = useRef(null)
+  const snapRestoreRef = useRef(null)
+
+  // Scroll event → sync slider + detect active week at midpoint crossings
+  useEffect(() => {
+    const container = scrollContainerRef.current
+    if (!container || allWeeks.length === 0) return
+
+    const handleScroll = () => {
+      // Sync slider position continuously (direct DOM, no re-render)
+      const slider = sliderRef.current
+      if (slider && allWeeks.length > 1) {
+        const maxScroll = container.scrollWidth - container.clientWidth
+        if (maxScroll > 0) {
+          slider.value = String((container.scrollLeft / maxScroll) * (allWeeks.length - 1))
+        }
+      }
+
+      // Detect active week when rounded index changes
+      const slideWidth = container.clientWidth
+      if (slideWidth > 0) {
+        const index = Math.round(container.scrollLeft / slideWidth)
+        const week = allWeeks[index]
+        if (week && week.id !== activeWeekIdRef.current) {
+          activeWeekIdRef.current = week.id
+          setActiveWeekId(week.id)
+          hapticTap()
+        }
+      }
+    }
+
+    container.addEventListener('scroll', handleScroll, { passive: true })
+    return () => container.removeEventListener('scroll', handleScroll)
+  }, [allWeeks])
+
+  // Initial scroll to latest week (instant, no haptic)
+  useEffect(() => {
+    if (allWeeks.length === 0) return
+    activeWeekIdRef.current = allWeeks[allWeeks.length - 1].id
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const c = scrollContainerRef.current
+        if (c) c.scrollLeft = c.scrollWidth
+        const s = sliderRef.current
+        if (s) s.value = String(allWeeks.length - 1)
+      })
+    })
+  }, [allWeeks.length])
+
+  // Prevent browser back/forward on horizontal trackpad swipes
+  useEffect(() => {
+    const container = scrollContainerRef.current
+    if (!container) return
+    const handleWheel = (e) => {
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) e.preventDefault()
+    }
+    container.addEventListener('wheel', handleWheel, { passive: false })
+    return () => container.removeEventListener('wheel', handleWheel)
+  }, [allWeeks.length])
+
+  // Slider drag → scroll container (continuous, real-time)
+  const handleSliderInput = useCallback((e) => {
+    const container = scrollContainerRef.current
+    if (!container) return
+    // Disable snap while dragging so text tracks finger smoothly
+    container.style.scrollSnapType = 'none'
+    const value = Number(e.target.value)
+    const maxScroll = container.scrollWidth - container.clientWidth
+    container.scrollLeft = (value / Math.max(allWeeks.length - 1, 1)) * maxScroll
+    // Re-enable snap + snap to nearest week after drag stops
+    clearTimeout(snapRestoreRef.current)
+    snapRestoreRef.current = setTimeout(() => {
+      container.style.scrollSnapType = 'x mandatory'
+      const slideWidth = container.clientWidth
+      const targetIndex = Math.round(container.scrollLeft / slideWidth)
+      container.scrollTo({ left: targetIndex * slideWidth, behavior: 'smooth' })
+    }, 150)
+  }, [allWeeks.length])
+
+  // Timeline bar tap → smooth scroll (scroll event syncs slider automatically)
+  const handleWeekSelect = useCallback((weekId) => {
+    const container = scrollContainerRef.current
+    if (!container) return
+    const index = allWeeks.findIndex(w => w.id === weekId)
+    if (index < 0) return
+    container.scrollTo({ left: index * container.clientWidth, behavior: 'smooth' })
+  }, [allWeeks])
+
+  // Mouse drag for desktop (touch is native scroll-snap)
+  const dragRef = useRef(null)
+
+  const onPointerDown = useCallback((e) => {
+    if (e.pointerType === 'touch') return
+    const container = scrollContainerRef.current
+    if (!container) return
+    dragRef.current = { x: e.clientX, scrollLeft: container.scrollLeft }
+    container.style.scrollSnapType = 'none'
+    container.style.cursor = 'grabbing'
+    container.setPointerCapture(e.pointerId)
+  }, [])
+
+  const onPointerMove = useCallback((e) => {
+    if (!dragRef.current || e.pointerType === 'touch') return
+    const container = scrollContainerRef.current
+    if (!container) return
+    container.scrollLeft = dragRef.current.scrollLeft - (e.clientX - dragRef.current.x)
+  }, [])
+
+  const onPointerUp = useCallback((e) => {
+    if (!dragRef.current || e.pointerType === 'touch') return
+    dragRef.current = null
+    const container = scrollContainerRef.current
+    if (!container) return
+    container.style.scrollSnapType = 'x mandatory'
+    container.style.cursor = ''
+    const slideWidth = container.clientWidth
+    const targetIndex = Math.round(container.scrollLeft / slideWidth)
+    container.scrollTo({ left: targetIndex * slideWidth, behavior: 'smooth' })
+  }, [])
 
   // --- Data fetching ---
 
@@ -473,7 +593,7 @@ export const Salon = () => {
               <HistoricalTimeline
                 weeks={allWeeks}
                 activeWeekId={activeWeekId}
-                onWeekSelect={handleTabClick}
+                onWeekSelect={handleWeekSelect}
               />
             </div>
           )}
@@ -557,43 +677,50 @@ export const Salon = () => {
           </div>
         </div>
 
-        {/* SWIPEABLE MIDDLE: essay carousel */}
+        {/* SCROLL-SNAP CAROUSEL: glide between weeks */}
         <div
-          ref={containerRef}
-          {...swipeHandlers}
+          ref={scrollContainerRef}
+          className="hide-scrollbar"
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={onPointerUp}
           style={{
             flex: 1,
             minHeight: 0,
-            maxHeight: '49vh',
-            overflowY: 'auto',
-            overflowX: 'clip',
+            maxHeight: '47.5vh',
+            overflowX: 'auto',
+            overflowY: 'hidden',
+            display: 'flex',
+            scrollSnapType: 'x mandatory',
             WebkitOverflowScrolling: 'touch',
+            overscrollBehaviorX: 'contain',
             borderTop: '1px solid #E8DCC8',
-            paddingTop: '12px',
             background: '#FFFEFA',
             borderRadius: '4px',
-            touchAction: 'pan-y',
-            overscrollBehaviorX: 'none',
+            cursor: 'grab',
           }}
         >
-          <AnimatePresence mode="wait" initial={false} custom={direction.current}>
-            {activeWeek && (
-              <Motion.div
-                key={activeWeek.id}
-                custom={direction.current}
-                variants={tabSlideVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={tabSlideTransition}
-              >
-                <ParlorText salonWeek={activeWeek} hideTitle textSize={textSize} />
-              </Motion.div>
-            )}
-          </AnimatePresence>
+          {allWeeks.map(week => (
+            <div
+              key={week.id}
+              style={{
+                flex: '0 0 100%',
+                width: '100%',
+                scrollSnapAlign: 'start',
+                scrollSnapStop: 'always',
+                overflowY: 'auto',
+                WebkitOverflowScrolling: 'touch',
+                overscrollBehavior: 'contain',
+                paddingTop: '12px',
+              }}
+            >
+              <ParlorText salonWeek={week} hideTitle textSize={textSize} />
+            </div>
+          ))}
         </div>
 
-        {/* Week slider — smooth scrub between weeks */}
+        {/* Week slider */}
         {allWeeks.length > 1 && (() => {
           const activeIndex = allWeeks.findIndex(w => w.id === activeWeekId)
           return (
@@ -615,19 +742,14 @@ export const Salon = () => {
                 {activeIndex + 1}/{allWeeks.length}
               </span>
               <input
+                ref={sliderRef}
                 type="range"
                 min="0"
                 max={allWeeks.length - 1}
-                step="1"
-                value={activeIndex >= 0 ? activeIndex : allWeeks.length - 1}
-                onChange={(e) => {
-                  const idx = Number(e.target.value)
-                  const targetWeek = allWeeks[idx]
-                  if (targetWeek && targetWeek.id !== activeWeekId) {
-                    handleTabClick(targetWeek.id)
-                  }
-                }}
-                className="salon-slider"
+                step="0.001"
+                defaultValue={allWeeks.length - 1}
+                onInput={handleSliderInput}
+                className="salon-slider salon-slider-week"
                 style={{ flex: 1 }}
                 aria-label="Browse weeks"
               />

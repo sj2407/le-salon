@@ -383,7 +383,7 @@ input, textarea, select {
 
 input:focus, textarea:focus, select:focus {
   outline: none;
-  border-color: #2C2C2C;
+  border-color: #7A3B2E;
 }
 
 button:focus, button:active {
@@ -402,10 +402,10 @@ button {
   font-size: 14px;
   font-weight: 400;
   padding: 10px 20px;
-  border: 1.5px solid #2C2C2C;
+  border: 1.5px solid #D4C9B8;
   border-radius: 3px;
   background: #FFFEFA;
-  color: #2C2C2C;
+  color: #5C4033;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -419,12 +419,12 @@ button:active {
 }
 
 button.primary {
-  background: #2C2C2C;
+  background: #7A3B2E;
   color: #FFFEFA;
 }
 
 button.primary:hover {
-  background: #1a1a1a;
+  background: #5C2E23;
 }
 
 /* Container */
@@ -820,7 +820,7 @@ nav {
 
 /* Filter Pills - Handmade Feel */
 .filter-pill {
-  border: 1.5px solid #2C2C2C;
+  border: 1.5px solid #D4C9B8;
   border-radius: 14px 16px 15px 17px; /* Slightly uneven for handmade feel */
   cursor: pointer;
   transition: all 0.2s;
@@ -1041,6 +1041,18 @@ nav {
   border-radius: 50%;
   background: #7A3B2E;
   border: none;
+}
+
+/* Week slider thumb */
+.salon-slider-week::-webkit-slider-thumb {
+  width: 10px;
+  height: 10px;
+  margin-top: -4.5px;
+}
+
+.salon-slider-week::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
 }
 
 /* Mic pulse animation for dictation */

@@ -66,12 +66,11 @@ export const FeedbackModal = ({ onClose }) => {
       <div
         style={{
           background: '#FFFEFA',
-          border: '2px solid #2C2C2C',
           borderRadius: '4px',
           padding: '32px',
           maxWidth: '500px',
           width: '90%',
-          boxShadow: '4px 4px 0 #2C2C2C'
+          boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)'
         }}
         onClick={(e) => e.stopPropagation()}
       >

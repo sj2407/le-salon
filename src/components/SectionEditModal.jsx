@@ -177,23 +177,22 @@ export const SectionEditModal = ({ category, entries, onSave, onClose }) => {
       <div
         style={{
           background: '#FFFEFA',
-          border: '1px solid #2C2C2C',
           borderRadius: '4px',
-          padding: '20px',
+          padding: '14px',
           width: '90%',
           maxWidth: '400px',
           maxHeight: '80vh',
           overflow: 'auto',
-          boxShadow: '4px 4px 0 #2C2C2C'
+          boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)'
         }}
       >
-        <h3 className="handwritten" style={{ fontSize: '24px', marginBottom: '20px', marginTop: 0 }}>
+        <h3 className="handwritten" style={{ fontSize: '22px', marginBottom: '10px', marginTop: 0, textAlign: 'center' }}>
           {titleText}
         </h3>
 
         {config.subcategories.length > 0 ? (
           config.subcategories.map(sub => (
-            <div key={sub} style={{ marginBottom: '16px' }}>
+            <div key={sub} style={{ marginBottom: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
                 <label style={{ fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>
                   {sub}
@@ -205,7 +204,7 @@ export const SectionEditModal = ({ category, entries, onSave, onClose }) => {
                     padding: '2px 8px',
                     fontSize: '14px',
                     background: '#FFFEFA',
-                    border: '1px solid #2C2C2C',
+                    border: '1px solid #ccc',
                     borderRadius: '3px',
                     cursor: 'pointer'
                   }}
@@ -235,7 +234,7 @@ export const SectionEditModal = ({ category, entries, onSave, onClose }) => {
                           padding: '8px 12px',
                           border: '1px solid #ccc',
                           borderRadius: '3px',
-                          fontSize: '14px'
+                          fontSize: '16px'
                         }}
                       />
                       {formData[sub].length > 1 && (
@@ -271,20 +270,20 @@ export const SectionEditModal = ({ category, entries, onSave, onClose }) => {
               padding: '12px',
               border: '1px solid #ccc',
               borderRadius: '3px',
-              fontSize: '14px',
+              fontSize: '16px',
               resize: 'vertical',
               boxSizing: 'border-box'
             }}
           />
         )}
 
-        <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
+        <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
           <button
             onClick={handleSave}
             style={{
               flex: 1,
-              padding: '10px 16px',
-              background: '#2C2C2C',
+              padding: '8px 14px',
+              background: '#7A3B2E',
               color: '#FFFEFA',
               border: 'none',
               borderRadius: '3px',
@@ -298,9 +297,9 @@ export const SectionEditModal = ({ category, entries, onSave, onClose }) => {
             onClick={onClose}
             style={{
               flex: 1,
-              padding: '10px 16px',
+              padding: '8px 14px',
               background: '#FFFEFA',
-              border: '1px solid #2C2C2C',
+              border: '1px solid #ccc',
               borderRadius: '3px',
               cursor: 'pointer',
               fontSize: '14px'

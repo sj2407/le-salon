@@ -159,7 +159,7 @@ export const AdminFeedback = () => {
                           padding: '6px 12px',
                           fontSize: '12px',
                           background: item.is_read ? '#D0E0D0' : '#FFFEFA',
-                          border: '1.5px solid #2C2C2C',
+                          border: '1px solid #ccc',
                           borderRadius: '3px',
                           cursor: 'pointer',
                           fontWeight: 500

@@ -207,7 +207,7 @@ export const CardEdit = ({ entries, displayName, onSave, onCancel }) => {
                       fontSize: '16px',
                       lineHeight: '1',
                       background: '#FFFEFA',
-                      border: '1.5px solid #2C2C2C',
+                      border: '1px solid #ccc',
                       borderRadius: '3px',
                       cursor: 'pointer'
                     }}

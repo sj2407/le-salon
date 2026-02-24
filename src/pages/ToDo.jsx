@@ -87,6 +87,7 @@ export const ToDo = () => {
   const [description, setDescription] = useState('')
   const [dateText, setDateText] = useState('')
   const [city, setCity] = useState('')
+  const [cityDropdownOpen, setCityDropdownOpen] = useState(false)
   const [location, setLocation] = useState('')
   const [price, setPrice] = useState('')
   const [error, setError] = useState('')
@@ -590,18 +591,18 @@ export const ToDo = () => {
           <div
             style={{
               background: '#FFFEFA',
-              border: '2px solid #2C2C2C',
-              borderRadius: '4px',
-              padding: '32px',
-              maxWidth: '500px',
+              borderRadius: '3px',
+              padding: '14px',
+              maxWidth: '400px',
               width: '90%',
               maxHeight: '90vh',
               overflowY: 'auto',
-              boxShadow: '4px 4px 0 #2C2C2C'
+              boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)'
             }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => { e.stopPropagation(); setCityDropdownOpen(false) }}
+            className="profile-edit-compact"
           >
-            <h2 className="handwritten" style={{ fontSize: '32px', marginBottom: '24px' }}>
+            <h2 className="handwritten" style={{ fontSize: '22px', marginBottom: '10px', marginTop: 0, textAlign: 'center' }}>
               {editingActivity ? 'Edit Activity' : 'Add Activity'}
             </h2>
 
@@ -629,11 +630,11 @@ export const ToDo = () => {
                 />
               </div>
 
-              <div className="form-group">
+              <div className="form-group" style={{ position: 'relative' }}>
                 <label className="form-label">City</label>
-                <select
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setCityDropdownOpen(!cityDropdownOpen) }}
                   style={{
                     width: '100%',
                     padding: '8px 10px',
@@ -641,16 +642,56 @@ export const ToDo = () => {
                     borderRadius: '3px',
                     background: '#FFFEFA',
                     fontSize: '16px',
-                    fontFamily: 'Source Serif 4, Georgia, serif'
+                    fontFamily: "'Source Serif 4', Georgia, serif",
+                    fontStyle: 'italic',
+                    fontWeight: 400,
+                    color: city ? '#2C2C2C' : '#999',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    boxSizing: 'border-box'
                   }}
                 >
-                  <option value="">Select city</option>
-                  {CITY_OPTIONS.map((cityOption) => (
-                    <option key={cityOption} value={cityOption}>
-                      {cityOption}
-                    </option>
-                  ))}
-                </select>
+                  {city || 'Select city'}
+                  <span style={{ fontSize: '10px', color: '#999' }}>▾</span>
+                </button>
+                {cityDropdownOpen && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    right: 0,
+                    background: '#FFFEFA',
+                    borderRadius: '0 0 4px 4px',
+                    boxShadow: '2px 3px 12px rgba(0, 0, 0, 0.15)',
+                    zIndex: 10,
+                    maxHeight: '200px',
+                    overflowY: 'auto'
+                  }}>
+                    {['', ...CITY_OPTIONS].map((opt) => (
+                      <div
+                        key={opt}
+                        onClick={() => { setCity(opt); setCityDropdownOpen(false) }}
+                        style={{
+                          padding: '8px 12px',
+                          cursor: 'pointer',
+                          fontFamily: "'Source Serif 4', Georgia, serif",
+                          fontSize: '15px',
+                          fontStyle: 'italic',
+                          color: opt ? '#2C2C2C' : '#999',
+                          background: opt === city ? '#F5F0EB' : 'transparent',
+                          transition: 'background 0.15s'
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = '#F5F0EB' }}
+                        onMouseLeave={(e) => { if (opt !== city) e.currentTarget.style.background = 'transparent' }}
+                      >
+                        {opt || 'Select city'}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="form-group">
@@ -677,7 +718,7 @@ export const ToDo = () => {
 
               {error && <div className="error-message">{error}</div>}
 
-              <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
+              <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
                 <button type="submit" className="primary" style={{ flex: 1 }}>
                   Save
                 </button>
