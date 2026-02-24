@@ -6,11 +6,11 @@ import { useMagnetic } from '../hooks/useMagnetic'
  * Uses framer-motion MotionValues — no React re-renders, smooth 60fps.
  * The inner section-box keeps all its existing CSS (sway, hover, tape).
  */
-export const AnimatedSectionWrapper = ({ children }) => {
+export const AnimatedSectionWrapper = ({ children, style }) => {
   const { ref, x, y } = useMagnetic()
 
   return (
-    <Motion.div ref={ref} style={{ x, y }}>
+    <Motion.div ref={ref} style={{ x, y, display: 'grid', ...style }}>
       {children}
     </Motion.div>
   )

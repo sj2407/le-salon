@@ -1,6 +1,4 @@
-# Le Salon — App Store Launch Checklist
-
-**Goal**: Submit to Apple App Store by ~Feb 19, 2026
+# Le Salon — Launch Checklist
 
 ---
 
@@ -14,33 +12,36 @@
 
 ## 2. Security Sweep
 
-Full audit completed Feb 14, 2026. Items marked with findings that need action.
+Full audit completed Feb 14, 2026. Re-audited Feb 24, 2026.
 
 ### 2A. Secrets & Credentials
 
 - [x] `.env` is gitignored and was never committed to git history
-- [x] `.mcp.json` reverted to `${SUPABASE_ACCESS_TOKEN}` env var (no longer hardcoded)
 - [x] `.env.example` documents all required env vars without real values
 - [x] `VITE_SUPABASE_ANON_KEY` is public by design (Supabase anon key, embedded in browser bundle) — no action needed
 - [x] `RESEND_API_KEY` is only in `.env` (gitignored) and Supabase Vault — not exposed
 - [x] No hardcoded secrets found in any source file
 - [x] `npm audit` — 0 vulnerabilities (255 dependencies)
+- [x] `.mcp.json` has hardcoded access token — **accepted risk** (file is gitignored, repo is private). Token was briefly in git history but repo access is restricted.
 
 ### 2B. RLS Policies — FIXED
 
-- [x] `notifications` INSERT policy tightened: `WITH CHECK (auth.uid() = actor_id)` — users can only create notifications as themselves
-- [x] `newsletters` INSERT policy tightened: `WITH CHECK (auth.uid() = user_id)` — users can only create their own newsletters
+- [x] `notifications` INSERT policy tightened: `WITH CHECK (auth.uid() = actor_id)`
+- [x] `newsletters` INSERT policy tightened: `WITH CHECK (auth.uid() = user_id)`
 - [x] `newsletter_items` INSERT policy tightened: requires newsletter ownership via EXISTS check
 - [x] 4 functions fixed with `SET search_path = public`: `sync_profile_email`, `handle_new_user`, `send_weekly_newsletter`, `preview_weekly_newsletter`
 
 ### 2C. Auth Configuration
 
-- [ ] **FIX: Leaked password protection is DISABLED** — Supabase can check passwords against HaveIBeenPwned.org. Enable in Supabase Dashboard → Auth → Settings. See: https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection
+- [x] Leaked password protection enabled (HaveIBeenPwned check) — enabled Feb 24, 2026
 - [x] Auth tokens managed entirely by Supabase SDK (no manual JWT handling)
 - [x] No auth tokens stored in localStorage — Supabase handles session storage
 - [x] `localStorage` only used for non-sensitive UI data (text size, cached week content)
-- [ ] Review Supabase redirect URL allowlist — ensure only your production domain and localhost are listed
-- [ ] Review session expiry / refresh token settings in Supabase Auth config
+- [ ] Review Supabase redirect URL allowlist (Dashboard > Auth > URL Configuration). Should be:
+  - **Site URL:** `https://le-salon.vercel.app`
+  - **Redirect URLs:** `http://localhost:5173/**` and `https://le-salon.vercel.app/**`
+  - App uses `window.location.origin` + `/account` (email change) and `/reset-password` (password reset)
+- [ ] Review session expiry / refresh token settings (Dashboard > Auth > Settings). Defaults: 1h access token, 1 week refresh token.
 
 ### 2D. XSS & Injection
 
@@ -63,31 +64,46 @@ Full audit completed Feb 14, 2026. Items marked with findings that need action.
 
 ### 2G. HTTP Security Headers — FIXED
 
-- [x] Content-Security-Policy added in `vercel.json` — restricts script/style/img/media/connect sources to self + known domains (Supabase, Deezer, Google Fonts)
-- [x] X-Frame-Options: DENY — prevents clickjacking
+- [x] Content-Security-Policy added in `vercel.json`
+- [x] X-Frame-Options: DENY
 - [x] X-Content-Type-Options: nosniff
 - [x] Referrer-Policy: strict-origin-when-cross-origin
 - [x] Permissions-Policy: camera=(), geolocation=(), microphone=(self)
-- [x] No source maps in production build (verified — none generated)
+- [x] No source maps in production build
 
-### 2H. Edge Cases
+### 2H. Edge Functions — FIXED Feb 24, 2026
 
-- [ ] Test: What happens when a user deletes their account? Are their notifications, reviews, activities properly cascaded?
+- [x] TMDB API key moved from URL query param to Authorization Bearer header (`cover-search/index.ts`)
+- [x] All 3 edge functions verify JWT (defense-in-depth + `verify_jwt` deployment flag)
+- [x] Secrets stored in Supabase Vault, not hardcoded
+- [x] CORS is `*` — **accepted**: JWT-based auth means wildcard CORS doesn't enable CSRF (attacker can't read victim's token cross-origin)
+- [x] `cover-search` edge function deployed (v3) with TMDB Bearer header fix — Feb 24, 2026
+
+### 2I. Edge Cases
+
+- [ ] Test: Account deletion cascades (notifications, reviews, activities)
 - [ ] Test: Expired/revoked session — does the app redirect to sign-in gracefully?
 - [ ] Test: Concurrent sessions (same account, two browsers) — any state conflicts?
-- [ ] Test: What happens if a friend is unfriended — are their recommendations, notes, wishlist claims cleaned up?
+- [ ] Test: Unfriending cleanup — recommendations, notes, wishlist claims
 
-## 3. UI/UX Polish
-- [ ] Investigate card flip animation (research via Mobbin for inspiration)
-- [ ] Add meaningful micro-animations (page transitions, list items, buttons)
-- [ ] Review mobile responsiveness across screen sizes
-- [ ] Test touch interactions (swipe, long press, pull to refresh if applicable)
-- [ ] Ensure all loading states have proper feedback (skeletons, spinners)
-- [ ] Ensure all error states have clear user-friendly messages
-- [ ] Review typography and spacing consistency
-- [ ] Dark mode consideration (nice-to-have for App Store)
+## 3. Code Quality Fixes — Feb 24, 2026
 
-## 4. App Store Prep (after above)
+- [x] Salon.jsx: race condition on fast week swipe — stale fetch no longer overwrites current week data (`currentWeekIdRef` guard)
+- [x] FriendCard.jsx: null guard on `friendProfile` in `handleUpdateReviewComment` and `handleDeleteReviewComment`
+- [x] useSpeechRecognition.js: language toggle bug — `start()` now reads `lang` via ref instead of stale closure; also stops existing instance before creating new one
+- [x] DictationModal.jsx: language toggle delay 100ms → 200ms to match ref update timing
+
+## 4. UI/UX Polish
+
+- [x] Card flip animation (3D marginalia flip)
+- [x] Micro-animations: page transitions, toast notifications, list cascade fade-in, haptic feedback
+- [x] Touch interactions: swipe tab navigation, scroll-snap carousel, haptics
+- [ ] Review mobile responsiveness across screen sizes (ongoing)
+- [ ] Ensure all loading states have proper feedback (skeletons vs. "Loading...")
+- [ ] Ensure all error states have clear user-friendly messages (some async ops fail silently)
+- [ ] Dark mode consideration (nice-to-have)
+
+## 5. App Store Prep (after above)
 - [ ] PWA / native wrapper setup (Capacitor? PWA?)
 - [ ] App icons and splash screens at required resolutions
 - [ ] App Store screenshots and description
@@ -98,4 +114,4 @@ Full audit completed Feb 14, 2026. Items marked with findings that need action.
 
 ---
 
-*Updated: Feb 14, 2026*
+*Updated: Feb 24, 2026*

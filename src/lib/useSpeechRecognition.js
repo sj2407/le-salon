@@ -12,6 +12,8 @@ export const useSpeechRecognition = ({ lang = 'en-US', continuous = true } = {})
   const [interimTranscript, setInterimTranscript] = useState('')
   const [error, setError] = useState(null)
   const recognitionRef = useRef(null)
+  const langRef = useRef(lang)
+  useEffect(() => { langRef.current = lang }, [lang])
 
   const isSupported = !!SpeechRecognition
 
@@ -21,6 +23,12 @@ export const useSpeechRecognition = ({ lang = 'en-US', continuous = true } = {})
       return
     }
 
+    // Stop any existing instance before starting a new one
+    if (recognitionRef.current) {
+      recognitionRef.current.stop()
+      recognitionRef.current = null
+    }
+
     setError(null)
     setTranscript('')
     setInterimTranscript('')
@@ -28,7 +36,7 @@ export const useSpeechRecognition = ({ lang = 'en-US', continuous = true } = {})
     const recognition = new SpeechRecognition()
     recognition.continuous = continuous
     recognition.interimResults = true
-    recognition.lang = lang
+    recognition.lang = langRef.current
 
     recognition.onresult = (event) => {
       let final = ''
@@ -61,7 +69,7 @@ export const useSpeechRecognition = ({ lang = 'en-US', continuous = true } = {})
     recognitionRef.current = recognition
     recognition.start()
     setIsListening(true)
-  }, [lang, continuous])
+  }, [continuous])
 
   const stop = useCallback(() => {
     if (recognitionRef.current) {

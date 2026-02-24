@@ -6,6 +6,7 @@ import { ParlorText } from '../components/salon/ParlorText'
 import { ParlorResponses } from '../components/salon/ParlorResponses'
 import { CommonplaceBook } from '../components/salon/CommonplaceBook'
 import { HistoricalTimeline } from '../components/salon/HistoricalTimeline'
+import { CalligraphyTitle } from '../components/salon/CalligraphyTitle'
 import { hapticTap } from '../lib/haptics'
 import { Headphones } from '@phosphor-icons/react'
 
@@ -40,6 +41,9 @@ export const Salon = () => {
   // Ref to avoid stale closure in realtime callback
   const showCommonplaceRef = useRef(false)
   useEffect(() => { showCommonplaceRef.current = showCommonplace }, [showCommonplace])
+
+  // Ref to guard against stale fetch results during rapid week swiping
+  const currentWeekIdRef = useRef(null)
 
   // --- Continuous scroll-snap carousel ---
   // Pure arithmetic: scrollLeft / slideWidth = which slide is visible.
@@ -225,6 +229,7 @@ export const Salon = () => {
       .order('created_at', { ascending: true })
 
     if (error) return
+    if (currentWeekIdRef.current !== weekId) return
     setResponses(data || [])
   }, [])
 
@@ -236,6 +241,7 @@ export const Salon = () => {
       .order('created_at', { ascending: false })
 
     if (error) return
+    if (currentWeekIdRef.current !== weekId) return
     setCommonplaceEntries(data || [])
   }, [])
 
@@ -361,6 +367,7 @@ export const Salon = () => {
         const latestIndex = weeks.length - 1
         const latestWeek = weeks[latestIndex]
         setActiveIndex(latestIndex)
+        currentWeekIdRef.current = latestWeek.id
 
         await Promise.all([
           fetchResponses(latestWeek.id),
@@ -380,6 +387,7 @@ export const Salon = () => {
   const prevActiveWeekIdRef = useRef(null)
   useEffect(() => {
     if (!activeWeekId || activeWeekId === prevActiveWeekIdRef.current) return
+    currentWeekIdRef.current = activeWeekId
     // Skip on initial load (handled by loadData above)
     if (prevActiveWeekIdRef.current !== null) {
       fetchResponses(activeWeekId)
@@ -590,18 +598,8 @@ export const Salon = () => {
           )}
 
           <div style={{ display: 'flex', alignItems: 'center', margin: '0 0 8px 0' }}>
-            <h2
-              key={activeIndex}
-              className="handwritten salon-title-fade"
-              style={{
-                fontSize: '26px',
-                textAlign: 'left',
-                margin: 0,
-                color: '#2C2C2C',
-                flex: 1
-              }}
-            >
-              {activeWeek?.parlor_title}
+            <h2 key={activeIndex} style={{ margin: 0, flex: 1 }}>
+              <CalligraphyTitle text={activeWeek?.parlor_title} fontSize={26} />
             </h2>
             {/* Audio play/pause */}
             <button

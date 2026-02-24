@@ -279,6 +279,7 @@ export const FriendCard = () => {
   }
 
   const handleUpdateReviewComment = async (commentId, content) => {
+    if (!friendProfile?.id) return
     try {
       const { error } = await supabase
         .from('review_comments')
@@ -294,6 +295,7 @@ export const FriendCard = () => {
   }
 
   const handleDeleteReviewComment = async (commentId) => {
+    if (!friendProfile?.id) return
     try {
       const { error } = await supabase
         .from('review_comments')

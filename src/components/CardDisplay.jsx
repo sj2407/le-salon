@@ -615,7 +615,7 @@ export const CardDisplay = ({
             if (isFriendView && isHidden) return null
             const wrapperProps = getSectionWrapperProps(section, isFullWidth, isHidden, index)
             return (
-              <AnimatedSectionWrapper key={section}>
+              <AnimatedSectionWrapper key={section} style={isFullWidth ? { gridColumn: '1 / -1' } : undefined}>
                 <div className={wrapperProps.className} style={wrapperProps.style}>
                   {renderSectionContent(section, isFullWidth)}
                 </div>

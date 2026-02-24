@@ -166,9 +166,10 @@ export const DictationModal = ({ isOpen, onClose, onAcceptEntries, mode = 'card'
     const newLang = lang === 'en-US' ? 'fr-FR' : 'en-US'
     setLang(newLang)
     // Restart recognition with new language if currently listening
+    // 200ms allows React to re-render and update the lang ref
     if (isListening) {
       stop()
-      setTimeout(() => start(), 100)
+      setTimeout(() => start(), 200)
     }
   }
 
