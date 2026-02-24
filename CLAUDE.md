@@ -61,6 +61,8 @@ Refer to the README.md "Design System" section for:
 - **Change ONLY what is requested** - when asked to move one element, move only that element. Use `transform: translateY()` to move elements visually without affecting layout of siblings.
 - **Don't guess** - understand the exact structure before making changes. Read the code first.
 - **My Corner views are the benchmark** - when there's a discrepancy between My Corner and Friend views, always adjust Friend to match My Corner, never the reverse.
+- **Math over intuition** - if a solution needs math (scroll positions, indices, layout), write the equation. Don't reach for DOM heuristics (IntersectionObserver, getBoundingClientRect, data-attribute queries) when arithmetic works: `index = Math.round(scrollLeft / slideWidth)`. If you can't figure out the math, ask for help.
+- **Don't fight React** - never use direct DOM manipulation (`ref.textContent`) for content React also renders. Let React own it (state) or let the DOM own it (no React children). Never both.
 
 ## Shared Components Architecture
 

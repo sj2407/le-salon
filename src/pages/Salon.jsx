@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import { supabase } from '../lib/supabase'
@@ -15,12 +15,10 @@ export const Salon = () => {
 
   // --- All published weeks (sorted by week_of ASC) + active week ---
   const [allWeeks, setAllWeeks] = useState([])
-  const [activeWeekId, setActiveWeekId] = useState(null)
-  const activeWeek = useMemo(
-    () => allWeeks.find(w => w.id === activeWeekId) || null,
-    [allWeeks, activeWeekId]
-  )
-  const isLatestWeek = activeWeekId === allWeeks[allWeeks.length - 1]?.id
+  const [activeIndex, setActiveIndex] = useState(null)
+  const activeWeek = activeIndex !== null ? allWeeks[activeIndex] || null : null
+  const activeWeekId = activeWeek?.id
+  const isLatestWeek = activeIndex === allWeeks.length - 1
 
   const [responses, setResponses] = useState([])
   const [commonplaceEntries, setCommonplaceEntries] = useState([])
@@ -44,80 +42,42 @@ export const Salon = () => {
   useEffect(() => { showCommonplaceRef.current = showCommonplace }, [showCommonplace])
 
   // --- Continuous scroll-snap carousel ---
-  // The scroll container is the single source of truth for position.
-  // The slider is a "scrollbar" — it maps 1:1 to scrollLeft in real-time.
-  // Both directions sync via direct DOM manipulation (no React re-renders during drag).
+  // Pure arithmetic: scrollLeft / slideWidth = which slide is visible.
+  // Slider syncs via direct DOM (no re-render). Title/counter via React state.
   const scrollContainerRef = useRef(null)
   const sliderRef = useRef(null)
-  const titleRef = useRef(null)
-  const weekCounterRef = useRef(null)
-  const activeWeekIdRef = useRef(null)
   const snapRestoreRef = useRef(null)
-  const activeWeekDebounceRef = useRef(null)
+  const lastScrollIndexRef = useRef(null)
 
-  // Scroll event → sync slider + title via direct DOM, debounce state for data fetching
-  useEffect(() => {
+  // Carousel scroll handler: arithmetic index from scroll position
+  const handleCarouselScroll = useCallback(() => {
     const container = scrollContainerRef.current
     if (!container || allWeeks.length === 0) return
 
-    const handleScroll = () => {
-      // Sync slider position continuously (direct DOM, no re-render)
-      const slider = sliderRef.current
-      if (slider && allWeeks.length > 1) {
-        const maxScroll = container.scrollWidth - container.clientWidth
-        if (maxScroll > 0) {
-          slider.value = String((container.scrollLeft / maxScroll) * (allWeeks.length - 1))
-        }
-      }
+    const slideWidth = container.clientWidth
+    if (slideWidth <= 0) return
 
-      // Detect active week: find which slide's left edge is closest to container's left edge
-      const containerLeft = container.getBoundingClientRect().left
-      const slides = container.querySelectorAll('[data-week-id]')
-      let closestSlide = null
-      let closestDist = Infinity
-
-      slides.forEach(slide => {
-        const dist = Math.abs(slide.getBoundingClientRect().left - containerLeft)
-        if (dist < closestDist) {
-          closestDist = dist
-          closestSlide = slide
-        }
-      })
-
-      if (!closestSlide) return
-      const weekId = closestSlide.dataset.weekId
-      const weekTitle = closestSlide.dataset.weekTitle
-      const weekIndex = closestSlide.dataset.weekIndex
-
-      if (weekId && weekId !== activeWeekIdRef.current) {
-        activeWeekIdRef.current = weekId
-        hapticTap()
-
-        // Update title + counter via direct DOM (instant, like slider)
-        if (titleRef.current && weekTitle) titleRef.current.textContent = weekTitle
-        if (weekCounterRef.current && weekIndex) {
-          weekCounterRef.current.textContent = `${Number(weekIndex) + 1}/${allWeeks.length}`
-        }
-
-        // Debounce React state update (for responses/commonplace fetching)
-        clearTimeout(activeWeekDebounceRef.current)
-        activeWeekDebounceRef.current = setTimeout(() => {
-          setActiveWeekId(weekId)
-        }, 200)
-      }
+    // Sync slider continuously (direct DOM, no re-render)
+    const slider = sliderRef.current
+    if (slider && allWeeks.length > 1) {
+      slider.value = String(container.scrollLeft / slideWidth)
     }
 
-    container.addEventListener('scroll', handleScroll, { passive: true })
-    return () => {
-      container.removeEventListener('scroll', handleScroll)
-      clearTimeout(activeWeekDebounceRef.current)
+    // Pure arithmetic: position / slide_width = index
+    const index = Math.round(container.scrollLeft / slideWidth)
+    const clamped = Math.max(0, Math.min(index, allWeeks.length - 1))
+
+    if (clamped !== lastScrollIndexRef.current) {
+      lastScrollIndexRef.current = clamped
+      hapticTap()
+      setActiveIndex(clamped)
     }
-  }, [allWeeks])
+  }, [allWeeks.length])
 
   // Initial scroll to latest week (instant, no haptic)
   useEffect(() => {
     if (allWeeks.length === 0) return
-    activeWeekIdRef.current = String(allWeeks[allWeeks.length - 1].id)
+    lastScrollIndexRef.current = allWeeks.length - 1
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         const c = scrollContainerRef.current
@@ -398,8 +358,9 @@ export const Salon = () => {
       setAllWeeks(weeks)
 
       if (weeks.length > 0) {
-        const latestWeek = weeks[weeks.length - 1]
-        setActiveWeekId(latestWeek.id)
+        const latestIndex = weeks.length - 1
+        const latestWeek = weeks[latestIndex]
+        setActiveIndex(latestIndex)
 
         await Promise.all([
           fetchResponses(latestWeek.id),
@@ -630,8 +591,8 @@ export const Salon = () => {
 
           <div style={{ display: 'flex', alignItems: 'center', margin: '0 0 8px 0' }}>
             <h2
-              ref={titleRef}
-              className="handwritten"
+              key={activeIndex}
+              className="handwritten salon-title-fade"
               style={{
                 fontSize: '26px',
                 textAlign: 'left',
@@ -712,6 +673,7 @@ export const Salon = () => {
         <div
           ref={scrollContainerRef}
           className="hide-scrollbar"
+          onScroll={handleCarouselScroll}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
@@ -732,12 +694,9 @@ export const Salon = () => {
             cursor: 'grab',
           }}
         >
-          {allWeeks.map((week, idx) => (
+          {allWeeks.map((week) => (
             <div
               key={week.id}
-              data-week-id={String(week.id)}
-              data-week-title={week.parlor_title}
-              data-week-index={idx}
               style={{
                 flex: '0 0 100%',
                 width: '100%',
@@ -763,7 +722,7 @@ export const Salon = () => {
               alignItems: 'center',
               gap: '8px',
             }}>
-              <span ref={weekCounterRef} style={{
+              <span style={{
                 fontSize: '8px',
                 color: '#A89F91',
                 whiteSpace: 'nowrap',
@@ -771,7 +730,7 @@ export const Salon = () => {
                 minWidth: '20px',
                 textAlign: 'right',
               }}>
-                {allWeeks.length}/{allWeeks.length}
+                {activeIndex !== null ? activeIndex + 1 : allWeeks.length}/{allWeeks.length}
               </span>
               <input
                 ref={sliderRef}
