@@ -1,17 +1,18 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useParams, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion as Motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { CardDisplay } from '../components/CardDisplay'
 import { FriendWishlist } from '../components/FriendWishlist'
-import { FriendProfile } from '../components/FriendProfile'
 import { ReviewsDisplay } from '../components/ReviewsDisplay'
 import { TAG_ICONS } from '../lib/reviewConstants'
 import { ExpandedReviewText } from '../components/review-comments/ExpandedReviewText'
 import { useSwipeNavigation, tabSlideVariants, tabSlideTransition } from '../lib/useSwipeNavigation'
+import { GearSix } from '@phosphor-icons/react'
 
-const FRIEND_TABS = ['card', 'reviews', 'overlap', 'wishlist', 'profile']
+const FRIEND_TABS = ['card', 'reviews', 'wishlist']
 
 export const FriendCard = () => {
   const { friendId } = useParams()
@@ -27,6 +28,17 @@ export const FriendCard = () => {
   const [error, setError] = useState('')
   const [activeTab, setActiveTab] = useState('card')
   const { containerRef, swipeHandlers, direction, handleTabClick } = useSwipeNavigation(FRIEND_TABS, activeTab, setActiveTab)
+  const [showProfile, setShowProfile] = useState(false)
+  const profileBackdropRef = useRef(null)
+
+  // Escape key to close profile popup
+  useEffect(() => {
+    if (!showProfile) return
+    const handleEscape = (e) => { if (e.key === 'Escape') setShowProfile(false) }
+    window.addEventListener('keydown', handleEscape)
+    return () => window.removeEventListener('keydown', handleEscape)
+  }, [showProfile])
+
   const [cardOverlaps, setCardOverlaps] = useState([])
   const [reviewOverlaps, setReviewOverlaps] = useState([])
   const [activityOverlaps, setActivityOverlaps] = useState([])
@@ -381,25 +393,7 @@ export const FriendCard = () => {
   }
 
   return (
-    <div className="container" style={{ position: 'relative' }}>
-      {/* Back button - positioned top right */}
-      <button
-        onClick={() => navigate('/friends')}
-        style={{
-          position: 'absolute',
-          top: '0',
-          right: '0',
-          background: 'none',
-          border: 'none',
-          fontSize: '13px',
-          color: '#777',
-          cursor: 'pointer',
-          padding: '4px 8px',
-          zIndex: 1
-        }}
-      >
-        Back
-      </button>
+    <div className="container">
 
       <div ref={containerRef} {...swipeHandlers} style={{ touchAction: 'pan-y', overscrollBehaviorX: 'none', minHeight: 'calc(100vh - 120px)' }}>
         {loading ? (
@@ -414,101 +408,63 @@ export const FriendCard = () => {
         ) : friendProfile ? (
           <>
             {/* Tab Navigation */}
-            <div style={{ display: 'flex', gap: '1px', marginBottom: '8px', overflowX: 'auto', paddingLeft: '20px', scrollbarWidth: 'none', msOverflowStyle: 'none' }} className="hide-scrollbar">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1px', marginBottom: '8px', overflowX: 'auto', scrollbarWidth: 'none', msOverflowStyle: 'none' }} className="hide-scrollbar">
               <button
-                onClick={() => handleTabClick('card')}
+                onClick={() => navigate('/friends')}
                 style={{
                   background: 'none',
                   border: 'none',
                   boxShadow: 'none',
                   outline: 'none',
-                  padding: '8px 10px',
+                  padding: '8px 8px',
                   fontSize: '13px',
-                  fontWeight: activeTab === 'card' ? 600 : 400,
-                  color: activeTab === 'card' ? '#2C2C2C' : '#777',
-                  marginBottom: '-2px',
+                  color: '#777',
                   cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  whiteSpace: 'nowrap'
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0
                 }}
               >
-                Card
+                &larr; Back
               </button>
+              {FRIEND_TABS.map(tab => (
+                <button
+                  key={tab}
+                  onClick={() => handleTabClick(tab)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    boxShadow: 'none',
+                    outline: 'none',
+                    padding: '8px 8px',
+                    fontSize: '13px',
+                    fontWeight: activeTab === tab ? 600 : 400,
+                    color: activeTab === tab ? '#2C2C2C' : '#777',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  {tab === 'card' ? 'Card' : tab === 'reviews' ? 'Reviews' : 'Wishlist'}
+                </button>
+              ))}
               <button
-                onClick={() => handleTabClick('reviews')}
+                type="button"
+                onClick={() => setShowProfile(true)}
                 style={{
                   background: 'none',
                   border: 'none',
-                  boxShadow: 'none',
-                  outline: 'none',
-                  padding: '8px 10px',
-                  fontSize: '13px',
-                  fontWeight: activeTab === 'reviews' ? 600 : 400,
-                  color: activeTab === 'reviews' ? '#2C2C2C' : '#777',
-                  marginBottom: '-2px',
                   cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  whiteSpace: 'nowrap'
+                  padding: '6px',
+                  marginLeft: 'auto',
+                  flexShrink: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  WebkitTapHighlightColor: 'transparent',
+                  touchAction: 'manipulation'
                 }}
+                title={`${friendProfile.display_name}'s Profile`}
               >
-                Reviews
-              </button>
-              <button
-                onClick={() => handleTabClick('overlap')}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  boxShadow: 'none',
-                  outline: 'none',
-                  padding: '8px 10px',
-                  fontSize: '13px',
-                  fontWeight: activeTab === 'overlap' ? 600 : 400,
-                  color: activeTab === 'overlap' ? '#2C2C2C' : '#777',
-                  marginBottom: '-2px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                Overlap
-              </button>
-              <button
-                onClick={() => handleTabClick('wishlist')}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  boxShadow: 'none',
-                  outline: 'none',
-                  padding: '8px 10px',
-                  fontSize: '13px',
-                  fontWeight: activeTab === 'wishlist' ? 600 : 400,
-                  color: activeTab === 'wishlist' ? '#2C2C2C' : '#777',
-                  marginBottom: '-2px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                Wishlist
-              </button>
-              <button
-                onClick={() => handleTabClick('profile')}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  boxShadow: 'none',
-                  outline: 'none',
-                  padding: '8px 10px',
-                  fontSize: '13px',
-                  fontWeight: activeTab === 'profile' ? 600 : 400,
-                  color: activeTab === 'profile' ? '#2C2C2C' : '#777',
-                  marginBottom: '-2px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                Profile
+                <GearSix size={18} weight="duotone" color="#7A3B2E" />
               </button>
             </div>
 
@@ -570,113 +526,146 @@ export const FriendCard = () => {
                     />
                   )}
 
-                  {activeTab === 'overlap' && (
-                    <div style={{ maxWidth: '720px', marginLeft: 'auto', marginRight: 'auto', paddingLeft: '40px' }}>
-                      <h2 className="handwritten" style={{ fontSize: '32px', marginTop: '24px', marginBottom: '16px' }}>
-                        What you have in common
-                      </h2>
-
-                      {cardOverlaps.length > 0 && (
-                        <div style={{ marginBottom: '48px', marginLeft: '-20px', background: '#FFFEFA', border: 'none', borderRadius: '2px', padding: '24px', boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)', transform: 'rotate(0.7deg)', animation: 'gentleSway1 5s ease-in-out infinite', position: 'relative' }}>
-                          <h3 style={{ fontSize: '20px', marginBottom: '16px', fontWeight: 600 }}>
-                            Currently Matching
-                          </h3>
-                          <ul style={{ margin: 0, paddingLeft: '20px', listStyleType: 'disc' }}>
-                            {cardOverlaps.map((overlap, index) => (
-                              <li
-                                key={index}
-                                style={{
-                                  fontSize: '15px',
-                                  fontStyle: 'italic',
-                                  marginBottom: '8px',
-                                  lineHeight: 1.6
-                                }}
-                              >
-                                You're both {overlap.category.toLowerCase()}: <strong>{overlap.content}</strong>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-
-                      {reviewOverlaps.length > 0 && (
-                        <div style={{ marginBottom: '48px' }}>
-                          <h3 style={{ fontSize: '20px', marginBottom: '16px', fontWeight: 600 }}>
-                            Shared Reviews
-                          </h3>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                            {reviewOverlaps.map((overlap, index) => (
-                              <div
-                                key={index}
-                                style={{
-                                  background: '#FFFEFA',
-                                  borderRadius: '3px',
-                                  padding: '16px',
-                                  boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)'
-                                }}
-                              >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                                  <span style={{ fontSize: '18px' }}>{TAG_ICONS[overlap.tag]}</span>
-                                  <strong style={{ fontSize: '16px' }}>{overlap.title}</strong>
-                                </div>
-                                <div style={{ fontSize: '14px', color: '#666' }}>
-                                  You: <span className="handwritten" style={{ fontSize: '18px', color: '#2C2C2C' }}>{overlap.yourRating}/10</span>
-                                  {' '} • {' '}
-                                  {friendProfile?.display_name}: <span className="handwritten" style={{ fontSize: '18px', color: '#2C2C2C' }}>{overlap.friendRating}/10</span>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {activityOverlaps.length > 0 && (
-                        <div style={{ marginBottom: '48px' }}>
-                          <h3 style={{ fontSize: '20px', marginBottom: '16px', fontWeight: 600 }}>
-                            Shared Activity Interest
-                          </h3>
-                          <ul style={{ margin: 0, paddingLeft: '20px', listStyleType: 'disc' }}>
-                            {activityOverlaps.map((activity, index) => (
-                              <li
-                                key={index}
-                                style={{
-                                  fontSize: '15px',
-                                  fontStyle: 'italic',
-                                  marginBottom: '8px',
-                                  lineHeight: 1.6
-                                }}
-                              >
-                                You're both interested in: <strong>{activity.description}</strong>
-                                {activity.date_text && ` (${activity.date_text})`}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-
-                      {cardOverlaps.length === 0 && reviewOverlaps.length === 0 && activityOverlaps.length === 0 && (
-                        <div style={{ padding: '20px 0' }}>
-                          <p style={{ fontSize: '16px', color: '#666', margin: 0, fontStyle: 'italic' }}>
-                            No overlaps yet — check back as you both update your cards!
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
                   {activeTab === 'wishlist' && (
                     <FriendWishlist friendId={friendId} friendName={friendProfile?.display_name} />
                   )}
 
-                  {activeTab === 'profile' && (
-                    <FriendProfile friendId={friendId} friendName={friendProfile?.display_name} />
-                  )}
                 </Motion.div>
               </AnimatePresence>
             </div>
           </>
         ) : null}
       </div>
+
+      {/* Friend Profile Popup — identical styling to ProfileEditModal */}
+      {showProfile && friendProfile && createPortal(
+        <Motion.div
+          ref={profileBackdropRef}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.4)',
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'center',
+            zIndex: 9999,
+            overflowY: 'auto',
+            paddingTop: '20px',
+            paddingBottom: '20px'
+          }}
+          onClick={(e) => { if (e.target === profileBackdropRef.current) setShowProfile(false) }}
+        >
+          <Motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            style={{
+              background: '#FFFEFA',
+              borderRadius: '3px',
+              padding: '14px',
+              width: '90%',
+              maxWidth: '400px',
+              boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)',
+            }}
+            className="profile-edit-compact"
+          >
+            <h3 className="handwritten" style={{ fontSize: '22px', marginBottom: '10px', marginTop: 0, textAlign: 'center' }}>
+              {friendProfile.display_name}&rsquo;s Profile
+            </h3>
+
+            {/* Photo */}
+            {friendProfile.profile_photo_url && (
+              <div style={{ textAlign: 'center', marginBottom: '10px' }}>
+                <img
+                  src={friendProfile.profile_photo_url}
+                  alt={friendProfile.display_name}
+                  style={{
+                    width: '70px',
+                    height: '70px',
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                    objectPosition: friendProfile.profile_photo_position || '50% 50%',
+                    filter: 'contrast(1.1) saturate(1.2) brightness(1.05)',
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Read-only fields */}
+            {friendProfile.location && (
+              <div className="form-group">
+                <label className="form-label">Location</label>
+                <div style={{ padding: '8px 10px', background: '#F5F1EB', borderRadius: '3px', fontSize: '14px' }}>
+                  {friendProfile.location}
+                </div>
+              </div>
+            )}
+
+            {friendProfile.bio && (
+              <div className="form-group">
+                <label className="form-label">About / Interests</label>
+                <div style={{ padding: '8px 10px', background: '#F5F1EB', borderRadius: '3px', fontSize: '14px', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
+                  {friendProfile.bio}
+                </div>
+              </div>
+            )}
+
+            {friendProfile.favorite_books && (
+              <div className="form-group">
+                <label className="form-label">Favorite Books</label>
+                <div style={{ padding: '8px 10px', background: '#F5F1EB', borderRadius: '3px', fontSize: '14px' }}>
+                  {friendProfile.favorite_books}
+                </div>
+              </div>
+            )}
+
+            {friendProfile.favorite_artists && (
+              <div className="form-group">
+                <label className="form-label">Favorite Artists</label>
+                <div style={{ padding: '8px 10px', background: '#F5F1EB', borderRadius: '3px', fontSize: '14px' }}>
+                  {friendProfile.favorite_artists}
+                </div>
+              </div>
+            )}
+
+            {friendProfile.astro_sign && (
+              <div className="form-group">
+                <label className="form-label">Astro Sign</label>
+                <div style={{ padding: '8px 10px', background: '#F5F1EB', borderRadius: '3px', fontSize: '14px' }}>
+                  {friendProfile.astro_sign}
+                </div>
+              </div>
+            )}
+
+            {friendProfile.spirit_animal && (
+              <div className="form-group">
+                <label className="form-label">Spirit Animal</label>
+                <div style={{ padding: '8px 10px', background: '#F5F1EB', borderRadius: '3px', fontSize: '14px' }}>
+                  {friendProfile.spirit_animal}
+                </div>
+              </div>
+            )}
+
+            {friendProfile.favorite_quote && (
+              <div className="form-group">
+                <label className="form-label">Favorite Quote</label>
+                <div style={{ padding: '8px 10px', background: '#F5F1EB', borderRadius: '3px', fontSize: '14px', whiteSpace: 'pre-wrap', lineHeight: 1.5, fontStyle: 'italic' }}>
+                  {friendProfile.favorite_quote}
+                </div>
+              </div>
+            )}
+          </Motion.div>
+        </Motion.div>,
+        document.body
+      )}
     </div>
   )
 }
