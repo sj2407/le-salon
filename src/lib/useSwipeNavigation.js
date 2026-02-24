@@ -1,4 +1,5 @@
 import { useRef, useCallback, useEffect } from 'react'
+import { hapticTap } from './haptics'
 
 const SWIPE_THRESHOLD = 50
 const DIRECTION_LOCK_RATIO = 1.5
@@ -40,11 +41,13 @@ export function useSwipeNavigation(tabs, activeTab, setActiveTab) {
       direction.current = 1
       cooldownRef.current = true
       setActiveTab(currentTabs[currentIndex + 1])
+      hapticTap()
       setTimeout(() => { cooldownRef.current = false }, SWIPE_COOLDOWN_MS)
     } else if (deltaX > 0 && currentIndex > 0) {
       direction.current = -1
       cooldownRef.current = true
       setActiveTab(currentTabs[currentIndex - 1])
+      hapticTap()
       setTimeout(() => { cooldownRef.current = false }, SWIPE_COOLDOWN_MS)
     }
   }, [setActiveTab])

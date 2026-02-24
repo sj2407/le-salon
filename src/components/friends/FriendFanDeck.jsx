@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion as Motion } from 'framer-motion'
+import { hapticTap } from '../../lib/haptics'
 
 /**
  * Fanned card deck — cards fan out to fill available width.
@@ -156,7 +157,7 @@ export const FriendFanDeck = ({ friends }) => {
               onDragEnd={(_, info) => {
                 const dist = Math.abs(info.offset.x)
                 const vel = Math.abs(info.velocity.x)
-                if (dist > 50 || vel > 250) cycleToBack()
+                if (dist > 50 || vel > 250) { cycleToBack(); hapticTap() }
                 setDragStart(null)
               }}
               onClick={() => {

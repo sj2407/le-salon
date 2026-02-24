@@ -14,6 +14,8 @@ import { CardBack } from './marginalia/CardBack'
 import { CardFold } from './marginalia/CardFold'
 import { Eye, EyeSlash, Microphone, DotsSixVertical } from '@phosphor-icons/react'
 import { Reorder, useDragControls } from 'framer-motion'
+import { AnimatedSectionWrapper } from './AnimatedSectionWrapper'
+import { hapticTap } from '../lib/haptics'
 
 const CATEGORY_ICONS = {
   'Reading': ReadingIcon,
@@ -304,7 +306,7 @@ export const CardDisplay = ({
         {/* Drag handle for reordering — own card only */}
         {dragControls && (
           <div
-            onPointerDown={(e) => { e.preventDefault(); dragControls.start(e) }}
+            onPointerDown={(e) => { e.preventDefault(); hapticTap(); dragControls.start(e) }}
             style={{
               position: 'absolute',
               top: '6px',
@@ -613,9 +615,11 @@ export const CardDisplay = ({
             if (isFriendView && isHidden) return null
             const wrapperProps = getSectionWrapperProps(section, isFullWidth, isHidden, index)
             return (
-              <div key={section} className={wrapperProps.className} style={wrapperProps.style}>
-                {renderSectionContent(section, isFullWidth)}
-              </div>
+              <AnimatedSectionWrapper key={section}>
+                <div className={wrapperProps.className} style={wrapperProps.style}>
+                  {renderSectionContent(section, isFullWidth)}
+                </div>
+              </AnimatedSectionWrapper>
             )
           })}
         </div>

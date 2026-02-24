@@ -1,21 +1,28 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { AnimatePresence, motion as Motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import { supabase } from '../lib/supabase'
 import { ParlorText } from '../components/salon/ParlorText'
 import { ParlorResponses } from '../components/salon/ParlorResponses'
 import { CommonplaceBook } from '../components/salon/CommonplaceBook'
+import { HistoricalTimeline } from '../components/salon/HistoricalTimeline'
+import { useSwipeNavigation, tabSlideVariants, tabSlideTransition } from '../lib/useSwipeNavigation'
 import { Headphones } from '@phosphor-icons/react'
-
-const formatWeekDate = (dateStr) => {
-  const date = new Date(dateStr + 'T00:00:00')
-  return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })
-}
 
 export const Salon = () => {
   const { user } = useAuth()
   const toast = useToast()
-  const [salonWeek, setSalonWeek] = useState(null)
+
+  // --- All published weeks (sorted by week_of ASC) + active week ---
+  const [allWeeks, setAllWeeks] = useState([])
+  const [activeWeekId, setActiveWeekId] = useState(null)
+  const activeWeek = useMemo(
+    () => allWeeks.find(w => w.id === activeWeekId) || null,
+    [allWeeks, activeWeekId]
+  )
+  const isLatestWeek = activeWeekId === allWeeks[allWeeks.length - 1]?.id
+
   const [responses, setResponses] = useState([])
   const [commonplaceEntries, setCommonplaceEntries] = useState([])
   const [loading, setLoading] = useState(true)
@@ -25,9 +32,9 @@ export const Salon = () => {
   const [textSize, setTextSize] = useState(() => {
     try {
       const saved = localStorage.getItem('salon_text_size')
-      return saved ? Number(saved) : 13
+      return saved ? Number(saved) : 12
     } catch {
-      return 13
+      return 12
     }
   })
   const [audioState, setAudioState] = useState('idle') // idle | loading | playing | paused
@@ -37,9 +44,14 @@ export const Salon = () => {
   const showCommonplaceRef = useRef(false)
   useEffect(() => { showCommonplaceRef.current = showCommonplace }, [showCommonplace])
 
+  // --- Swipe navigation (reuses same hook as MyCorner tabs) ---
+  const weekIds = useMemo(() => allWeeks.map(w => w.id), [allWeeks])
+  const { containerRef, swipeHandlers, direction, handleTabClick } =
+    useSwipeNavigation(weekIds, activeWeekId, setActiveWeekId)
+
   // --- Data fetching ---
 
-  const fetchCurrentWeek = useCallback(async () => {
+  const fetchAllPublishedWeeks = useCallback(async () => {
     const today = new Date().toISOString().split('T')[0]
 
     // Which Monday are we in? (UTC)
@@ -51,41 +63,36 @@ export const Salon = () => {
 
     // Cache is valid only if it was set during the same week
     try {
-      const cached = localStorage.getItem('salon_week_v2')
+      const cached = localStorage.getItem('salon_weeks_all_v2')
       if (cached) {
         const parsed = JSON.parse(cached)
-        if (parsed._weekMonday === thisMondayStr) {
-          return parsed
+        if (parsed._weekMonday === thisMondayStr && Array.isArray(parsed.weeks)) {
+          return parsed.weeks
         }
       }
     } catch {
-      // Corrupted cache or localStorage unavailable — fall through to network fetch
+      // Corrupted cache — fall through to network fetch
     }
 
     const { data, error } = await supabase
       .from('salon_weeks')
       .select('*')
       .lte('week_of', today)
-      .order('week_of', { ascending: false })
-      .limit(1)
-      .single()
+      .order('week_of', { ascending: true })
 
-    if (error && error.code !== 'PGRST116') {
-      // silently handled
+    if (error) return []
+
+    const weeks = data || []
+    try {
+      localStorage.setItem('salon_weeks_all_v2', JSON.stringify({
+        weeks,
+        _weekMonday: thisMondayStr
+      }))
+    } catch {
+      // localStorage full — continue without caching
     }
 
-    if (data) {
-      try {
-        localStorage.setItem('salon_week_v2', JSON.stringify({
-          ...data,
-          _weekMonday: thisMondayStr
-        }))
-      } catch {
-        // localStorage full or unavailable — continue without caching
-      }
-    }
-
-    return data || null
+    return weeks
   }, [])
 
   const fetchNextWeek = useCallback(async (currentWeekOf) => {
@@ -99,62 +106,6 @@ export const Salon = () => {
 
     setNextWeekTitle(data?.parlor_title || null)
   }, [])
-
-  const handleAudioToggle = async () => {
-    // If already playing, pause
-    if (audioState === 'playing' && audioRef.current) {
-      audioRef.current.pause()
-      setAudioState('paused')
-      return
-    }
-
-    // If paused, resume
-    if (audioState === 'paused' && audioRef.current) {
-      audioRef.current.play()
-      setAudioState('playing')
-      return
-    }
-
-    // Otherwise, try public URL first (cached), then generate via Edge Function
-    setAudioState('loading')
-    try {
-      const publicUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/salon-audio/week-${salonWeek.id}.mp3`
-
-      // Check if cached audio exists
-      const headRes = await fetch(publicUrl, { method: 'HEAD' })
-      let audioUrl = null
-
-      if (headRes.ok) {
-        audioUrl = publicUrl
-      } else {
-        // Generate via Edge Function
-        const { data, error } = await supabase.functions.invoke('tts', {
-          body: { salon_week_id: salonWeek.id }
-        })
-        if (error) throw error
-        if (!data?.url) throw new Error('No audio URL')
-        audioUrl = data.url
-      }
-
-      // Clean up previous audio instance to prevent memory leak
-      if (audioRef.current) {
-        audioRef.current.pause()
-        audioRef.current.onended = null
-        audioRef.current.onerror = null
-        audioRef.current.src = ''
-        audioRef.current = null
-      }
-
-      const audio = new Audio(audioUrl)
-      audioRef.current = audio
-      audio.onended = () => setAudioState('idle')
-      audio.onerror = () => setAudioState('idle')
-      await audio.play()
-      setAudioState('playing')
-    } catch (_err) {
-      setAudioState('idle')
-    }
-  }
 
   const fetchResponses = useCallback(async (weekId) => {
     const { data, error } = await supabase
@@ -179,7 +130,6 @@ export const Salon = () => {
   }, [])
 
   const checkNewCommonplaceEntries = useCallback(async (weekId) => {
-    // Get user's last seen timestamp
     const { data: lastSeenData } = await supabase
       .from('commonplace_last_seen')
       .select('last_seen_at')
@@ -187,7 +137,6 @@ export const Salon = () => {
       .maybeSingle()
 
     if (!lastSeenData) {
-      // User has never opened the commonplace book — any entries are "new"
       const { count } = await supabase
         .from('commonplace_entries')
         .select('*', { count: 'exact', head: true })
@@ -198,7 +147,6 @@ export const Salon = () => {
       return
     }
 
-    // Check for entries newer than last seen
     const { count } = await supabase
       .from('commonplace_entries')
       .select('*', { count: 'exact', head: true })
@@ -209,75 +157,71 @@ export const Salon = () => {
     setHasNewCommonplaceEntries((count || 0) > 0)
   }, [user.id])
 
-  // --- Initial load ---
+  // --- Audio ---
 
-  useEffect(() => {
-    if (!user) return
+  const handleAudioToggle = async () => {
+    if (!activeWeek) return
 
-    const loadData = async () => {
-      setLoading(true)
-      const week = await fetchCurrentWeek()
-      setSalonWeek(week)
+    if (audioState === 'playing' && audioRef.current) {
+      audioRef.current.pause()
+      setAudioState('paused')
+      return
+    }
 
-      if (week) {
-        await Promise.all([
-          fetchResponses(week.id),
-          fetchCommonplaceEntries(week.id),
-          checkNewCommonplaceEntries(week.id),
-          fetchNextWeek(week.week_of)
-        ])
+    if (audioState === 'paused' && audioRef.current) {
+      audioRef.current.play()
+      setAudioState('playing')
+      return
+    }
+
+    setAudioState('loading')
+    try {
+      const publicUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/salon-audio/week-${activeWeek.id}.mp3`
+      const headRes = await fetch(publicUrl, { method: 'HEAD' })
+      let audioUrl = null
+
+      if (headRes.ok) {
+        audioUrl = publicUrl
+      } else {
+        const { data, error } = await supabase.functions.invoke('tts', {
+          body: { salon_week_id: activeWeek.id }
+        })
+        if (error) throw error
+        if (!data?.url) throw new Error('No audio URL')
+        audioUrl = data.url
       }
-      setLoading(false)
+
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current.onended = null
+        audioRef.current.onerror = null
+        audioRef.current.src = ''
+        audioRef.current = null
+      }
+
+      const audio = new Audio(audioUrl)
+      audioRef.current = audio
+      audio.onended = () => setAudioState('idle')
+      audio.onerror = () => setAudioState('idle')
+      await audio.play()
+      setAudioState('playing')
+    } catch (_err) {
+      setAudioState('idle')
     }
+  }
 
-    loadData()
-  }, [user?.id, fetchCurrentWeek, fetchResponses, fetchCommonplaceEntries, checkNewCommonplaceEntries, fetchNextWeek])
-
-  // --- Realtime subscriptions ---
+  // --- Stop audio when switching weeks ---
 
   useEffect(() => {
-    if (!salonWeek) return
-
-    const parlorChannel = supabase
-      .channel(`parlor-responses-${salonWeek.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'parlor_responses',
-          filter: `salon_week_id=eq.${salonWeek.id}`
-        },
-        () => {
-          fetchResponses(salonWeek.id)
-        }
-      )
-      .subscribe()
-
-    const commonplaceChannel = supabase
-      .channel(`commonplace-entries-${salonWeek.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'commonplace_entries',
-          filter: `salon_week_id=eq.${salonWeek.id}`
-        },
-        () => {
-          fetchCommonplaceEntries(salonWeek.id)
-          if (!showCommonplaceRef.current) {
-            setHasNewCommonplaceEntries(true)
-          }
-        }
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(parlorChannel)
-      supabase.removeChannel(commonplaceChannel)
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.onended = null
+      audioRef.current.onerror = null
+      audioRef.current.src = ''
+      audioRef.current = null
     }
-  }, [salonWeek, fetchResponses, fetchCommonplaceEntries])
+    setAudioState('idle')
+  }, [activeWeekId])
 
   // --- Cleanup audio on unmount ---
 
@@ -293,12 +237,100 @@ export const Salon = () => {
     }
   }, [])
 
+  // --- Initial load ---
+
+  useEffect(() => {
+    if (!user) return
+
+    const loadData = async () => {
+      setLoading(true)
+      const weeks = await fetchAllPublishedWeeks()
+      setAllWeeks(weeks)
+
+      if (weeks.length > 0) {
+        const latestWeek = weeks[weeks.length - 1]
+        setActiveWeekId(latestWeek.id)
+
+        await Promise.all([
+          fetchResponses(latestWeek.id),
+          fetchCommonplaceEntries(latestWeek.id),
+          checkNewCommonplaceEntries(latestWeek.id),
+          fetchNextWeek(latestWeek.week_of)
+        ])
+      }
+      setLoading(false)
+    }
+
+    loadData()
+  }, [user?.id, fetchAllPublishedWeeks, fetchResponses, fetchCommonplaceEntries, checkNewCommonplaceEntries, fetchNextWeek])
+
+  // --- Fetch responses/commonplace when swiping to a different week ---
+
+  const prevActiveWeekIdRef = useRef(null)
+  useEffect(() => {
+    if (!activeWeekId || activeWeekId === prevActiveWeekIdRef.current) return
+    // Skip on initial load (handled by loadData above)
+    if (prevActiveWeekIdRef.current !== null) {
+      fetchResponses(activeWeekId)
+      fetchCommonplaceEntries(activeWeekId)
+      checkNewCommonplaceEntries(activeWeekId)
+    }
+    prevActiveWeekIdRef.current = activeWeekId
+  }, [activeWeekId, fetchResponses, fetchCommonplaceEntries, checkNewCommonplaceEntries])
+
+  // --- Realtime subscriptions (scoped to active week) ---
+
+  useEffect(() => {
+    if (!activeWeek) return
+
+    const parlorChannel = supabase
+      .channel(`parlor-responses-${activeWeek.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'parlor_responses',
+          filter: `salon_week_id=eq.${activeWeek.id}`
+        },
+        () => {
+          fetchResponses(activeWeek.id)
+        }
+      )
+      .subscribe()
+
+    const commonplaceChannel = supabase
+      .channel(`commonplace-entries-${activeWeek.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'commonplace_entries',
+          filter: `salon_week_id=eq.${activeWeek.id}`
+        },
+        () => {
+          fetchCommonplaceEntries(activeWeek.id)
+          if (!showCommonplaceRef.current) {
+            setHasNewCommonplaceEntries(true)
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(parlorChannel)
+      supabase.removeChannel(commonplaceChannel)
+    }
+  }, [activeWeek?.id, fetchResponses, fetchCommonplaceEntries])
+
   // --- CRUD: Parlor responses ---
 
   const handleSubmitResponse = async (text) => {
+    if (!activeWeek) return
     const { error } = await supabase
       .from('parlor_responses')
-      .insert({ salon_week_id: salonWeek.id, user_id: user.id, text })
+      .insert({ salon_week_id: activeWeek.id, user_id: user.id, text })
 
     if (error) throw error
   }
@@ -326,9 +358,10 @@ export const Salon = () => {
   // --- CRUD: Commonplace entries ---
 
   const handleSubmitCommonplaceEntry = async (text) => {
+    if (!activeWeek) return
     const { error } = await supabase
       .from('commonplace_entries')
-      .insert({ salon_week_id: salonWeek.id, user_id: user.id, text })
+      .insert({ salon_week_id: activeWeek.id, user_id: user.id, text })
 
     if (error) throw error
   }
@@ -359,7 +392,6 @@ export const Salon = () => {
     setShowCommonplace(true)
     setHasNewCommonplaceEntries(false)
 
-    // Update last seen
     await supabase
       .from('commonplace_last_seen')
       .upsert({ user_id: user.id, last_seen_at: new Date().toISOString() })
@@ -379,9 +411,9 @@ export const Salon = () => {
     )
   }
 
-  // --- Empty state: no salon week ---
+  // --- Empty state: no salon weeks ---
 
-  if (!salonWeek) {
+  if (allWeeks.length === 0) {
     return (
       <div className="container" style={{ textAlign: 'center', paddingTop: '60px' }}>
         <img
@@ -419,7 +451,7 @@ export const Salon = () => {
         padding: '20px 20px 0',
         overflow: 'hidden'
       }}>
-        {/* FIXED TOP: icon + date + title */}
+        {/* FIXED TOP: icon + timeline + title */}
         <div style={{ flexShrink: 0 }}>
           <div style={{ textAlign: 'center', margin: '-16px 0 -24px' }}>
             <img
@@ -434,6 +466,18 @@ export const Salon = () => {
               }}
             />
           </div>
+
+          {/* Historical Timeline */}
+          {allWeeks.length > 1 && (
+            <div style={{ margin: '0 0 6px' }}>
+              <HistoricalTimeline
+                weeks={allWeeks}
+                activeWeekId={activeWeekId}
+                onWeekSelect={handleTabClick}
+              />
+            </div>
+          )}
+
           <div style={{ display: 'flex', alignItems: 'center', margin: '0 0 8px 0' }}>
             <h2
               className="handwritten"
@@ -445,7 +489,7 @@ export const Salon = () => {
                 flex: 1
               }}
             >
-              {salonWeek.parlor_title}
+              {activeWeek?.parlor_title}
             </h2>
             {/* Audio play/pause */}
             <button
@@ -513,21 +557,86 @@ export const Salon = () => {
           </div>
         </div>
 
-        {/* SCROLLABLE MIDDLE: essay body */}
-        <div style={{
-          maxHeight: '50vh',
-          overflowY: 'auto',
-          WebkitOverflowScrolling: 'touch',
-          borderTop: '1px solid #E8DCC8',
-          paddingTop: '12px',
-          background: '#FFFEFA',
-          borderRadius: '4px'
-        }}>
-          <ParlorText salonWeek={salonWeek} hideTitle textSize={textSize} />
+        {/* SWIPEABLE MIDDLE: essay carousel */}
+        <div
+          ref={containerRef}
+          {...swipeHandlers}
+          style={{
+            flex: 1,
+            minHeight: 0,
+            maxHeight: '49vh',
+            overflowY: 'auto',
+            overflowX: 'clip',
+            WebkitOverflowScrolling: 'touch',
+            borderTop: '1px solid #E8DCC8',
+            paddingTop: '12px',
+            background: '#FFFEFA',
+            borderRadius: '4px',
+            touchAction: 'pan-y',
+            overscrollBehaviorX: 'none',
+          }}
+        >
+          <AnimatePresence mode="wait" initial={false} custom={direction.current}>
+            {activeWeek && (
+              <Motion.div
+                key={activeWeek.id}
+                custom={direction.current}
+                variants={tabSlideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={tabSlideTransition}
+              >
+                <ParlorText salonWeek={activeWeek} hideTitle textSize={textSize} />
+              </Motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
-        {/* Next week teaser */}
-        {nextWeekTitle && (
+        {/* Week slider — smooth scrub between weeks */}
+        {allWeeks.length > 1 && (() => {
+          const activeIndex = allWeeks.findIndex(w => w.id === activeWeekId)
+          return (
+            <div style={{
+              flexShrink: 0,
+              padding: '4px 8px 2px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+            }}>
+              <span style={{
+                fontSize: '8px',
+                color: '#A89F91',
+                whiteSpace: 'nowrap',
+                fontStyle: 'italic',
+                minWidth: '20px',
+                textAlign: 'right',
+              }}>
+                {activeIndex + 1}/{allWeeks.length}
+              </span>
+              <input
+                type="range"
+                min="0"
+                max={allWeeks.length - 1}
+                step="1"
+                value={activeIndex >= 0 ? activeIndex : allWeeks.length - 1}
+                onChange={(e) => {
+                  const idx = Number(e.target.value)
+                  const targetWeek = allWeeks[idx]
+                  if (targetWeek && targetWeek.id !== activeWeekId) {
+                    handleTabClick(targetWeek.id)
+                  }
+                }}
+                className="salon-slider"
+                style={{ flex: 1 }}
+                aria-label="Browse weeks"
+              />
+            </div>
+          )
+        })()}
+
+        {/* Next week teaser — only when viewing the most recent week */}
+        {nextWeekTitle && isLatestWeek && (
           <div style={{
             flexShrink: 0,
             padding: '4px 0 0',
@@ -548,7 +657,7 @@ export const Salon = () => {
         {/* FIXED BOTTOM: responses */}
         <div style={{
           flexShrink: 0,
-          borderTop: nextWeekTitle ? 'none' : '1px solid #E8DCC8',
+          borderTop: (nextWeekTitle && isLatestWeek) ? 'none' : '1px solid #E8DCC8',
           paddingBottom: '4px'
         }}>
           <ParlorResponses
@@ -562,8 +671,8 @@ export const Salon = () => {
         </div>
       </div>
 
-      {/* Typewriter — fixed bottom-right of screen */}
-      <button
+      {/* Typewriter FAB + Commonplace Book — hidden for now, will revisit integration */}
+      {/* <button
         className="typewriter-fab"
         onClick={handleOpenCommonplace}
         style={{
@@ -601,7 +710,6 @@ export const Salon = () => {
         )}
       </button>
 
-      {/* Commonplace Book Overlay */}
       <CommonplaceBook
         isOpen={showCommonplace}
         onClose={handleCloseCommonplace}
@@ -610,7 +718,7 @@ export const Salon = () => {
         onSubmit={handleSubmitCommonplaceEntry}
         onEdit={handleEditCommonplaceEntry}
         onDelete={handleDeleteCommonplaceEntry}
-      />
+      /> */}
     </>
   )
 }
