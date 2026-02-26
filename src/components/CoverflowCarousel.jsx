@@ -32,7 +32,7 @@ const parseTitle = (title) => {
 // Responsive card size — ~40% of viewport width, clamped between 180–320px
 const getCardWidth = () => {
   const vw = typeof window !== 'undefined' ? window.innerWidth : 375
-  return Math.min(320, Math.max(180, Math.round(vw * 0.4)))
+  return Math.min(380, Math.max(216, Math.round(vw * 0.48)))
 }
 
 /**
@@ -110,7 +110,7 @@ export const CoverflowCarousel = ({ items, onToggleDone, onEdit, onDelete }) => 
   if (!items || items.length === 0) return null
 
   // Spacing scales with card width
-  const spacing = Math.round(cardW * 0.55)
+  const spacing = Math.round(cardW * 0.28)
 
   return (
     <div
