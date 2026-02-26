@@ -6,12 +6,13 @@ import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { CardDisplay } from '../components/CardDisplay'
 import { FriendWishlist } from '../components/FriendWishlist'
+import { FriendListe } from '../components/FriendListe'
 import { ReviewsDisplay } from '../components/ReviewsDisplay'
 import { TAG_ICONS } from '../lib/reviewConstants'
 import { ExpandedReviewText } from '../components/review-comments/ExpandedReviewText'
 import { GearSix } from '@phosphor-icons/react'
 
-const FRIEND_TABS = ['card', 'reviews', 'wishlist']
+const FRIEND_TABS = ['card', 'reviews', 'liste', 'wishlist']
 
 export const FriendCard = () => {
   const { friendId } = useParams()
@@ -444,7 +445,7 @@ export const FriendCard = () => {
                     whiteSpace: 'nowrap'
                   }}
                 >
-                  {tab === 'card' ? 'Card' : tab === 'reviews' ? 'Reviews' : 'Wishlist'}
+                  {tab === 'card' ? 'Card' : tab === 'reviews' ? 'Reviews' : tab === 'liste' ? 'La Liste' : 'Wishlist'}
                 </button>
               ))}
               <button
@@ -514,6 +515,10 @@ export const FriendCard = () => {
                         />
                       )}
                     />
+                  )}
+
+                  {activeTab === 'liste' && (
+                    <FriendListe friendId={friendId} friendName={friendProfile?.display_name} />
                   )}
 
                   {activeTab === 'wishlist' && (

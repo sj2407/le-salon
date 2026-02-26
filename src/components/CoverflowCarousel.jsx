@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect } from 'react'
+import { Eye, EyeSlash } from '@phosphor-icons/react'
 import { TAG_ICONS } from '../lib/reviewConstants'
 
 const FALLBACK_GRADIENTS = [
@@ -39,7 +40,7 @@ const getCardWidth = () => {
  * 3D coverflow carousel — absolute-positioned, overlapping cards.
  * Center card faces forward, sides fan out behind it.
  */
-export const CoverflowCarousel = ({ items, onToggleDone, onEdit, onDelete }) => {
+export const CoverflowCarousel = ({ items, onToggleDone, onEdit, onDelete, onTogglePrivate }) => {
   const [activeIndex, setActiveIndex] = useState(() => Math.floor(items.length / 2))
   const [openMenuId, setOpenMenuId] = useState(null)
   const [cardW, setCardW] = useState(getCardWidth)
@@ -288,10 +289,10 @@ export const CoverflowCarousel = ({ items, onToggleDone, onEdit, onDelete }) => 
               )}
             </div>
 
-            {/* Done button — empty circle, only on active card */}
-            {offset === 0 && (
+            {/* Done button — empty circle, only on active card, only in owner mode */}
+            {offset === 0 && onToggleDone && (
               <button
-                onClick={(e) => { e.stopPropagation(); onToggleDone?.(item) }}
+                onClick={(e) => { e.stopPropagation(); onToggleDone(item) }}
                 style={{
                   position: 'absolute',
                   bottom: '-8px',
@@ -314,8 +315,38 @@ export const CoverflowCarousel = ({ items, onToggleDone, onEdit, onDelete }) => 
               />
             )}
 
-            {/* Overflow menu — only on active card */}
-            {offset === 0 && (
+            {/* Privacy toggle — only on active card, only in owner mode */}
+            {offset === 0 && onTogglePrivate && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onTogglePrivate(item) }}
+                style={{
+                  position: 'absolute',
+                  bottom: '-8px',
+                  left: '12px',
+                  background: '#FFFEFA',
+                  border: '1px solid #CCC',
+                  borderRadius: '50%',
+                  width: '20px',
+                  height: '20px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: 0,
+                  boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
+                  zIndex: 5,
+                }}
+                title={item.isPrivate ? 'Make visible to friends' : 'Hide from friends'}
+              >
+                {item.isPrivate
+                  ? <EyeSlash size={11} weight="duotone" color="#999" />
+                  : <Eye size={11} weight="duotone" color="#7A3B2E" />
+                }
+              </button>
+            )}
+
+            {/* Overflow menu — only on active card, only in owner mode */}
+            {offset === 0 && (onEdit || onDelete) && (
               <div
                 ref={openMenuId === item.id ? menuRef : null}
                 style={{ position: 'absolute', top: '4px', right: '4px', zIndex: 10 }}

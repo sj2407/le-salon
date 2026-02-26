@@ -204,6 +204,23 @@ export const LaListe = () => {
     }
   }
 
+  const handleTogglePrivate = async (item) => {
+    const fullItem = items.find(i => i.id === item.id)
+    if (!fullItem) return
+    try {
+      const { error } = await supabase
+        .from('discovery_items')
+        .update({ is_private: !fullItem.is_private })
+        .eq('id', item.id)
+
+      if (error) throw error
+      await fetchItems()
+      toast.success(fullItem.is_private ? 'Now visible to friends' : 'Hidden from friends')
+    } catch (_err) {
+      toast.error('Failed to update privacy')
+    }
+  }
+
   const handleDelete = async (itemId) => {
     try {
       const { error } = await supabase
@@ -759,6 +776,7 @@ export const LaListe = () => {
                 imageUrl: i.image_url,
                 title: i.title,
                 tag: i.tag,
+                isPrivate: i.is_private,
               }))}
               onToggleDone={(item) => {
                 const fullItem = items.find(i => i.id === item.id)
@@ -768,6 +786,7 @@ export const LaListe = () => {
                 const fullItem = items.find(i => i.id === item.id)
                 if (fullItem) startEdit(fullItem)
               }}
+              onTogglePrivate={handleTogglePrivate}
               onDelete={(id) => handleDelete(id)}
             />
           )}
