@@ -121,18 +121,16 @@ export const CoverflowCarousel = ({ items, onToggleDone, onEdit, onDelete }) => 
       onPointerCancel={onPointerUp}
       style={{
         position: 'relative',
-        height: `calc(100vh - 240px)`,
+        flex: 1,
         minHeight: `${cardH + 40}px`,
         perspective: '1200px',
         perspectiveOrigin: '50% 50%',
         margin: '0 auto',
+        width: '100%',
         overflow: 'hidden',
         cursor: 'grab',
         touchAction: 'pan-y',
         userSelect: 'none',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
       }}
     >
       {items.map((item, i) => {

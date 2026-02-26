@@ -347,7 +347,7 @@ export const LaListe = () => {
     : doneItems.filter(i => i.tag === filterTag)
 
   return (
-    <div style={{ maxWidth: '720px', position: 'relative' }}>
+    <div style={{ maxWidth: '720px', position: 'relative', display: 'flex', flexDirection: 'column', minHeight: 'calc(100dvh - 160px)' }}>
       <h1 className="handwritten" style={{ fontSize: '42px', marginBottom: '0', marginTop: '8px', marginLeft: '10px', position: 'relative', zIndex: 1, transform: 'translateY(16px)' }}>
         La Liste
       </h1>
@@ -747,7 +747,7 @@ export const LaListe = () => {
       {filteredPending.length === 0 && filteredDone.length === 0 && recommendations.length === 0 ? (
         <EmptyStateFantom />
       ) : (
-        <>
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
           {filteredPending.length === 0 && pendingItems.length > 0 ? (
             <div style={{ textAlign: 'center', padding: '20px', fontStyle: 'italic', color: '#777' }}>
               No {TAG_LABELS[filterTag] || filterTag} items yet.
@@ -927,7 +927,7 @@ export const LaListe = () => {
               )}
             </div>
           )}
-        </>
+        </div>
       )}
 
       {/* From Friends — collapsible section */}
