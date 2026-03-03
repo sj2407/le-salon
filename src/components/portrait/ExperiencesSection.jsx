@@ -131,6 +131,9 @@ export const ExperiencesSection = ({ experiences, isOwner, onExperienceClick, on
           0%, 100% { opacity: 0.5; }
           50% { opacity: 0.8; }
         }
+        @media (prefers-reduced-motion: reduce) {
+          * { animation-duration: 0s !important; }
+        }
         @media (max-width: 500px) {
           /* Stack to 2 columns on narrow screens */
           .portrait-experiences-grid {

@@ -108,7 +108,7 @@ export const ReadingSection = ({ books, readingThemes, onBookClick, onThemeClick
       {/* Currently reading */}
       {currentlyReading && (
         <div
-          onClick={() => onBookClick && onBookClick(currentlyReading)}
+          onClick={(e) => onBookClick && onBookClick(currentlyReading, e)}
           style={{
             display: 'flex',
             gap: '12px',
@@ -163,7 +163,7 @@ export const ReadingSection = ({ books, readingThemes, onBookClick, onThemeClick
           {recentReads.map((book, i) => (
             <div
               key={book.id}
-              onClick={() => onBookClick && onBookClick(book)}
+              onClick={(e) => onBookClick && onBookClick(book, e)}
               onMouseEnter={() => setHoveredBook(i)}
               onMouseLeave={() => setHoveredBook(null)}
               style={{

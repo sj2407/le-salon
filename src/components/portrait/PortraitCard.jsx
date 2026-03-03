@@ -11,6 +11,9 @@ export const PortraitCard = ({ spotifyProfile, books, onImageClick, isOwner }) =
   const moodLabel = spotifyProfile?.mood_label
   const portraitText = spotifyProfile?.portrait_text
 
+  const prefersReduced = typeof window !== 'undefined'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
   // Nothing to show
   if (!moodLabel && !portraitText) return null
 
@@ -44,9 +47,9 @@ export const PortraitCard = ({ spotifyProfile, books, onImageClick, isOwner }) =
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 6 }}
+      initial={prefersReduced ? false : { opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: 'easeOut' }}
+      transition={{ duration: prefersReduced ? 0 : 0.5, ease: 'easeOut' }}
       style={{
         background: '#2C2C2C',
         borderRadius: '12px',
@@ -60,9 +63,9 @@ export const PortraitCard = ({ spotifyProfile, books, onImageClick, isOwner }) =
       <div style={{ position: 'relative', zIndex: 3, maxWidth: hasImages ? '60%' : '100%' }}>
         {moodLabel && (
           <motion.h2
-            initial={{ opacity: 0, y: 6 }}
+            initial={prefersReduced ? false : { opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0, ease: 'easeOut' }}
+            transition={{ duration: prefersReduced ? 0 : 0.5, delay: 0, ease: 'easeOut' }}
             style={{
               margin: '0 0 12px 0',
               fontSize: '48px',
@@ -80,9 +83,9 @@ export const PortraitCard = ({ spotifyProfile, books, onImageClick, isOwner }) =
 
         {portraitText && (
           <motion.p
-            initial={{ opacity: 0, y: 6 }}
+            initial={prefersReduced ? false : { opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.12, ease: 'easeOut' }}
+            transition={{ duration: prefersReduced ? 0 : 0.5, delay: 0, ease: 'easeOut' }}
             style={{
               margin: 0,
               fontSize: '15px',

@@ -2,6 +2,13 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { PortraitDisplay } from '../components/portrait/PortraitDisplay'
+import { BookPopover } from '../components/portrait/BookPopover'
+import { MusicDetailModal } from '../components/portrait/MusicDetailModal'
+import { ReadingDetailModal } from '../components/portrait/ReadingDetailModal'
+import { CreationArchiveModal } from '../components/portrait/CreationArchiveModal'
+import { ExperienceDetailModal } from '../components/portrait/ExperienceDetailModal'
+import { AddCreationModal } from '../components/portrait/AddCreationModal'
+import { AddExperienceModal } from '../components/portrait/AddExperienceModal'
 import {
   MOCK_SPOTIFY_PROFILE,
   MOCK_BOOKS,
@@ -11,7 +18,7 @@ import {
 } from '../components/portrait/mockData'
 
 /**
- * Portrait tab page — fetches data and renders PortraitDisplay.
+ * Portrait tab page — fetches data, manages modal state, renders PortraitDisplay.
  *
  * For v1 (mock data development): uses mock data as fallback when no live data.
  * For friend view: accepts a userId prop and fetches that user's data (read-only).
@@ -21,12 +28,23 @@ export const Portrait = ({ userId: friendUserId }) => {
   const isOwner = !friendUserId
   const targetUserId = friendUserId || profile?.id
 
+  // Data state
   const [spotifyProfile, setSpotifyProfile] = useState(null)
   const [books, setBooks] = useState([])
   const [readingThemes, setReadingThemes] = useState(null)
   const [creations, setCreations] = useState([])
   const [experiences, setExperiences] = useState([])
   const [loading, setLoading] = useState(true)
+
+  // Modal state
+  const [showMusicModal, setShowMusicModal] = useState(false)
+  const [showReadingModal, setShowReadingModal] = useState(false)
+  const [showCreationArchive, setShowCreationArchive] = useState(false)
+  const [showAddCreation, setShowAddCreation] = useState(false)
+  const [showAddExperience, setShowAddExperience] = useState(false)
+  const [selectedExperience, setSelectedExperience] = useState(null)
+  const [selectedBook, setSelectedBook] = useState(null)
+  const [bookPopoverRect, setBookPopoverRect] = useState(null)
 
   useEffect(() => {
     if (targetUserId) {
@@ -134,13 +152,7 @@ export const Portrait = ({ userId: friendUserId }) => {
     }
   }
 
-  const handleAddCreation = () => {
-    // TODO: Open creation modal (worktree-4 builds the modal)
-  }
-
-  const handleDeleteCreation = async (creationId) => {
-    if (!confirm('Delete this creation?')) return
-
+  const deleteCreation = async (creationId) => {
     try {
       const { error } = await supabase
         .from('creations')
@@ -156,38 +168,50 @@ export const Portrait = ({ userId: friendUserId }) => {
     }
   }
 
-  const handleViewCreationArchive = () => {
-    // TODO: Open archive modal (worktree-4 builds the modal)
+  // CreationSection overflow menu — adds its own confirm
+  const handleDeleteCreation = async (creationId) => {
+    if (!confirm('Delete this creation?')) return
+    await deleteCreation(creationId)
   }
 
-  const handleAddExperience = () => {
-    // TODO: Open experience form modal (worktree-4 builds the modal)
-  }
+  // --- Modal open callbacks ---
 
-  // --- Navigation callbacks ---
+  const handleAddCreation = () => setShowAddCreation(true)
+
+  const handleViewCreationArchive = () => setShowCreationArchive(true)
+
+  const handleAddExperience = () => setShowAddExperience(true)
+
+  const handleMusicSeeAll = () => setShowMusicModal(true)
+
+  const handleReadingSeeAll = () => setShowReadingModal(true)
 
   const handlePortraitImageClick = (img) => {
-    // TODO: Navigate to source (worktree-4 builds navigation)
+    if (img.type === 'artist') setShowMusicModal(true)
+    else if (img.type === 'book') setShowReadingModal(true)
   }
 
-  const handleBookClick = (book) => {
-    // TODO: Open book popover (worktree-4 builds the popover)
+  const handleBookClick = (book, e) => {
+    if (e?.currentTarget) {
+      setBookPopoverRect(e.currentTarget.getBoundingClientRect())
+    }
+    setSelectedBook(book)
   }
 
-  const handleThemeClick = (theme) => {
-    // TODO: Filter by theme (worktree-4 builds filter mechanic)
+  const handleThemeClick = () => {
+    setShowReadingModal(true)
   }
 
-  const handleExperienceClick = (experience) => {
-    // TODO: Open experience detail modal (worktree-4 builds the modal)
+  const handleExperienceClick = (exp) => setSelectedExperience(exp)
+
+  // --- Add callbacks ---
+
+  const handleCreationCreated = (newCreation) => {
+    setCreations(prev => [newCreation, ...prev])
   }
 
-  const handleMusicSeeAll = () => {
-    // TODO: Open music detail modal (worktree-4 builds the modal)
-  }
-
-  const handleReadingSeeAll = () => {
-    // TODO: Open reading detail modal (worktree-4 builds the modal)
+  const handleExperienceCreated = (newExperience) => {
+    setExperiences(prev => [newExperience, ...prev])
   }
 
   if (loading) {
@@ -199,7 +223,7 @@ export const Portrait = ({ userId: friendUserId }) => {
   return (
     <div style={{ maxWidth: '720px' }}>
       <h1 className="handwritten" style={{ fontSize: '42px', marginBottom: '0', marginTop: '8px', marginLeft: '10px', position: 'relative', zIndex: 1, transform: 'translateY(16px)' }}>
-        {isOwner ? 'Portrait' : 'Portrait'}
+        Portrait
       </h1>
 
       <div style={{ marginTop: '28px' }}>
@@ -223,6 +247,63 @@ export const Portrait = ({ userId: friendUserId }) => {
           onReadingSeeAll={handleReadingSeeAll}
         />
       </div>
+
+      {/* Book popover — positioned near clicked cover */}
+      {selectedBook && bookPopoverRect && (
+        <BookPopover
+          book={selectedBook}
+          anchorRect={bookPopoverRect}
+          onClose={() => { setSelectedBook(null); setBookPopoverRect(null) }}
+        />
+      )}
+
+      {/* Modals */}
+      <MusicDetailModal
+        isOpen={showMusicModal}
+        onClose={() => setShowMusicModal(false)}
+        spotifyProfile={spotifyProfile}
+      />
+
+      <ReadingDetailModal
+        isOpen={showReadingModal}
+        onClose={() => setShowReadingModal(false)}
+        books={books}
+        readingThemes={readingThemes}
+        onBookClick={(book) => {
+          setShowReadingModal(false)
+          setSelectedBook(book)
+        }}
+      />
+
+      <CreationArchiveModal
+        isOpen={showCreationArchive}
+        onClose={() => setShowCreationArchive(false)}
+        creations={creations}
+        isOwner={isOwner}
+        onToggleVisibility={handleToggleCreationVisibility}
+        onDelete={deleteCreation}
+      />
+
+      <ExperienceDetailModal
+        isOpen={!!selectedExperience}
+        onClose={() => setSelectedExperience(null)}
+        experience={selectedExperience}
+      />
+
+      {isOwner && (
+        <>
+          <AddCreationModal
+            isOpen={showAddCreation}
+            onClose={() => setShowAddCreation(false)}
+            onCreated={handleCreationCreated}
+          />
+          <AddExperienceModal
+            isOpen={showAddExperience}
+            onClose={() => setShowAddExperience(false)}
+            onCreated={handleExperienceCreated}
+          />
+        </>
+      )}
     </div>
   )
 }
