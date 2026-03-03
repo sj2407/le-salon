@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useDebounce } from '../../hooks/useDebounce'
 import { searchByMediaType } from '../../lib/coverSearchApis'
+import { supabase } from '../../lib/supabase'
 
 /**
  * Portal-based search modal for cover images.
@@ -18,6 +19,8 @@ export const CoverSearchModal = ({ isOpen, onClose, onSelect, initialQuery = '',
   const [results, setResults] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef(null)
 
   const debouncedQuery = useDebounce(query, 500)
 
@@ -74,6 +77,36 @@ export const CoverSearchModal = ({ isOpen, onClose, onSelect, initialQuery = '',
     onClose()
   }
 
+  const handleUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploading(true)
+    setError('')
+    try {
+      const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+      const filename = `upload_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('covers')
+        .upload(filename, file, { contentType: file.type, upsert: true })
+
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('covers')
+        .getPublicUrl(filename)
+
+      onSelect({ title: '', subtitle: '', imageUrl: publicUrl })
+      onClose()
+    } catch {
+      setError('Upload failed. Try again.')
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
   if (!isOpen) return null
 
   const isSquare = mediaType === 'album' || mediaType === 'podcast'
@@ -87,6 +120,8 @@ export const CoverSearchModal = ({ isOpen, onClose, onSelect, initialQuery = '',
     show: 'Search Shows',
     podcast: 'Search Podcasts',
   }
+
+  const uploadOnly = !mediaType
 
   return createPortal(
     <div
@@ -123,28 +158,30 @@ export const CoverSearchModal = ({ isOpen, onClose, onSelect, initialQuery = '',
         }}
       >
         <h3 style={{ fontSize: '18px', marginBottom: '12px', marginTop: 0, fontWeight: 600 }}>
-          {labels[mediaType] || 'Search Cover'}
+          {uploadOnly ? 'Add Cover' : (labels[mediaType] || 'Search Cover')}
         </h3>
 
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={(e) => e.stopPropagation()}
-          onClick={(e) => e.stopPropagation()}
-          placeholder="Type to search..."
-          autoFocus
-          style={{
-            marginBottom: '12px',
-            width: '100%',
-            padding: '10px 12px',
-            border: '1px solid #999',
-            borderRadius: '6px',
-            fontSize: '16px',
-            boxSizing: 'border-box',
-            outline: 'none',
-          }}
-        />
+        {!uploadOnly && (
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
+            placeholder="Type to search..."
+            autoFocus
+            style={{
+              marginBottom: '12px',
+              width: '100%',
+              padding: '10px 12px',
+              border: '1px solid #999',
+              borderRadius: '6px',
+              fontSize: '16px',
+              boxSizing: 'border-box',
+              outline: 'none',
+            }}
+          />
+        )}
 
         <div style={{ flex: 1, overflowY: 'auto', minHeight: '100px', maxHeight: '300px', borderTop: '1px solid #eee', borderBottom: '1px solid #eee' }}>
           {isLoading && (
@@ -171,6 +208,49 @@ export const CoverSearchModal = ({ isOpen, onClose, onSelect, initialQuery = '',
             </div>
           )}
 
+          {/* Upload option — always visible in upload-only mode, or after search */}
+          {!isLoading && (uploadOnly || query.length >= 2) && (
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '12px 10px',
+                borderBottom: '1px solid #f0f0f0',
+                cursor: uploading ? 'wait' : 'pointer',
+                color: '#7A3B2E',
+              }}
+              onMouseOver={(e) => { e.currentTarget.style.background = '#f5f5f5' }}
+              onMouseOut={(e) => { e.currentTarget.style.background = 'transparent' }}
+            >
+              <div style={{
+                width: '45px',
+                height: mediaType === 'album' || mediaType === 'podcast' ? '45px' : '63px',
+                borderRadius: '3px',
+                border: '1px dashed #C8B89C',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '18px',
+                flexShrink: 0,
+              }}>
+                📷
+              </div>
+              <div style={{ flex: 1, fontSize: '14px', fontWeight: 500 }}>
+                {uploading ? 'Uploading...' : 'Upload your own cover'}
+              </div>
+            </div>
+          )}
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleUpload}
+            style={{ display: 'none' }}
+          />
+
           {results.map((result) => (
             <div
               key={result.id}
@@ -186,19 +266,38 @@ export const CoverSearchModal = ({ isOpen, onClose, onSelect, initialQuery = '',
               onMouseOver={(e) => { e.currentTarget.style.background = '#f5f5f5' }}
               onMouseOut={(e) => { e.currentTarget.style.background = 'transparent' }}
             >
-              <img
-                src={result.imageUrl}
-                alt=""
-                style={{
+              {result.imageUrl ? (
+                <img
+                  src={result.imageUrl}
+                  alt=""
+                  style={{
+                    width: `${thumbW}px`,
+                    height: `${thumbH}px`,
+                    borderRadius: '3px',
+                    objectFit: 'cover',
+                    background: '#eee',
+                    flexShrink: 0,
+                  }}
+                  onError={(e) => { e.target.style.display = 'none' }}
+                />
+              ) : (
+                <div style={{
                   width: `${thumbW}px`,
                   height: `${thumbH}px`,
                   borderRadius: '3px',
-                  objectFit: 'cover',
-                  background: '#eee',
+                  border: '1px dashed #C8B89C',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '11px',
+                  color: '#999',
                   flexShrink: 0,
-                }}
-                onError={(e) => { e.target.style.display = 'none' }}
-              />
+                  textAlign: 'center',
+                  lineHeight: 1.1,
+                }}>
+                  No cover
+                </div>
+              )}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{
                   fontWeight: 600,

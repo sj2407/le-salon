@@ -29,10 +29,10 @@ body {
 /* Card Styles */
 .card {
   background: #FFFEFA;
-  border: 2px solid #2C2C2C;
-  border-radius: 4px;
+  border: none;
+  border-radius: 8px;
   padding: 32px;
-  box-shadow: 4px 4px 0 #2C2C2C;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .card-header {
@@ -150,7 +150,7 @@ body {
   font-size: 21px;
   font-weight: 600;
   color: #2C2C2C;
-  border-bottom: 2px solid #2C2C2C;
+  border-bottom: 1px solid #E0D6C8;
   padding-bottom: 2px;
   line-height: 1.1;
 }
@@ -457,6 +457,49 @@ button.primary:hover {
   margin-bottom: 32px;
 }
 
+.auth-divider {
+  display: flex;
+  align-items: center;
+  margin: 20px 0;
+  color: #999;
+  font-size: 13px;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #E0D6C8;
+}
+
+.auth-divider span {
+  padding: 0 12px;
+}
+
+.google-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 16px;
+  background: #fff;
+  border: 1px solid #E0D6C8;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #2C2C2C;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.google-btn:hover {
+  background: #F9F7F3;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
 .form-group {
   margin-bottom: 14px;
 }
@@ -505,7 +548,7 @@ button.primary:hover {
 /* Navigation */
 nav {
   background: #FFFEFA;
-  border-bottom: 2px solid #2C2C2C;
+  border-bottom: 1px solid #E0D6C8;
   padding: 12px 20px;
   margin-bottom: 0;
 }

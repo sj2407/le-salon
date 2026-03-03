@@ -22,7 +22,7 @@ const NotificationItem = ({ notification, onClick }) => (
     }}
     onMouseEnter={(e) => {
       e.currentTarget.style.background = '#F5F1EB'
-      e.currentTarget.style.boxShadow = '2px 2px 0 #2C2C2C'
+      e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.12)'
     }}
     onMouseLeave={(e) => {
       e.currentTarget.style.background = notification.read ? '#FFFEFA' : '#FFF9E6'

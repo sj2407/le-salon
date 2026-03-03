@@ -503,64 +503,44 @@ export const LaListe = () => {
               }}
             />
           </div>
-          {newTag !== 'other' && (
-            <div style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              {newImageUrl ? (
-                <>
-                  <CoverThumbnail imageUrl={newImageUrl} tag={newTag} />
-                  {TAG_TO_MEDIA_TYPE[newTag] && (
-                    <button
-                      type="button"
-                      onClick={() => { setCoverSearchContext('add'); setShowCoverSearch(true) }}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: '#4A7BA7', padding: '2px 0' }}
-                    >
-                      Change
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => setNewImageUrl('')}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: '#999', padding: '2px 0' }}
-                  >
-                    Remove
-                  </button>
-                </>
-              ) : TAG_TO_MEDIA_TYPE[newTag] ? (
+          <div style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {newImageUrl ? (
+              <>
+                <CoverThumbnail imageUrl={newImageUrl} tag={newTag} />
                 <button
                   type="button"
                   onClick={() => { setCoverSearchContext('add'); setShowCoverSearch(true) }}
-                  style={{
-                    background: 'none',
-                    border: '1px dashed #ccc',
-                    borderRadius: '3px',
-                    cursor: 'pointer',
-                    padding: '6px 10px',
-                    fontSize: '12px',
-                    color: '#999',
-                    fontStyle: 'italic'
-                  }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: '#4A7BA7', padding: '2px 0' }}
                 >
-                  Search cover...
+                  Change
                 </button>
-              ) : (
-                <input
-                  type="url"
-                  value={newImageUrl}
-                  onChange={(e) => setNewImageUrl(e.target.value)}
-                  placeholder="Paste image URL..."
-                  style={{
-                    padding: '6px 10px',
-                    border: '1px solid #ccc',
-                    borderRadius: '3px',
-                    fontSize: '16px',
-                    fontStyle: 'italic',
-                    background: '#FFFEFA',
-                    width: '200px'
-                  }}
-                />
-              )}
-            </div>
-          )}
+                <button
+                  type="button"
+                  onClick={() => setNewImageUrl('')}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: '#999', padding: '2px 0' }}
+                >
+                  Remove
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={() => { setCoverSearchContext('add'); setShowCoverSearch(true) }}
+                style={{
+                  background: 'none',
+                  border: '1px dashed #ccc',
+                  borderRadius: '3px',
+                  cursor: 'pointer',
+                  padding: '6px 10px',
+                  fontSize: '12px',
+                  color: '#999',
+                  fontStyle: 'italic'
+                }}
+              >
+                {TAG_TO_MEDIA_TYPE[newTag] ? 'Search cover...' : 'Add cover...'}
+              </button>
+            )}
+          </div>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button
               onClick={handleAdd}
@@ -668,64 +648,44 @@ export const LaListe = () => {
               }}
             />
           </div>
-          {editTag !== 'other' && (
-            <div style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              {editImageUrl ? (
-                <>
-                  <CoverThumbnail imageUrl={editImageUrl} tag={editTag} />
-                  {TAG_TO_MEDIA_TYPE[editTag] && (
-                    <button
-                      type="button"
-                      onClick={() => { setCoverSearchContext('edit'); setShowCoverSearch(true) }}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: '#4A7BA7', padding: '2px 0' }}
-                    >
-                      Change
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => setEditImageUrl('')}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: '#999', padding: '2px 0' }}
-                  >
-                    Remove
-                  </button>
-                </>
-              ) : TAG_TO_MEDIA_TYPE[editTag] ? (
+          <div style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {editImageUrl ? (
+              <>
+                <CoverThumbnail imageUrl={editImageUrl} tag={editTag} />
                 <button
                   type="button"
                   onClick={() => { setCoverSearchContext('edit'); setShowCoverSearch(true) }}
-                  style={{
-                    background: 'none',
-                    border: '1px dashed #ccc',
-                    borderRadius: '3px',
-                    cursor: 'pointer',
-                    padding: '6px 10px',
-                    fontSize: '12px',
-                    color: '#999',
-                    fontStyle: 'italic'
-                  }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: '#4A7BA7', padding: '2px 0' }}
                 >
-                  Search cover...
+                  Change
                 </button>
-              ) : (
-                <input
-                  type="url"
-                  value={editImageUrl}
-                  onChange={(e) => setEditImageUrl(e.target.value)}
-                  placeholder="Paste image URL..."
-                  style={{
-                    padding: '4px 8px',
-                    border: '1px solid #ccc',
-                    borderRadius: '3px',
-                    fontSize: '16px',
-                    fontStyle: 'italic',
-                    background: '#FFFEFA',
-                    width: '200px'
-                  }}
-                />
-              )}
-            </div>
-          )}
+                <button
+                  type="button"
+                  onClick={() => setEditImageUrl('')}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: '#999', padding: '2px 0' }}
+                >
+                  Remove
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={() => { setCoverSearchContext('edit'); setShowCoverSearch(true) }}
+                style={{
+                  background: 'none',
+                  border: '1px dashed #ccc',
+                  borderRadius: '3px',
+                  cursor: 'pointer',
+                  padding: '6px 10px',
+                  fontSize: '12px',
+                  color: '#999',
+                  fontStyle: 'italic'
+                }}
+              >
+                {TAG_TO_MEDIA_TYPE[editTag] ? 'Search cover...' : 'Add cover...'}
+              </button>
+            )}
+          </div>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button
               onClick={handleEdit}

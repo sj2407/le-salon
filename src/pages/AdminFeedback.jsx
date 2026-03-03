@@ -110,13 +110,13 @@ export const AdminFeedback = () => {
               width: '100%',
               borderCollapse: 'collapse',
               background: '#FFFEFA',
-              border: '2px solid #2C2C2C',
-              borderRadius: '4px',
-              boxShadow: '4px 4px 0 #2C2C2C'
+              border: 'none',
+              borderRadius: '8px',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
             }}
           >
             <thead>
-              <tr style={{ background: '#F5F1EB', borderBottom: '2px solid #2C2C2C' }}>
+              <tr style={{ background: '#F5F1EB', borderBottom: '1px solid #E0D6C8' }}>
                 <th style={{ padding: '16px', textAlign: 'left', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, borderRight: '1px solid #E8E8E8', width: '140px' }}>
                   Date
                 </th>

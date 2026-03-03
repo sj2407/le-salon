@@ -57,7 +57,7 @@ export const ProfileDisplay = ({ profile, title }) => {
               width: '150px',
               height: '150px',
               borderRadius: '50%',
-              border: '3px dashed #2C2C2C',
+              border: '2px dashed #C8B89C',
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',

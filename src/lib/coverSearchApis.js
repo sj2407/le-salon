@@ -40,24 +40,71 @@ export function jsonpFetch(url, callbackParam = 'callback') {
 /**
  * Search books via Open Library (free, no key, CORS OK)
  */
-export async function searchBooks(query) {
+async function searchOpenLibrary(query) {
   const encoded = encodeURIComponent(query)
   const res = await fetch(
     `https://openlibrary.org/search.json?q=${encoded}&limit=8&fields=key,title,author_name,cover_i,first_publish_year`
   )
   const data = await res.json()
 
-  return (data.docs || [])
-    .filter(doc => doc.cover_i) // only results with covers
-    .map(doc => ({
-      id: doc.key,
-      title: doc.title,
-      subtitle: [
-        doc.author_name?.[0],
-        doc.first_publish_year
-      ].filter(Boolean).join(', '),
-      imageUrl: `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg`
-    }))
+  return (data.docs || []).map(doc => ({
+    id: doc.key,
+    title: doc.title,
+    subtitle: [
+      doc.author_name?.[0],
+      doc.first_publish_year
+    ].filter(Boolean).join(', '),
+    imageUrl: doc.cover_i
+      ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg`
+      : ''
+  }))
+}
+
+/**
+ * Search books via Google Books (free fallback, no key needed)
+ */
+async function searchGoogleBooks(query) {
+  try {
+    const encoded = encodeURIComponent(query)
+    const res = await fetch(
+      `https://www.googleapis.com/books/v1/volumes?q=${encoded}&maxResults=8`
+    )
+    if (!res.ok) return []
+    const data = await res.json()
+
+    return (data.items || []).map(item => {
+      const vi = item.volumeInfo || {}
+      return {
+        id: `gb_${item.id}`,
+        title: vi.title || '',
+        subtitle: [
+          vi.authors?.[0],
+          vi.publishedDate?.slice(0, 4)
+        ].filter(Boolean).join(', '),
+        imageUrl: vi.imageLinks?.thumbnail?.replace('http://', 'https://') || ''
+      }
+    })
+  } catch {
+    return []
+  }
+}
+
+/**
+ * Search books — Open Library first, Google Books fallback for more results
+ */
+export async function searchBooks(query) {
+  const olResults = await searchOpenLibrary(query)
+  // If Open Library returned enough results with covers, use those
+  const withCovers = olResults.filter(r => r.imageUrl)
+  if (withCovers.length >= 3) return olResults
+
+  // Otherwise, also try Google Books and merge
+  const gbResults = await searchGoogleBooks(query)
+  // Deduplicate by title (case-insensitive)
+  const seenTitles = new Set(olResults.map(r => r.title.toLowerCase()))
+  const newResults = gbResults.filter(r => !seenTitles.has(r.title.toLowerCase()))
+
+  return [...olResults, ...newResults]
 }
 
 /**

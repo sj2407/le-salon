@@ -180,7 +180,7 @@ export const ReviewsDisplay = ({
               )}
 
               {/* Review content row */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingRight: hasActions ? '24px' : 0 }}>
                 <CoverThumbnail imageUrl={review.image_url} tag={review.tag} />
                 <h3 style={{ margin: 0, fontSize: '14px', fontStyle: 'italic', fontWeight: 400, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {review.title}
