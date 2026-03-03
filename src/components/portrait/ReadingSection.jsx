@@ -43,7 +43,7 @@ const BookCoverPlaceholder = ({ title, size = 'small' }) => {
 /**
  * Reading section — currently reading, mini book covers, theme tags.
  */
-export const ReadingSection = ({ books, readingThemes, onBookClick, onThemeClick, onSeeAll, isOwner }) => {
+export const ReadingSection = ({ books, readingThemes, onBookClick, onThemeClick, onSeeAll, isOwner, onAddBook, onImportGoodreads, onScanBookshelf }) => {
   const [hoveredBook, setHoveredBook] = useState(null)
   const scrollRef = useRef(null)
 
@@ -63,9 +63,71 @@ export const ReadingSection = ({ books, readingThemes, onBookClick, onThemeClick
           <span style={{ fontSize: '18px' }}>{'\ud83d\udcd6'}</span>
           <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#2C2C2C' }}>Reading</h3>
         </div>
-        <p style={{ margin: 0, fontSize: '14px', color: '#999', fontStyle: 'italic' }}>
-          Photograph your bookshelf to get started.
+        <p style={{ margin: '0 0 14px 0', fontSize: '14px', color: '#999', fontStyle: 'italic' }}>
+          Add books to shape your reading identity.
         </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {onScanBookshelf && (
+            <button
+              onClick={onScanBookshelf}
+              style={{
+                padding: '10px 14px',
+                background: '#F5F1EB',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '13px',
+                color: '#2C2C2C',
+                textAlign: 'left',
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = '#EDE6DA' }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = '#F5F1EB' }}
+            >
+              Scan your bookshelf
+            </button>
+          )}
+          {onImportGoodreads && (
+            <button
+              onClick={onImportGoodreads}
+              style={{
+                padding: '10px 14px',
+                background: '#F5F1EB',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '13px',
+                color: '#2C2C2C',
+                textAlign: 'left',
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = '#EDE6DA' }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = '#F5F1EB' }}
+            >
+              Import from Goodreads
+            </button>
+          )}
+          {onAddBook && (
+            <button
+              onClick={onAddBook}
+              style={{
+                padding: '10px 14px',
+                background: '#F5F1EB',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '13px',
+                color: '#2C2C2C',
+                textAlign: 'left',
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = '#EDE6DA' }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = '#F5F1EB' }}
+            >
+              Add a book manually
+            </button>
+          )}
+        </div>
       </div>
     )
   }

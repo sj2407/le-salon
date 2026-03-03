@@ -36,6 +36,12 @@ export const PortraitDisplay = ({
   onExperienceClick,
   onMusicSeeAll,
   onReadingSeeAll,
+  // Connect / import callbacks (owner view)
+  onConnectSpotify,
+  onDisconnectSpotify,
+  onAddBook,
+  onImportGoodreads,
+  onScanBookshelf,
 }) => {
   const hasSpotify = spotifyProfile && spotifyProfile.is_active
   const hasBooks = books && books.length > 0
@@ -119,6 +125,8 @@ export const PortraitDisplay = ({
             spotifyProfile={spotifyProfile}
             onSeeAll={onMusicSeeAll}
             isOwner={isOwner}
+            onConnectSpotify={onConnectSpotify}
+            onDisconnectSpotify={onDisconnectSpotify}
           />
           <ReadingSection
             books={books}
@@ -127,6 +135,9 @@ export const PortraitDisplay = ({
             onThemeClick={onThemeClick}
             onSeeAll={onReadingSeeAll}
             isOwner={isOwner}
+            onAddBook={onAddBook}
+            onImportGoodreads={onImportGoodreads}
+            onScanBookshelf={onScanBookshelf}
           />
         </div>
       )}

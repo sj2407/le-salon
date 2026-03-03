@@ -10,7 +10,7 @@ const LISTENING_MODE_LABELS = {
  * Music section — mood line, artist chips, listening mode, cultural geography.
  * Empty state prompts Spotify connection.
  */
-export const MusicSection = ({ spotifyProfile, onSeeAll, isOwner }) => {
+export const MusicSection = ({ spotifyProfile, onSeeAll, isOwner, onConnectSpotify, onDisconnectSpotify }) => {
   const [hoveredChip, setHoveredChip] = useState(null)
 
   // Empty state
@@ -27,9 +27,32 @@ export const MusicSection = ({ spotifyProfile, onSeeAll, isOwner }) => {
           <span style={{ fontSize: '18px' }}>{'\ud83c\udfb5'}</span>
           <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#2C2C2C' }}>Music</h3>
         </div>
-        <p style={{ margin: 0, fontSize: '14px', color: '#999', fontStyle: 'italic' }}>
+        <p style={{ margin: '0 0 14px 0', fontSize: '14px', color: '#999', fontStyle: 'italic' }}>
           Connect Spotify to discover your musical identity.
         </p>
+        {onConnectSpotify && (
+          <button
+            onClick={onConnectSpotify}
+            style={{
+              padding: '10px 20px',
+              background: '#1DB954',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '20px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              transition: 'opacity 0.15s',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9' }}
+            onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
+          >
+            Connect Spotify
+          </button>
+        )}
       </div>
     )
   }
@@ -133,6 +156,31 @@ export const MusicSection = ({ spotifyProfile, onSeeAll, isOwner }) => {
         }}>
           {cultural_geography.map(g => g.region).join(' \u00b7 ')}
         </p>
+      )}
+
+      {/* Disconnect (owner only) */}
+      {isOwner && onDisconnectSpotify && (
+        <button
+          onClick={() => {
+            if (confirm('Disconnect Spotify? Your music data will be hidden.')) {
+              onDisconnectSpotify()
+            }
+          }}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            fontSize: '11px',
+            color: '#ccc',
+            padding: 0,
+            marginTop: '12px',
+            transition: 'color 0.15s',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = '#999' }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = '#ccc' }}
+        >
+          Disconnect Spotify
+        </button>
       )}
     </div>
   )
