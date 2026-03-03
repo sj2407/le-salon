@@ -1,0 +1,74 @@
+{
+  "__comment": "Maps genre keywords to cultural regions for cultural_geography derivation. Multiple genres can map to the same region. Matching is substring-based: if a raw Spotify genre contains the key, it maps to the region.",
+
+  "français": "France",
+  "french": "France",
+  "chanson": "France",
+  "variété": "France",
+
+  "k-pop": "South Korea",
+  "korean": "South Korea",
+
+  "j-pop": "Japan",
+  "j-rock": "Japan",
+  "city pop": "Japan",
+  "japanese": "Japan",
+  "anime": "Japan",
+
+  "afrobeats": "West Africa",
+  "afropop": "West Africa",
+  "afro house": "South Africa",
+  "amapiano": "South Africa",
+  "highlife": "West Africa",
+  "mbalax": "West Africa",
+  "ethio-jazz": "East Africa",
+
+  "bossa nova": "Brazil",
+  "mpb": "Brazil",
+  "samba": "Brazil",
+  "tropicalia": "Brazil",
+  "brazilian": "Brazil",
+
+  "reggaeton": "Latin America",
+  "latin": "Latin America",
+  "cumbia": "Latin America",
+  "bachata": "Caribbean",
+  "salsa": "Caribbean",
+
+  "arabic": "Arab World",
+  "rai": "North Africa",
+  "raï": "North Africa",
+  "khaliji": "Gulf States",
+
+  "turkish": "Turkey",
+  "persian": "Iran",
+
+  "flamenco": "Spain",
+  "spanish": "Spain",
+  "fado": "Portugal",
+  "portuguese": "Portugal",
+
+  "celtic": "British Isles",
+  "irish": "Ireland",
+  "scottish": "Scotland",
+  "british": "United Kingdom",
+  "uk": "United Kingdom",
+  "grime": "United Kingdom",
+
+  "balkan": "Balkans",
+  "greek": "Greece",
+
+  "reggae": "Jamaica",
+  "ska": "Jamaica",
+  "dub": "Jamaica",
+  "dancehall": "Jamaica",
+
+  "c-pop": "China",
+  "mandopop": "China",
+  "cantopop": "Hong Kong",
+
+  "bollywood": "India",
+  "indian": "India",
+  "hindustani": "India",
+  "carnatic": "India"
+}
