@@ -11,8 +11,9 @@ import { ReviewsDisplay } from '../components/ReviewsDisplay'
 import { TAG_ICONS } from '../lib/reviewConstants'
 import { ExpandedReviewText } from '../components/review-comments/ExpandedReviewText'
 import { GearSix } from '@phosphor-icons/react'
+import { Portrait } from './Portrait'
 
-const FRIEND_TABS = ['card', 'reviews', 'liste', 'wishlist']
+const FRIEND_TABS = ['card', 'reviews', 'liste', 'wishlist', 'portrait']
 
 export const FriendCard = () => {
   const { friendId } = useParams()
@@ -445,7 +446,7 @@ export const FriendCard = () => {
                     whiteSpace: 'nowrap'
                   }}
                 >
-                  {tab === 'card' ? 'Card' : tab === 'reviews' ? 'Reviews' : tab === 'liste' ? 'La Liste' : 'Wishlist'}
+                  {tab === 'card' ? 'Card' : tab === 'reviews' ? 'Reviews' : tab === 'liste' ? 'La Liste' : tab === 'wishlist' ? 'Wishlist' : 'Portrait'}
                 </button>
               ))}
               <button
@@ -523,6 +524,10 @@ export const FriendCard = () => {
 
                   {activeTab === 'wishlist' && (
                     <FriendWishlist friendId={friendId} friendName={friendProfile?.display_name} />
+                  )}
+
+                  {activeTab === 'portrait' && (
+                    <Portrait userId={friendId} />
                   )}
             </div>
           </>
