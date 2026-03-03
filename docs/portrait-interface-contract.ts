@@ -15,17 +15,25 @@
 // =============================================================================
 
 /**
- * spotify_profiles — one row per user, upserted on each sync
+ * spotify_tokens — OAuth tokens, stored separately for security.
+ * NO client-facing RLS policies. Only service_role (Edge Functions) can access.
+ */
+export interface SpotifyTokens {
+  user_id: string;                // UUID, PK, FK → profiles.id
+  access_token: string;
+  refresh_token: string;
+  updated_at: string;
+}
+
+/**
+ * spotify_profiles — one row per user, upserted on each sync.
  * PK is user_id (not a separate id column).
+ * Tokens are in the separate spotify_tokens table (security improvement over PRD).
  */
 export interface SpotifyProfile {
   user_id: string;                // UUID, PK, FK → profiles.id
   synced_at: string;              // timestamptz — last successful sync
   is_active: boolean;             // false = disconnected (soft delete)
-
-  // Tokens — encrypted at rest, never exposed to client
-  spotify_access_token: string;
-  spotify_refresh_token: string;
 
   // Aggregates computed server-side during sync
   top_artists: SpotifyArtist[];   // jsonb — top 10
