@@ -90,9 +90,9 @@ export const WishlistDisplay = ({
                 zIndex: openMenuId === item.id ? 5 : 1
               }}
             >
-              {item.image_url && typeToMediaType(item.type) && (
+              {item.image_url && (
                 <div style={{ marginRight: '12px', flexShrink: 0 }}>
-                  <CoverThumbnail imageUrl={item.image_url} tag={typeToMediaType(item.type)} />
+                  <CoverThumbnail imageUrl={item.image_url} tag={typeToMediaType(item.type) || 'other'} />
                 </div>
               )}
               <div style={{ flex: 1 }}>

@@ -61,7 +61,18 @@ async function searchOpenLibrary(query) {
 }
 
 /**
- * Search books via Google Books (free fallback, no key needed)
+ * Clean a Google Books thumbnail URL — ensure HTTPS + strip curl effect.
+ * Note: zoom=2 breaks for books without preview, so we keep zoom=1.
+ */
+function enhanceGoogleBooksUrl(url) {
+  if (!url) return ''
+  return url
+    .replace('http://', 'https://')
+    .replace('&edge=curl', '')
+}
+
+/**
+ * Search books via Google Books (free, no key needed) with enhanced covers
  */
 async function searchGoogleBooks(query) {
   try {
@@ -81,7 +92,7 @@ async function searchGoogleBooks(query) {
           vi.authors?.[0],
           vi.publishedDate?.slice(0, 4)
         ].filter(Boolean).join(', '),
-        imageUrl: vi.imageLinks?.thumbnail?.replace('http://', 'https://') || ''
+        imageUrl: enhanceGoogleBooksUrl(vi.imageLinks?.thumbnail)
       }
     })
   } catch {
@@ -90,21 +101,49 @@ async function searchGoogleBooks(query) {
 }
 
 /**
- * Search books — Open Library first, Google Books fallback for more results
+ * Search books — Google Books first (better covers with zoom enhancement),
+ * Open Library fallback for additional results
  */
 export async function searchBooks(query) {
-  const olResults = await searchOpenLibrary(query)
-  // If Open Library returned enough results with covers, use those
-  const withCovers = olResults.filter(r => r.imageUrl)
-  if (withCovers.length >= 3) return olResults
-
-  // Otherwise, also try Google Books and merge
   const gbResults = await searchGoogleBooks(query)
-  // Deduplicate by title (case-insensitive)
-  const seenTitles = new Set(olResults.map(r => r.title.toLowerCase()))
-  const newResults = gbResults.filter(r => !seenTitles.has(r.title.toLowerCase()))
+  const withCovers = gbResults.filter(r => r.imageUrl)
+  if (withCovers.length >= 3) return gbResults
 
-  return [...olResults, ...newResults]
+  // Not enough Google Books results — supplement with Open Library
+  const olResults = await searchOpenLibrary(query)
+  const seenTitles = new Set(gbResults.map(r => r.title.toLowerCase()))
+  const newResults = olResults.filter(r => !seenTitles.has(r.title.toLowerCase()))
+
+  return [...gbResults, ...newResults]
+}
+
+/**
+ * Fetch the best available cover URL for a book title.
+ * Used for refreshing existing review/wishlist covers.
+ * Returns the enhanced URL or null if not found.
+ * Validates the image is a real cover (>8KB) to avoid placeholders.
+ */
+export async function fetchBestBookCover(title) {
+  try {
+    const encoded = encodeURIComponent(title)
+    const res = await fetch(
+      `https://www.googleapis.com/books/v1/volumes?q=intitle:${encoded}&maxResults=1`
+    )
+    if (!res.ok) return null
+    const data = await res.json()
+    const thumbnail = data.items?.[0]?.volumeInfo?.imageLinks?.thumbnail
+    const url = enhanceGoogleBooksUrl(thumbnail)
+    if (!url) return null
+
+    // Verify this is a real cover, not a tiny placeholder
+    const head = await fetch(url, { method: 'HEAD' })
+    const size = parseInt(head.headers.get('content-length') || '0', 10)
+    if (size < 8000) return null
+
+    return url
+  } catch {
+    return null
+  }
 }
 
 /**

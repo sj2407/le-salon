@@ -3,7 +3,7 @@ import { ParagraphComments } from './ParagraphComments'
 
 /**
  * Splits review text into paragraphs with comment affordance.
- * Replaces the raw review_text rendering when comments are enabled.
+ * When inReader=true, uses reader typography (larger, non-italic, drop cap).
  */
 export const ExpandedReviewText = ({
   review,
@@ -15,7 +15,8 @@ export const ExpandedReviewText = ({
   onLeaveComment,
   onUpdateComment,
   onDeleteComment,
-  onReplyToComment
+  onReplyToComment,
+  inReader
 }) => {
   const [activeParagraph, setActiveParagraph] = useState(null)
 
@@ -23,10 +24,8 @@ export const ExpandedReviewText = ({
 
   const getCommentForParagraph = (index) => {
     if (isOwner) {
-      // Owner sees all comments on this paragraph
       return comments.filter(c => c.paragraph_index === index)
     }
-    // Friend sees only their own comment
     return comments.filter(c => c.paragraph_index === index && c.from_user_id === currentUserId)
   }
 
@@ -35,25 +34,26 @@ export const ExpandedReviewText = ({
   }
 
   return (
-    <div style={{ marginTop: '10px' }}>
+    <div style={{ marginTop: inReader ? 0 : '10px' }}>
       {paragraphs.map((text, index) => {
         const paragraphComments = getCommentForParagraph(index)
         const hasComments = paragraphComments.length > 0
         const isActive = activeParagraph === index
 
         return (
-          <div key={index} style={{ marginBottom: index < paragraphs.length - 1 ? '12px' : '0' }}>
+          <div key={index} style={{ marginBottom: index < paragraphs.length - 1 ? (inReader ? '16px' : '12px') : '0' }}>
             {/* Paragraph text */}
             <div
               onClick={() => handleParagraphClick(index)}
               style={{
-                fontSize: '14px',
-                lineHeight: 1.6,
+                fontSize: inReader ? '15px' : '14px',
+                lineHeight: inReader ? 1.8 : 1.6,
                 color: '#2C2C2C',
-                fontStyle: 'italic',
+                fontStyle: inReader ? 'normal' : 'italic',
                 whiteSpace: 'pre-wrap',
                 cursor: 'pointer',
                 paddingLeft: '10px',
+                textIndent: inReader && index > 0 ? '1.5em' : undefined,
                 borderLeft: isActive
                   ? '2px solid #4A7BA7'
                   : hasComments
@@ -85,13 +85,29 @@ export const ExpandedReviewText = ({
                   background: '#C0B8A8'
                 }} />
               )}
-              {text}
+              {/* Drop cap for first paragraph in reader mode */}
+              {inReader && index === 0 && text.length > 0 ? (
+                <>
+                  <span style={{
+                    float: 'left',
+                    fontSize: '48px',
+                    fontWeight: 700,
+                    lineHeight: 1,
+                    marginRight: '8px',
+                    marginTop: '4px',
+                    color: '#622722',
+                    fontFamily: "'Source Serif 4', Georgia, serif"
+                  }}>
+                    {text[0]}
+                  </span>
+                  {text.slice(1)}
+                </>
+              ) : text}
             </div>
 
             {/* Comment area */}
             {isActive && (
               isOwner ? (
-                // Owner: show all comments from friends
                 paragraphComments.length > 0 ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {paragraphComments.map((comment) => (
@@ -123,7 +139,6 @@ export const ExpandedReviewText = ({
                   </div>
                 )
               ) : (
-                // Friend: show their single comment (or input)
                 <ParagraphComments
                   reviewId={review.id}
                   paragraphIndex={index}
