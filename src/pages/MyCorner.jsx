@@ -6,15 +6,20 @@ import { MyCard } from './MyCard'
 import { Reviews } from './Reviews'
 import { LaListe } from './LaListe'
 import { Wishlist } from './Wishlist'
+import { Portrait } from './Portrait'
 // import { Profile } from './Profile' // Merged into Card tab — edit via gear icon
 import { ProfileEditModal } from '../components/ProfileEditModal'
 import { GearSix } from '@phosphor-icons/react'
 
-const MY_CORNER_TABS = ['card', 'reviews', 'liste', 'wishlist']
+const MY_CORNER_TABS = ['card', 'reviews', 'liste', 'wishlist', 'portrait']
 
 export const MyCorner = () => {
   const [searchParams] = useSearchParams()
-  const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'card')
+  const [activeTab, setActiveTab] = useState(() => {
+    // Auto-switch to portrait tab on Spotify OAuth callback
+    if (searchParams.get('code')) return 'portrait'
+    return searchParams.get('tab') || 'card'
+  })
   const [showProfileEdit, setShowProfileEdit] = useState(false)
   // Update active tab when URL param changes (adjust state during render, not in effect)
   const [prevSearchParams, setPrevSearchParams] = useState(searchParams)
@@ -49,7 +54,7 @@ export const MyCorner = () => {
                 whiteSpace: 'nowrap'
               }}
             >
-              {tab === 'card' ? 'Card' : tab === 'reviews' ? 'Reviews' : tab === 'liste' ? 'La Liste' : 'Wishlist'}
+              {tab === 'card' ? 'Card' : tab === 'reviews' ? 'Reviews' : tab === 'liste' ? 'La Liste' : tab === 'wishlist' ? 'Wishlist' : 'Portrait'}
             </button>
           ))}
           <button
@@ -79,6 +84,7 @@ export const MyCorner = () => {
           {activeTab === 'reviews' && <Reviews />}
           {activeTab === 'liste' && <LaListe />}
           {activeTab === 'wishlist' && <Wishlist />}
+          {activeTab === 'portrait' && <Portrait />}
         </div>
       </div>
       <AnimatePresence>
