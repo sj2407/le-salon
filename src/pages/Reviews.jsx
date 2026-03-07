@@ -481,7 +481,7 @@ export const Reviews = () => {
             justifyContent: 'center',
             zIndex: 1000
           }}
-          onClick={() => { if (!isFormDirty()) setShowModal(false) }}
+          onClick={(e) => e.stopPropagation()}
         >
           <div
             style={{
