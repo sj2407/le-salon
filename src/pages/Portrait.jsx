@@ -91,7 +91,7 @@ export const Portrait = ({ userId: friendUserId }) => {
 
   const triggerReadingThemes = async (targetId) => {
     try {
-      const payload = targetId && targetId !== user?.id ? { target_user_id: targetId } : {}
+      const payload = targetId && targetId !== profile?.id ? { target_user_id: targetId } : {}
       const result = await callEdgeFunction('reading-themes', payload)
       if (result.themes) {
         setReadingThemes(result.themes)
