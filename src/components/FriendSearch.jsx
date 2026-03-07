@@ -103,7 +103,7 @@ export const FriendSearch = () => {
         }}
         title="Search friends"
       >
-        <MagnifyingGlass size={18} weight="duotone" color="#7A3B2E" />
+        <MagnifyingGlass size={18} weight="duotone" color="#622722" />
       </button>
 
       {isOpen && (

@@ -48,7 +48,7 @@ export const NewsletterBell = () => {
       }}
       aria-label="Newsletter"
     >
-      <EnvelopeSimple size={18} weight="duotone" color="#7A3B2E" />
+      <EnvelopeSimple size={18} weight="duotone" color="#622722" />
 
       {/* Badge */}
       {unreadCount > 0 && (

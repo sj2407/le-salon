@@ -235,7 +235,7 @@ export const MusicSection = ({ spotifyProfile, onSeeAll, isOwner, onConnectSpoti
             display: 'inline-block',
             padding: '3px 10px',
             borderRadius: '12px',
-            background: '#7A3B2E',
+            background: '#622722',
             fontSize: '12px',
             color: '#FFFEFA',
             fontWeight: 500,

@@ -207,7 +207,7 @@ export const Wishlist = () => {
             display: 'flex',
             alignItems: 'center'
           }}>
-            <Plus size={18} weight="duotone" color="#7A3B2E" />
+            <Plus size={18} weight="duotone" color="#622722" />
           </button>
         )}
         renderItemStatus={(item) => (

@@ -430,7 +430,7 @@ export const Portrait = ({ userId: friendUserId }) => {
   }
 
   return (
-    <div style={{ maxWidth: '720px' }}>
+    <div style={{ maxWidth: '720px', padding: '0 20px' }}>
       <h1 className="handwritten" style={{ fontSize: '42px', marginBottom: '0', marginTop: '8px', marginLeft: '10px', position: 'relative', zIndex: 1, transform: 'translateY(16px)' }}>
         Portrait
       </h1>

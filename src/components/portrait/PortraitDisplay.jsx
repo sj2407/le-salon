@@ -60,7 +60,7 @@ const ArrowButton = ({ direction, onClick }) => {
       onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.45' }}
       title={`Move ${direction}`}
     >
-      <Icon size={14} weight="bold" color="#7A3B2E" />
+      <Icon size={14} weight="bold" color="#622722" />
     </button>
   )
 }
@@ -289,7 +289,7 @@ export const PortraitDisplay = ({
             }}
             title={`Show ${key}`}
           >
-            <EyeSlash size={16} weight="duotone" color="#7A3B2E" />
+            <EyeSlash size={16} weight="duotone" color="#622722" />
           </button>
         </>
       )
@@ -343,7 +343,7 @@ export const PortraitDisplay = ({
             }}
             title={`Hide ${key}`}
           >
-            <Eye size={14} weight="duotone" color="#7A3B2E" />
+            <Eye size={14} weight="duotone" color="#622722" />
           </button>
         )}
 

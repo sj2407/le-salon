@@ -33,23 +33,48 @@ export const CalligraphyTitle = ({ text, fontSize = 26, color = '#2C2C2C' }) => 
       aria-label={text}
       style={{ fontSize: `${fontSize}px`, color }}
     >
-      {text.split('').map((char, i) => (
-        <span
-          key={`${text}-${i}`}
-          aria-hidden="true"
-          style={{
-            display: 'inline-block',
-            opacity: revealed ? 1 : 0,
-            transform: revealed ? 'none' : 'translateY(4px)',
-            transition: revealed
-              ? `opacity 0.12s ease-out ${i * charDelay}s, transform 0.12s ease-out ${i * charDelay}s`
-              : 'none',
-            whiteSpace: char === ' ' ? 'pre' : undefined,
-          }}
-        >
-          {char === ' ' ? '\u00A0' : char}
-        </span>
-      ))}
+      {text.split(' ').map((word, wIndex) => {
+        // Count chars before this word for delay offset
+        const charOffset = text.split(' ').slice(0, wIndex).reduce((sum, w) => sum + w.length + 1, 0)
+        return (
+          <span key={`${text}-w${wIndex}`} style={{ whiteSpace: 'nowrap' }}>
+            {word.split('').map((char, cIndex) => {
+              const i = charOffset + cIndex
+              return (
+                <span
+                  key={`${text}-${i}`}
+                  aria-hidden="true"
+                  style={{
+                    display: 'inline-block',
+                    opacity: revealed ? 1 : 0,
+                    transform: revealed ? 'none' : 'translateY(4px)',
+                    transition: revealed
+                      ? `opacity 0.12s ease-out ${i * charDelay}s, transform 0.12s ease-out ${i * charDelay}s`
+                      : 'none',
+                  }}
+                >
+                  {char}
+                </span>
+              )
+            })}
+            {wIndex < text.split(' ').length - 1 && (
+              <span
+                aria-hidden="true"
+                style={{
+                  display: 'inline-block',
+                  opacity: revealed ? 1 : 0,
+                  transition: revealed
+                    ? `opacity 0.12s ease-out ${(charOffset + word.length) * charDelay}s`
+                    : 'none',
+                  whiteSpace: 'pre',
+                }}
+              >
+                {'\u00A0'}
+              </span>
+            )}
+          </span>
+        )
+      })}
     </span>
   )
 }

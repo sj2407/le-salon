@@ -134,7 +134,7 @@ export const GoodreadsImportModal = ({ isOpen, onClose, onImported }) => {
               width: '16px',
               height: '16px',
               border: '2px solid #E8DCC8',
-              borderTopColor: '#7A3B2E',
+              borderTopColor: '#622722',
               borderRadius: '50%',
               animation: 'spin 0.8s linear infinite',
             }} />

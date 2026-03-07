@@ -346,7 +346,7 @@ export const CoverflowCarousel = ({ items, onToggleDone, onEdit, onDelete, onTog
               >
                 {item.isPrivate
                   ? <EyeSlash size={11} weight="duotone" color="#999" />
-                  : <Eye size={11} weight="duotone" color="#7A3B2E" />
+                  : <Eye size={11} weight="duotone" color="#622722" />
                 }
               </button>
             )}

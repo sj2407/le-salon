@@ -197,7 +197,7 @@ export const HistoricalTimeline = ({ weeks, activeWeekId, onWeekSelect }) => {
                 width: barWidth,
                 height: LANE_HEIGHT,
                 borderRadius: BAR_RADIUS,
-                background: isActive ? '#7A3B2E' : 'rgba(232, 220, 200, 0.7)',
+                background: isActive ? '#622722' : 'rgba(232, 220, 200, 0.7)',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',

@@ -577,11 +577,12 @@ export const Salon = () => {
               src="/images/salon-couch-ready.png"
               alt=""
               style={{
-                width: '158px',
-                height: '158px',
+                width: '174px',
+                height: '174px',
                 objectFit: 'contain',
-                opacity: 0.85,
-                pointerEvents: 'none'
+                opacity: 1,
+                pointerEvents: 'none',
+                filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.45)) drop-shadow(0 2px 4px rgba(0,0,0,0.3)) drop-shadow(0 0 2px rgba(0,0,0,0.15)) contrast(1.15) brightness(1.08) saturate(1.1)'
               }}
             />
           </div>
@@ -618,13 +619,13 @@ export const Salon = () => {
               aria-label={audioState === 'playing' ? 'Pause audio' : 'Listen to essay'}
             >
               {audioState === 'idle' ? (
-                <Headphones size={20} weight="duotone" color="#7A3B2E" />
+                <Headphones size={20} weight="duotone" color="#622722" />
               ) : (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={audioState === 'playing' ? '#5C6B4A' : '#7A3B2E'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={audioState === 'playing' ? '#5C6B4A' : '#622722'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
                   <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
                   {audioState === 'loading' && (
-                    <circle cx="12" cy="12" r="3" fill="#7A3B2E" stroke="none" opacity="0.5">
+                    <circle cx="12" cy="12" r="3" fill="#622722" stroke="none" opacity="0.5">
                       <animate attributeName="opacity" values="0.3;1;0.3" dur="1s" repeatCount="indefinite" />
                     </circle>
                   )}

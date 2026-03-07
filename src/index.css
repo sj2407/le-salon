@@ -14,15 +14,12 @@ html, body, #root {
 body {
   color-scheme: light;
   background-color: #F5F1EB;
-  background-image: linear-gradient(rgba(245, 241, 235, 0.5), rgba(245, 241, 235, 0.5)), url('/images/parchment-bg.jpg');
-  background-size: cover;
-  background-attachment: fixed;
-  background-position: center;
   font-family: 'Source Serif 4', Georgia, serif;
   color: #2C2C2C;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
 
 /* App shell — nav and tab bar stay fixed, only content scrolls */
 .app-shell {
@@ -413,7 +410,7 @@ input, textarea, select {
 
 input:focus, textarea:focus, select:focus {
   outline: none;
-  border-color: #7A3B2E;
+  border-color: #622722;
 }
 
 button:focus, button:active {
@@ -449,12 +446,12 @@ button:active {
 }
 
 button.primary {
-  background: #7A3B2E;
+  background: #622722;
   color: #FFFEFA;
 }
 
 button.primary:hover {
-  background: #5C2E23;
+  background: #4E1F1B;
 }
 
 /* Container */
@@ -1096,7 +1093,7 @@ nav {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #7A3B2E;
+  background: #622722;
   border: none;
   margin-top: -3.5px;
 }
@@ -1112,7 +1109,7 @@ nav {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #7A3B2E;
+  background: #622722;
   border: none;
 }
 
@@ -1193,31 +1190,48 @@ body.reader-open .app-scroll-content {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 14px;
-  padding: 0 8px 6px;
+  padding: 0 20px 2px;
+  perspective: 800px;
 }
 
+/* 3D shelf — visible top surface + front face */
 .shelf-plank {
-  width: 100%;
-  height: 3px;
-  background: #8B6F4E;
+  width: calc(100% + 8px);
+  margin-left: -4px;
   position: relative;
-  box-shadow: 0 1px 0 #6B5238, 0 3px 6px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.08);
+  height: 10px;
+  border-radius: 1px;
+  /* Top 4px = light surface, bottom 6px = dark front face */
+  background:
+    linear-gradient(180deg,
+      #D4B8A8 0%,
+      #C4A393 30%,
+      #9B7060 38%,
+      #73453A 42%,
+      #622722 60%,
+      #4E1F1B 100%
+    );
+  box-shadow:
+    0 2px 3px rgba(0,0,0,0.12),
+    inset 0 1px 0 rgba(255,255,255,0.2);
 }
 
+/* Soft cast shadow below */
 .shelf-plank::after {
   content: '';
   position: absolute;
-  bottom: -8px;
-  left: 5%;
-  right: 5%;
-  height: 6px;
-  background: radial-gradient(ellipse at center, rgba(0,0,0,0.06) 0%, transparent 70%);
+  bottom: -6px;
+  left: 3%;
+  right: 3%;
+  height: 5px;
+  background: radial-gradient(ellipse at center, rgba(0,0,0,0.08) 0%, transparent 70%);
 }
 
 /* ── Cover item ────────────────────────────── */
 
 .cover-item {
-  width: 100%;
+  width: 90%;
+  margin: 0 auto;
   min-width: 0;
   cursor: pointer;
   position: relative;
@@ -1227,19 +1241,34 @@ body.reader-open .app-scroll-content {
   transform: translateX(20px);
 }
 
+/* Covers lean back against wall — top tilts away, bottom stays on shelf */
 .shelf-section.revealed .cover-item {
   opacity: 1;
-  transform: translateX(0);
+  transform: translateX(0) rotateX(6deg);
+  transform-origin: bottom center;
+}
+
+/* Vary lean per position — natural bookshelf look */
+.shelf-section.revealed .cover-item:nth-child(1) {
+  transform: translateX(0) rotateX(8deg) rotateY(-2deg);
+}
+
+.shelf-section.revealed .cover-item:nth-child(2) {
+  transform: translateX(0) rotateX(4deg);
+}
+
+.shelf-section.revealed .cover-item:nth-child(3) {
+  transform: translateX(0) rotateX(8deg) rotateY(2deg);
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .cover-item:not(.score-only):hover {
-    transform: translateY(-8px) scale(1.03);
+  .shelf-section.revealed .cover-item:not(.score-only):hover {
+    transform: translateY(-8px) scale(1.03) rotateX(6deg);
     z-index: 10;
   }
 
-  .cover-item.score-only:hover {
-    transform: translateY(-4px);
+  .shelf-section.revealed .cover-item.score-only:hover {
+    transform: translateY(-4px) rotateX(6deg);
   }
 
   .cover-item:not(.score-only):hover .cover-image-wrap {
@@ -1249,7 +1278,7 @@ body.reader-open .app-scroll-content {
   .cover-item:hover .cover-rating {
     opacity: 1;
     transform: scale(1.1);
-    background: #7A3B2E;
+    background: #622722;
   }
 
   .cover-item:hover .ri-label {
@@ -1272,13 +1301,13 @@ body.reader-open .app-scroll-content {
 }
 
 .cover-item.active .cover-image-wrap {
-  box-shadow: 6px 12px 32px rgba(122, 59, 46, 0.2), 4px 8px 24px rgba(0,0,0,0.2), 0 0 0 2px #7A3B2E;
+  box-shadow: 6px 12px 32px rgba(122, 59, 46, 0.2), 4px 8px 24px rgba(0,0,0,0.2), 0 0 0 2px #622722;
 }
 
 .cover-item.active .cover-rating {
   opacity: 1;
   transform: scale(1.1);
-  background: #7A3B2E;
+  background: #622722;
 }
 
 /* ── Cover image container ────────────────── */
@@ -1402,7 +1431,7 @@ body.reader-open .app-scroll-content {
   font-size: 8px;
   font-style: italic;
   font-weight: 400;
-  color: #7A3B2E;
+  color: #622722;
   margin-left: 3px;
   vertical-align: middle;
 }
@@ -1610,7 +1639,7 @@ body.reader-open .app-scroll-content {
   font-family: 'Caveat', cursive;
   font-size: 24px;
   font-weight: 700;
-  color: #7A3B2E;
+  color: #622722;
 }
 
 .reader-rating-label {
@@ -1652,6 +1681,22 @@ body.reader-open .app-scroll-content {
   margin-right: 8px;
   margin-top: 4px;
   color: #622722;
+}
+
+/* ── Parlor essay drop cap ────────────────── */
+.parlor-body > p:first-child::first-letter {
+  font-size: 3.2em;
+  font-weight: 700;
+  float: left;
+  line-height: 1;
+  margin-right: 10px;
+  margin-top: 2px;
+  padding: 6px 10px 4px;
+  background: rgba(232, 220, 200, 0.35);
+  border-radius: 4px;
+  color: #622722;
+  font-style: normal;
+  font-family: 'Source Serif 4', Georgia, serif;
 }
 
 /* ── Bookshelf desktop (720px+) ───────────── */

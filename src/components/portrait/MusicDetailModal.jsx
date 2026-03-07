@@ -41,7 +41,7 @@ export const MusicDetailModal = ({ isOpen, onClose, spotifyProfile }) => {
             display: 'inline-block',
             fontSize: '12px',
             color: '#FFFEFA',
-            background: '#7A3B2E',
+            background: '#622722',
             padding: '3px 10px',
             borderRadius: '12px',
             fontWeight: 500,

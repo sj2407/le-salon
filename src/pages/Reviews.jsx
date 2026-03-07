@@ -547,7 +547,7 @@ export const Reviews = () => {
                 alignItems: 'center'
               }}
             >
-              <Plus size={18} weight="duotone" color="#7A3B2E" />
+              <Plus size={18} weight="duotone" color="#622722" />
             </button>
             {isSpeechSupported && (
               <button
@@ -562,7 +562,7 @@ export const Reviews = () => {
                   alignItems: 'center'
                 }}
               >
-                <Microphone size={14} weight="duotone" color="#7A3B2E" />
+                <Microphone size={14} weight="duotone" color="#622722" />
               </button>
             )}
           </div>

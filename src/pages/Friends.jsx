@@ -154,7 +154,7 @@ export const Friends = () => {
           to="/find-friends"
           style={{
             textDecoration: 'none',
-            color: '#7A3B2E',
+            color: '#622722',
             fontFamily: "'Caveat', cursive",
             fontSize: '20px',
             fontWeight: 600

@@ -466,7 +466,7 @@ export const FriendCard = () => {
                 }}
                 title={`${friendProfile.display_name}'s Profile`}
               >
-                <GearSix size={18} weight="duotone" color="#7A3B2E" />
+                <GearSix size={18} weight="duotone" color="#622722" />
               </button>
             </div>
 

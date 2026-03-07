@@ -252,7 +252,7 @@ export const CardDisplay = ({
             }}
             title={`Show ${categoryName}`}
           >
-            <EyeSlash size={16} weight="duotone" color="#7A3B2E" />
+            <EyeSlash size={16} weight="duotone" color="#622722" />
           </button>
         </>
       )
@@ -322,7 +322,7 @@ export const CardDisplay = ({
             onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9' }}
             onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.5' }}
           >
-            <DotsSixVertical size={18} weight="bold" color="#7A3B2E" />
+            <DotsSixVertical size={18} weight="bold" color="#622722" />
           </div>
         )}
         {hasFloatingIcon && (
@@ -379,7 +379,7 @@ export const CardDisplay = ({
             }}
             title={`Hide ${categoryName}`}
           >
-            <Eye size={14} weight="duotone" color="#7A3B2E" />
+            <Eye size={14} weight="duotone" color="#622722" />
           </button>
         )}
         {/* Fold indicator for unread notes on own card */}
@@ -577,7 +577,7 @@ export const CardDisplay = ({
                 alignItems: 'center'
               }}
             >
-              <Microphone size={16} weight="duotone" color="#7A3B2E" />
+              <Microphone size={16} weight="duotone" color="#622722" />
             </button>
           )}
         </div>

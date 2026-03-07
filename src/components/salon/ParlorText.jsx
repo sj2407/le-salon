@@ -27,7 +27,11 @@ export const ParlorText = ({ salonWeek, hideTitle = false, textSize = 13 }) => {
             textAlign: 'left',
             marginTop: '0',
             marginBottom: '16px',
-            color: '#2C2C2C'
+            color: '#2C2C2C',
+            overflowWrap: 'normal',
+            wordBreak: 'normal',
+            hyphens: 'none',
+            WebkitHyphens: 'none'
           }}
         >
           {salonWeek.parlor_title}
@@ -36,11 +40,16 @@ export const ParlorText = ({ salonWeek, hideTitle = false, textSize = 13 }) => {
 
       {/* Body text — literary typography */}
       <div
+        className="parlor-body"
         style={{
           fontSize: `${textSize}px`,
           lineHeight: 1.8,
           color: '#2C2C2C',
-          fontStyle: 'italic'
+          fontStyle: 'italic',
+          hyphens: 'none',
+          WebkitHyphens: 'none',
+          wordBreak: 'normal',
+          overflowWrap: 'break-word'
         }}
       >
         {renderSimpleMarkdown(salonWeek.parlor_body)}

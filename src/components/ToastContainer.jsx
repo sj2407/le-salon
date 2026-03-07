@@ -4,7 +4,7 @@ import { AnimatePresence, motion as Motion } from 'framer-motion'
 const TOAST_COLORS = {
   success: '#5C6B4A',
   error: '#C75D5D',
-  info: '#7A3B2E',
+  info: '#622722',
 }
 
 export const ToastContainer = ({ toasts, onRemove }) => {

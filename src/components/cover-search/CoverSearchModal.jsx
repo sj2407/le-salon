@@ -219,7 +219,7 @@ export const CoverSearchModal = ({ isOpen, onClose, onSelect, initialQuery = '',
                 padding: '12px 10px',
                 borderBottom: '1px solid #f0f0f0',
                 cursor: uploading ? 'wait' : 'pointer',
-                color: '#7A3B2E',
+                color: '#622722',
               }}
               onMouseOver={(e) => { e.currentTarget.style.background = '#f5f5f5' }}
               onMouseOut={(e) => { e.currentTarget.style.background = 'transparent' }}

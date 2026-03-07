@@ -7,7 +7,7 @@ import { FilterDropdown } from './FilterDropdown'
 const ITEMS_PER_ROW = 3
 
 const FALLBACK_GRADIENTS = {
-  book: 'linear-gradient(160deg, #7A3B2E, #622722)',
+  book: 'linear-gradient(160deg, #622722, #622722)',
   movie: 'linear-gradient(160deg, #622722, #4A3C34)',
   show: 'linear-gradient(160deg, #622722, #3D3328)',
   album: 'linear-gradient(160deg, #827A34, #5C5428)',
@@ -19,7 +19,7 @@ const FALLBACK_GRADIENTS = {
 }
 
 const ACCENT_COLORS = {
-  book: '#7A3B2E',
+  book: '#622722',
   movie: '#622722',
   show: '#622722',
   album: '#827A34',
@@ -289,7 +289,7 @@ export const ReviewsDisplay = ({
         <div className={`review-reader${openReviewId !== null ? ' open' : ''}`}>
           <div
             className="reader-accent"
-            style={{ background: displayedReview ? (ACCENT_COLORS[displayedReview.tag] || ACCENT_COLORS.other) : '#7A3B2E' }}
+            style={{ background: displayedReview ? (ACCENT_COLORS[displayedReview.tag] || ACCENT_COLORS.other) : '#622722' }}
           />
           <div className="reader-topbar">
             <button className="reader-back" onClick={closeReader}>

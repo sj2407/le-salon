@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { House, BookOpen, ListChecks, Users, DotsThreeVertical } from '@phosphor-icons/react'
 
-const ICON_ACTIVE = '#7A3B2E'
+const ICON_ACTIVE = '#622722'
 const ICON_INACTIVE = '#8C7B6B'
 
 const SalonIcon = ({ active }) => (
@@ -145,7 +145,7 @@ export const BottomTabBar = () => {
                 fontFamily: "'Caveat', cursive",
                 fontSize: '11px',
                 fontWeight: isActive ? 600 : 500,
-                color: isActive ? '#7A3B2E' : '#8C7B6B',
+                color: isActive ? '#622722' : '#8C7B6B',
                 lineHeight: 1,
               }}>
                 {tab.label}

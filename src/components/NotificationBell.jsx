@@ -142,7 +142,7 @@ export const NotificationBell = () => {
         }}
         aria-label="Notifications"
       >
-        <Bell size={18} weight="duotone" color="#7A3B2E" />
+        <Bell size={18} weight="duotone" color="#622722" />
 
         {/* Badge */}
         {unreadCount > 0 && (

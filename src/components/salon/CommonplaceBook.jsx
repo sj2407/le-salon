@@ -184,7 +184,7 @@ export const CommonplaceBook = ({ isOpen, onClose, entries, userId, onSubmit, on
                   disabled={!inputText.trim() || submitting}
                   style={{
                     padding: '8px 20px',
-                    background: inputText.trim() ? '#7A3B2E' : '#D4C9B8',
+                    background: inputText.trim() ? '#622722' : '#D4C9B8',
                     color: '#FFFEFA',
                     border: 'none',
                     borderRadius: '3px',

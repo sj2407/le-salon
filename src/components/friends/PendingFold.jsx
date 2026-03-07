@@ -53,7 +53,7 @@ export const PendingFold = ({ pendingRequests, sentRequests, onAccept, onDecline
             fontFamily: "'Caveat', cursive",
             fontSize: '22px',
             fontWeight: 600,
-            color: '#7A3B2E'
+            color: '#622722'
           }}
         >
           Pending ({totalCount})
@@ -61,7 +61,7 @@ export const PendingFold = ({ pendingRequests, sentRequests, onAccept, onDecline
         <span
           style={{
             fontSize: '14px',
-            color: '#7A3B2E',
+            color: '#622722',
             transition: 'transform 0.2s ease',
             transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
             display: 'inline-block'

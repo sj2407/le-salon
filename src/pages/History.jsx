@@ -311,7 +311,7 @@ export const History = () => {
             onMouseEnter={(e) => e.target.style.opacity = '1'}
             onMouseLeave={(e) => e.target.style.opacity = '0.6'}
           >
-            <FilePdf size={28} weight="duotone" color="#7A3B2E" />
+            <FilePdf size={28} weight="duotone" color="#622722" />
           </button>
         </div>
       )}

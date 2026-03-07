@@ -80,7 +80,7 @@ export const NoteInput = ({
             disabled={!localValue.trim()}
             style={{
               padding: '4px 10px',
-              background: localValue.trim() ? '#7A3B2E' : '#CCC',
+              background: localValue.trim() ? '#622722' : '#CCC',
               color: '#FFF',
               border: 'none',
               borderRadius: '3px',
