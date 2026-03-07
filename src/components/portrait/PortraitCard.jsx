@@ -38,11 +38,11 @@ export const PortraitCard = ({ spotifyProfile, books, onImageClick, isOwner }) =
   const displayImages = collageImages.slice(0, 3)
   const hasImages = displayImages.length > 0
 
-  // Collage positioning — unequal grid cells, cropped at edges
+  // Collage positioning — triangle cluster at top-right
   const imagePositions = [
-    { top: '12px', right: '-8px', width: '110px', height: '140px', zIndex: 1 },
-    { top: '60px', right: '80px', width: '90px', height: '110px', zIndex: 2 },
-    { bottom: '8px', right: '30px', width: '80px', height: '100px', zIndex: 1 },
+    { top: '-6px', right: '-8px', width: '110px', height: '140px', zIndex: 1 },
+    { top: '30px', right: '85px', width: '100px', height: '120px', zIndex: 2 },
+    { top: '110px', right: '20px', width: '90px', height: '110px', zIndex: 1 },
   ]
 
   return (
