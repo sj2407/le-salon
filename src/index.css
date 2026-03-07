@@ -6,8 +6,12 @@
   box-sizing: border-box;
 }
 
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+}
+
 body {
-  overscroll-behavior-y: none;
   color-scheme: light;
   background-color: #F5F1EB;
   background-image: linear-gradient(rgba(245, 241, 235, 0.5), rgba(245, 241, 235, 0.5)), url('/images/parchment-bg.jpg');
@@ -16,9 +20,22 @@ body {
   background-position: center;
   font-family: 'Source Serif 4', Georgia, serif;
   color: #2C2C2C;
-  min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* App shell — nav and tab bar stay fixed, only content scrolls */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  height: 100vh; /* fallback */
+}
+
+.app-scroll-content {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Typography */
@@ -553,8 +570,7 @@ nav {
   padding: 12px 20px;
   padding-top: calc(12px + env(safe-area-inset-top, 0px));
   margin-bottom: 0;
-  position: sticky;
-  top: 0;
+  flex-shrink: 0;
   z-index: 100;
 }
 
@@ -718,10 +734,7 @@ nav {
 @media (max-width: 767px) {
   .bottom-tab-bar {
     display: flex;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    flex-shrink: 0;
     background: #FFFEFA;
     border-top: 1px solid #E8E8E8;
     justify-content: space-around;
@@ -731,10 +744,6 @@ nav {
     height: calc(49px + env(safe-area-inset-bottom, 0px));
     padding-bottom: env(safe-area-inset-bottom, 0px);
     z-index: 100;
-  }
-
-  body {
-    padding-bottom: calc(49px + env(safe-area-inset-bottom, 0px));
   }
 
   .nav-links-desktop {
