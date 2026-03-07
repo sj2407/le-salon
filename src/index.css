@@ -28,8 +28,8 @@ body {
 .app-shell {
   display: flex;
   flex-direction: column;
+  height: 100vh; /* fallback for browsers without dvh */
   height: 100dvh;
-  height: 100vh; /* fallback */
 }
 
 .app-scroll-content {
