@@ -89,10 +89,10 @@ export const Portrait = ({ userId: friendUserId }) => {
 
   // --- Generation triggers (fire-and-forget, non-blocking) ---
 
-  const triggerReadingThemes = async (targetId) => {
+  const triggerReadingThemes = async (userIdParam) => {
     try {
-      const payload = targetId && targetId !== profile?.id ? { target_user_id: targetId } : {}
-      const result = await callEdgeFunction('reading-themes', payload)
+      const uid = userIdParam || targetUserId
+      const result = await callEdgeFunction('reading-themes', { user_id: uid })
       if (result.themes) {
         setReadingThemes(result.themes)
       }
@@ -122,7 +122,7 @@ export const Portrait = ({ userId: friendUserId }) => {
 
   const triggerPortraitGeneration = async () => {
     try {
-      const result = await callEdgeFunction('portrait-generate', {})
+      const result = await callEdgeFunction('portrait-generate', { user_id: targetUserId })
       if (result.portrait_text) {
         setSpotifyProfile(prev => prev ? {
           ...prev,

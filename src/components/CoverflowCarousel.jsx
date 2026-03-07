@@ -40,7 +40,7 @@ const getCardWidth = () => {
  * 3D coverflow carousel — absolute-positioned, overlapping cards.
  * Center card faces forward, sides fan out behind it.
  */
-export const CoverflowCarousel = ({ items, onToggleDone, onEdit, onDelete, onTogglePrivate }) => {
+export const CoverflowCarousel = ({ items, onToggleDone, onEdit, onDelete, onTogglePrivate, onActiveChange }) => {
   const [activeIndex, setActiveIndex] = useState(() => Math.floor(items.length / 2))
   const [openMenuId, setOpenMenuId] = useState(null)
   const [cardW, setCardW] = useState(getCardWidth)
@@ -63,6 +63,11 @@ export const CoverflowCarousel = ({ items, onToggleDone, onEdit, onDelete, onTog
   useEffect(() => {
     if (activeIndex >= items.length) setActiveIndex(Math.max(0, items.length - 1))
   }, [items.length, activeIndex])
+
+  // Notify parent of active index changes
+  useEffect(() => {
+    if (onActiveChange) onActiveChange(activeIndex)
+  }, [activeIndex, onActiveChange])
 
   // Close menu on outside click / Escape
   useEffect(() => {
@@ -114,6 +119,7 @@ export const CoverflowCarousel = ({ items, onToggleDone, onEdit, onDelete, onTog
   const spacing = Math.round(cardW * 0.28)
 
   return (
+    <div style={{ display: 'flex', flexDirection: 'column' }}>
     <div
       ref={containerRef}
       onPointerDown={onPointerDown}
@@ -431,6 +437,50 @@ export const CoverflowCarousel = ({ items, onToggleDone, onEdit, onDelete, onTog
           </div>
         )
       })}
+    </div>
+    {/* Dot indicators — show max 9 dots, sliding window around active */}
+    {items.length > 1 && (() => {
+      const MAX_DOTS = 9
+      let start = 0
+      let end = items.length
+      if (items.length > MAX_DOTS) {
+        const half = Math.floor(MAX_DOTS / 2)
+        start = Math.max(0, Math.min(activeIndex - half, items.length - MAX_DOTS))
+        end = start + MAX_DOTS
+      }
+      return (
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: '6px',
+          paddingTop: '12px',
+          paddingBottom: '4px',
+        }}>
+          {items.slice(start, end).map((item, idx) => {
+            const i = start + idx
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveIndex(i)}
+                style={{
+                  width: i === activeIndex ? '9px' : '7px',
+                  height: i === activeIndex ? '9px' : '7px',
+                  borderRadius: '50%',
+                  background: i === activeIndex ? '#622722' : '#C8B89C',
+                  opacity: i === activeIndex ? 1 : 0.6,
+                  border: 'none',
+                  padding: 0,
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                }}
+                aria-label={`Go to item ${i + 1}`}
+              />
+            )
+          })}
+        </div>
+      )
+    })()}
     </div>
   )
 }

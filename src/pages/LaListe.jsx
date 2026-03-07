@@ -18,6 +18,18 @@ import { CoverflowCarousel } from '../components/CoverflowCarousel'
 import { TAG_TO_MEDIA_TYPE } from '../lib/coverSearchApis'
 import { linkifyText } from '../lib/linkifyText'
 
+// Extract display title (strip URL) from title string
+const getDisplayTitle = (title) => {
+  if (!title) return ''
+  const urlAtEnd = title.match(/^(.+?)\s+(https?:\/\/[^\s]+)$/)
+  if (urlAtEnd) return urlAtEnd[1].trim()
+  if (title.includes(' | http')) return title.split(' | ')[0].trim()
+  if (/^https?:\/\/[^\s]+$/.test(title.trim())) {
+    try { return new URL(title.trim()).hostname.replace(/^www\./, '') } catch { return title.trim() }
+  }
+  return title
+}
+
 // Extract a URL from a title string (same logic as CoverflowCarousel.parseTitle)
 const extractUrl = (title) => {
   if (!title) return null
@@ -53,6 +65,7 @@ export const LaListe = () => {
   const [expandedRecs, setExpandedRecs] = useState(new Set())
   const [showDictation, setShowDictation] = useState(false)
   const [openMenuId, setOpenMenuId] = useState(null)
+  const [activeCarouselIndex, setActiveCarouselIndex] = useState(0)
   const menuRef = useRef(null)
 
   // Add/edit form state
@@ -363,14 +376,45 @@ export const LaListe = () => {
     ? doneItems
     : doneItems.filter(i => i.tag === filterTag)
 
+  // Compute active title from carousel
+  const activeItem = filteredPending[activeCarouselIndex]
+  const activeDisplayTitle = activeItem ? getDisplayTitle(activeItem.title) : ''
+
   return (
     <div style={{ maxWidth: '720px', position: 'relative', display: 'flex', flexDirection: 'column', minHeight: 'calc(100dvh - 160px)' }}>
-      <h1 className="handwritten" style={{ fontSize: '42px', marginBottom: '0', marginTop: '8px', marginLeft: '10px', position: 'relative', zIndex: 1, transform: 'translateY(16px)' }}>
+      {/* Split background — Burnt Terra fading into cream */}
+      <div style={{
+        position: 'absolute',
+        top: '20px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: '100vw',
+        height: '55%',
+        background: 'linear-gradient(180deg, #622722 0%, #622722 60%, rgba(98, 39, 34, 0) 100%)',
+        zIndex: 0,
+        pointerEvents: 'none',
+        borderRadius: '12px 12px 0 0',
+      }} />
+
+      <h1 className="handwritten" style={{ fontSize: '42px', marginBottom: '0', marginTop: '8px', marginLeft: '10px', position: 'relative', zIndex: 1, transform: 'translateY(16px)', color: '#FFFEFA' }}>
         La Liste
       </h1>
+      <p style={{
+        fontFamily: "'Source Serif 4', Georgia, serif",
+        fontStyle: 'italic',
+        fontSize: '13px',
+        color: 'rgba(255, 254, 250, 0.7)',
+        marginTop: '20px',
+        marginBottom: '12px',
+        marginLeft: '10px',
+        position: 'relative',
+        zIndex: 1,
+      }}>
+        Everything I want to read, watch, listen to, and experience
+      </p>
 
       {/* Toolbar: filter + sort left, + and mic right */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '28px', marginBottom: '16px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', position: 'relative', zIndex: 1 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <FilterDropdown
             value={filterTag}
@@ -387,7 +431,7 @@ export const LaListe = () => {
               border: 'none',
               cursor: 'pointer',
               fontSize: '12px',
-              color: '#999',
+              color: 'rgba(255, 254, 250, 0.6)',
               padding: '4px 0',
               whiteSpace: 'nowrap'
             }}
@@ -408,7 +452,7 @@ export const LaListe = () => {
               alignItems: 'center'
             }}
           >
-            <Plus size={18} weight="duotone" color="#7A3B2E" />
+            <Plus size={18} weight="duotone" color="#FFFEFA" />
           </button>
           {isSpeechSupported && (
             <button
@@ -423,7 +467,7 @@ export const LaListe = () => {
                 alignItems: 'center'
               }}
             >
-              <Microphone size={14} weight="duotone" color="#7A3B2E" />
+              <Microphone size={14} weight="duotone" color="#FFFEFA" />
             </button>
           )}
         </div>
@@ -436,7 +480,9 @@ export const LaListe = () => {
           borderRadius: '2px',
           padding: '16px',
           marginBottom: '16px',
-          boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)'
+          boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)',
+          position: 'relative',
+          zIndex: 1,
         }}>
           <input
             type="text"
@@ -582,7 +628,9 @@ export const LaListe = () => {
           borderRadius: '2px',
           padding: '12px 16px',
           marginBottom: '12px',
-          boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)'
+          boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)',
+          position: 'relative',
+          zIndex: 1,
         }}>
           <input
             type="text"
@@ -724,9 +772,9 @@ export const LaListe = () => {
       {filteredPending.length === 0 && filteredDone.length === 0 && recommendations.length === 0 ? (
         <EmptyStateFantom />
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, position: 'relative', zIndex: 1 }}>
           {filteredPending.length === 0 && pendingItems.length > 0 ? (
-            <div style={{ textAlign: 'center', padding: '20px', fontStyle: 'italic', color: '#777' }}>
+            <div style={{ textAlign: 'center', padding: '20px', fontStyle: 'italic', color: 'rgba(255, 254, 250, 0.7)' }}>
               No {TAG_LABELS[filterTag] || filterTag} items yet.
             </div>
           ) : filteredPending.length > 0 && (
@@ -748,7 +796,26 @@ export const LaListe = () => {
               }}
               onTogglePrivate={handleTogglePrivate}
               onDelete={(id) => handleDelete(id)}
+              onActiveChange={setActiveCarouselIndex}
             />
+          )}
+
+          {/* Active item title */}
+          {activeDisplayTitle && filteredPending.length > 0 && (
+            <h2 style={{
+              textAlign: 'center',
+              fontFamily: "'Source Serif 4', Georgia, serif",
+              fontSize: '20px',
+              fontWeight: 600,
+              color: '#622722',
+              margin: '12px 0 8px',
+              padding: '0 20px',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}>
+              {activeDisplayTitle}
+            </h2>
           )}
 
           {/* Done section */}
@@ -911,7 +978,7 @@ export const LaListe = () => {
 
       {/* From Friends — collapsible section */}
       {recommendations.length > 0 && (
-        <div style={{ marginTop: '32px' }}>
+        <div style={{ marginTop: '32px', position: 'relative', zIndex: 1 }}>
           <button
             onClick={() => setRecsExpanded(!recsExpanded)}
             style={{
