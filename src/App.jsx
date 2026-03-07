@@ -64,9 +64,9 @@ function AppContent() {
   const location = useLocation()
 
   return (
-    <>
+    <div className="app-shell">
       <Navigation />
-      <BottomTabBar />
+      <div className="app-scroll-content">
       <AnimatePresence mode="wait">
         <Motion.div
           key={location.pathname}
@@ -198,7 +198,9 @@ function AppContent() {
         </Motion.div>
       </AnimatePresence>
       <Footer />
-    </>
+      </div>
+      <BottomTabBar />
+    </div>
   )
 }
 
