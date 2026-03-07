@@ -35,13 +35,14 @@ async function generateCodeChallenge(verifier) {
  */
 export async function startSpotifyConnect() {
   if (!SPOTIFY_CLIENT_ID) {
-    alert('Spotify is not configured yet (missing VITE_SPOTIFY_CLIENT_ID)')
-    return
+    return { ok: false, reason: 'not_configured' }
   }
 
   const codeVerifier = generateCodeVerifier()
   const codeChallenge = await generateCodeChallenge(codeVerifier)
-  const redirectUri = window.location.origin + '/my-corner'
+  // Spotify requires 127.0.0.1 instead of localhost (policy change April 2025)
+  const origin = window.location.origin.replace('://localhost', '://127.0.0.1')
+  const redirectUri = origin + '/my-corner'
 
   // Store for the callback
   sessionStorage.setItem('spotify_code_verifier', codeVerifier)

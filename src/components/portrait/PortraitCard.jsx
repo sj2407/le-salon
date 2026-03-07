@@ -51,7 +51,7 @@ export const PortraitCard = ({ spotifyProfile, books, onImageClick, isOwner }) =
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: prefersReduced ? 0 : 0.5, ease: 'easeOut' }}
       style={{
-        background: '#2C2C2C',
+        background: 'linear-gradient(135deg, #3D1C14 0%, #7A3B2E 50%, #5C2D23 100%)',
         borderRadius: '12px',
         padding: '28px 24px',
         position: 'relative',

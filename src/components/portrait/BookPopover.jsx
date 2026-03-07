@@ -71,9 +71,9 @@ export const BookPopover = ({ book, anchorRect, onClose, onViewReview }) => {
         </div>
       )}
 
-      {book.google_books_genres && book.google_books_genres.length > 0 && (
+      {(book.goodreads_genres || book.google_books_genres || []).length > 0 && (
         <div style={{ fontSize: '12px', color: '#999', marginBottom: '8px' }}>
-          {book.google_books_genres.slice(0, 3).join(' · ')}
+          {(book.goodreads_genres || book.google_books_genres).slice(0, 3).join(' · ')}
         </div>
       )}
 

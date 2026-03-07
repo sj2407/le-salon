@@ -1,11 +1,25 @@
 import { useState } from 'react'
+import { QuillMenu } from './QuillMenu'
+
+const emptyStateButtonStyle = {
+  padding: '10px 14px',
+  background: '#F5F1EB',
+  border: 'none',
+  borderRadius: '8px',
+  cursor: 'pointer',
+  fontSize: '13px',
+  color: '#2C2C2C',
+  textAlign: 'left',
+  transition: 'background 0.15s',
+}
 
 /**
  * Creation section — shows the most recent visible creation.
  * Owner can toggle visibility (eye icon), add new creations, view archive.
+ * Quill menu for owners with write/upload options.
  * Friend view: only visible creations; hidden entirely if none.
  */
-export const CreationSection = ({ creations, isOwner, onToggleVisibility, onAddCreation, onViewArchive, onDelete }) => {
+export const CreationSection = ({ creations, isOwner, onToggleVisibility, onAddCreationText, onAddCreationImage, onViewArchive, onDelete }) => {
   const [openMenuId, setOpenMenuId] = useState(null)
 
   const safeCreations = creations || []
@@ -20,17 +34,57 @@ export const CreationSection = ({ creations, isOwner, onToggleVisibility, onAddC
   // Completely empty — friend view: hide entirely
   if (!isOwner && visibleCreations.length === 0) return null
 
+  // Empty state for owner — card with prompt buttons
+  if (!latestCreation && isOwner && (onAddCreationText || onAddCreationImage)) {
+    return (
+      <>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+          <span style={{ fontSize: '18px' }}>{'\u270d\ufe0f'}</span>
+          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#2C2C2C' }}>Creation</h3>
+        </div>
+        <p style={{ margin: '0 0 14px 0', fontSize: '14px', color: '#999', fontStyle: 'italic' }}>
+          Share a poem, a note, a screenshot — something you made.
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {onAddCreationText && (
+            <button
+              onClick={onAddCreationText}
+              style={emptyStateButtonStyle}
+              onMouseEnter={(e) => { e.currentTarget.style.background = '#EDE6DA' }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = '#F5F1EB' }}
+            >
+              Write something
+            </button>
+          )}
+          {onAddCreationImage && (
+            <button
+              onClick={onAddCreationImage}
+              style={emptyStateButtonStyle}
+              onMouseEnter={(e) => { e.currentTarget.style.background = '#EDE6DA' }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = '#F5F1EB' }}
+            >
+              Upload an image
+            </button>
+          )}
+        </div>
+      </>
+    )
+  }
+
+  // Nothing to show
+  if (!latestCreation) return null
+
   return (
-    <div style={{ position: 'relative' }}>
+    <>
+      {/* Quill menu — owner only */}
+      {isOwner && (onAddCreationText || onAddCreationImage) && (
+        <QuillMenu items={[
+          onAddCreationText && { label: 'Write something', onClick: onAddCreationText },
+          onAddCreationImage && { label: 'Upload an image', onClick: onAddCreationImage },
+        ].filter(Boolean)} />
+      )}
+
       {/* Latest creation */}
-      {latestCreation && (
-        <div style={{
-          background: '#FFFEFA',
-          borderRadius: '12px',
-          padding: '20px',
-          boxShadow: '2px 3px 8px rgba(0,0,0,0.1)',
-          position: 'relative',
-        }}>
           {/* Owner actions — absolute overlay */}
           {isOwner && (
             <div style={{ position: 'absolute', top: '12px', right: '12px', display: 'flex', gap: '8px', zIndex: 2 }}>
@@ -155,44 +209,6 @@ export const CreationSection = ({ creations, isOwner, onToggleVisibility, onAddC
               }
             </button>
           )}
-        </div>
-      )}
-
-      {/* Empty state (owner only — no creations at all) */}
-      {!latestCreation && isOwner && (
-        <div style={{
-          background: '#FFFEFA',
-          borderRadius: '12px',
-          padding: '20px',
-          boxShadow: '2px 3px 8px rgba(0,0,0,0.1)',
-        }}>
-          <p style={{ margin: 0, fontSize: '14px', color: '#999', fontStyle: 'italic' }}>
-            No creations yet.
-          </p>
-        </div>
-      )}
-
-      {/* Add creation prompt — always present for owner */}
-      {isOwner && onAddCreation && (
-        <button
-          onClick={onAddCreation}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            fontSize: '13px',
-            color: '#999',
-            fontStyle: 'italic',
-            padding: '10px 0 0 0',
-            display: 'block',
-            transition: 'color 0.15s',
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.color = '#666' }}
-          onMouseLeave={(e) => { e.currentTarget.style.color = '#999' }}
-        >
-          + Add a creation — poem, note, screenshot...
-        </button>
-      )}
-    </div>
+    </>
   )
 }

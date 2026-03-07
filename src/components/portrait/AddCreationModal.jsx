@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { PortraitModal } from './PortraitModal'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
@@ -7,7 +7,7 @@ import { useAuth } from '../../contexts/AuthContext'
  * Add Creation modal — write text or upload an image.
  * Optional title (max 80 chars), visibility toggle (default visible).
  */
-export const AddCreationModal = ({ isOpen, onClose, onCreated }) => {
+export const AddCreationModal = ({ isOpen, onClose, onCreated, initialMode = null }) => {
   const { profile } = useAuth()
   const [mode, setMode] = useState(null) // null | 'text' | 'image'
   const [title, setTitle] = useState('')
@@ -17,6 +17,16 @@ export const AddCreationModal = ({ isOpen, onClose, onCreated }) => {
   const [isVisible, setIsVisible] = useState(true)
   const [saving, setSaving] = useState(false)
   const fileInputRef = useRef(null)
+
+  // Sync initialMode when modal opens
+  useEffect(() => {
+    if (isOpen && initialMode) {
+      setMode(initialMode)
+      if (initialMode === 'image') {
+        setTimeout(() => fileInputRef.current?.click(), 100)
+      }
+    }
+  }, [isOpen, initialMode])
 
   const reset = () => {
     setMode(null)

@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase'
 import { WishlistDisplay } from '../components/WishlistDisplay'
 import { CoverSearchModal } from '../components/cover-search/CoverSearchModal'
 import { CoverThumbnail } from '../components/cover-search/CoverThumbnail'
-import { typeToMediaType } from '../lib/coverSearchApis'
+import { typeToMediaType, fetchBestBookCover } from '../lib/coverSearchApis'
 import { scrollLock } from '../lib/scrollLock'
 import { Plus } from '@phosphor-icons/react'
 
@@ -31,6 +31,34 @@ export const Wishlist = () => {
       fetchWishlistItems()
     }
   }, [profile])
+
+  // Upgrade book covers from Open Library to Google Books (better quality)
+  const coversRefreshed = useRef(false)
+  useEffect(() => {
+    if (coversRefreshed.current || items.length === 0) return
+    coversRefreshed.current = true
+
+    const needsUpgrade = (url) => !url || url.includes('openlibrary.org')
+    const bookItems = items.filter(item =>
+      typeToMediaType(item.type) === 'book' && needsUpgrade(item.image_url)
+    )
+    if (bookItems.length === 0) return
+
+    ;(async () => {
+      let updated = 0
+      for (const item of bookItems) {
+        const betterUrl = await fetchBestBookCover(item.name)
+        if (betterUrl && betterUrl !== item.image_url) {
+          await supabase
+            .from('wishlist_items')
+            .update({ image_url: betterUrl })
+            .eq('id', item.id)
+          updated++
+        }
+      }
+      if (updated > 0) fetchWishlistItems()
+    })()
+  }, [items])
 
   const isFormDirty = () => {
     if (!initialFormRef.current) return false
@@ -268,70 +296,49 @@ export const Wishlist = () => {
                 />
               </div>
 
-              {type.trim() && (
-                <div className="form-group">
-                  <label className="form-label">Cover Image (optional)</label>
-                  {imageUrl ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <CoverThumbnail imageUrl={imageUrl} tag={typeToMediaType(type) || 'other'} size="medium" />
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        {typeToMediaType(type) && (
-                          <button
-                            type="button"
-                            onClick={() => setShowCoverSearch(true)}
-                            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: '#4A7BA7', padding: '4px 0' }}
-                          >
-                            Change
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => setImageUrl('')}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: '#999', padding: '4px 0' }}
-                        >
-                          Remove
-                        </button>
-                      </div>
+              <div className="form-group">
+                <label className="form-label">Cover Image (optional)</label>
+                {imageUrl ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <CoverThumbnail imageUrl={imageUrl} tag={typeToMediaType(type) || 'other'} size="medium" />
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        type="button"
+                        onClick={() => setShowCoverSearch(true)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: '#4A7BA7', padding: '4px 0' }}
+                      >
+                        Change
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setImageUrl('')}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: '#999', padding: '4px 0' }}
+                      >
+                        Remove
+                      </button>
                     </div>
-                  ) : typeToMediaType(type) ? (
-                    <button
-                      type="button"
-                      onClick={() => setShowCoverSearch(true)}
-                      style={{
-                        background: 'none',
-                        border: '1px dashed #ccc',
-                        borderRadius: '3px',
-                        cursor: 'pointer',
-                        padding: '8px 12px',
-                        fontSize: '13px',
-                        color: '#999',
-                        fontStyle: 'italic',
-                        width: '100%',
-                        textAlign: 'left'
-                      }}
-                    >
-                      Search cover...
-                    </button>
-                  ) : (
-                    <input
-                      type="url"
-                      value={imageUrl}
-                      onChange={(e) => setImageUrl(e.target.value)}
-                      placeholder="Paste image URL..."
-                      style={{
-                        width: '100%',
-                        padding: '8px 10px',
-                        border: '1px solid #ccc',
-                        borderRadius: '3px',
-                        fontSize: '16px',
-                        fontStyle: 'italic',
-                        boxSizing: 'border-box',
-                        background: '#FFFEFA'
-                      }}
-                    />
-                  )}
-                </div>
-              )}
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowCoverSearch(true)}
+                    style={{
+                      background: 'none',
+                      border: '1px dashed #ccc',
+                      borderRadius: '3px',
+                      cursor: 'pointer',
+                      padding: '8px 12px',
+                      fontSize: '13px',
+                      color: '#999',
+                      fontStyle: 'italic',
+                      width: '100%',
+                      textAlign: 'left'
+                    }}
+                  >
+                    {typeToMediaType(type) ? 'Search cover...' : 'Upload a photo...'}
+                  </button>
+                )}
+              </div>
 
               <div className="form-group">
                 <label className="form-label">Link (optional)</label>

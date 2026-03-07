@@ -49,6 +49,58 @@ export const Reviews = () => {
     }
   }, [profile])
 
+  // Sync book covers from the books table (Portrait's enriched covers)
+  const coversRefreshed = useRef(false)
+  useEffect(() => {
+    if (coversRefreshed.current || reviews.length === 0) return
+    coversRefreshed.current = true
+
+    const bookReviews = reviews.filter(r => r.tag === 'book')
+    if (bookReviews.length === 0) return
+
+    ;(async () => {
+      // Fetch covers from the books table (populated by book-enrich edge function)
+      const { data: books } = await supabase
+        .from('books')
+        .select('review_id, cover_url')
+        .in('review_id', bookReviews.map(r => r.id))
+        .not('cover_url', 'is', null)
+
+      if (!books || books.length === 0) return
+
+      const coverMap = Object.fromEntries(books.map(b => [b.review_id, b.cover_url]))
+      let updated = 0
+
+      for (const review of bookReviews) {
+        const betterUrl = coverMap[review.id]
+        if (betterUrl && betterUrl !== review.image_url) {
+          await supabase
+            .from('reviews')
+            .update({ image_url: betterUrl })
+            .eq('id', review.id)
+          updated++
+        }
+      }
+
+      if (updated > 0) fetchReviews()
+    })()
+  }, [reviews])
+
+  // Scroll to a specific review if ?review=<id> is in the URL
+  useEffect(() => {
+    const reviewId = searchParams.get('review')
+    if (reviewId && reviews.length > 0) {
+      const el = document.getElementById(`review-${reviewId}`)
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        el.style.boxShadow = '0 0 0 2px #4A7BA7, 2px 3px 8px rgba(0,0,0,0.1)'
+        setTimeout(() => { el.style.boxShadow = '2px 3px 8px rgba(0,0,0,0.1)' }, 2000)
+        searchParams.delete('review')
+        setSearchParams(searchParams, { replace: true })
+      }
+    }
+  }, [reviews, searchParams])
+
   // Pre-fill add modal from URL params (e.g., from La Liste "Write a review?" link)
   useEffect(() => {
     const prefillTitle = searchParams.get('prefill_title')
@@ -287,6 +339,21 @@ export const Reviews = () => {
 
         if (error) throw error
         reviewId = data.id
+
+        // Auto-create experience for performing_arts/exhibition reviews
+        if (['performing_arts', 'exhibition'].includes(tag)) {
+          const categoryMap = { performing_arts: 'theatre', exhibition: 'exhibition' }
+          const { data: existing } = await supabase.from('experiences')
+            .select('id').eq('user_id', profile.id).ilike('name', title).maybeSingle()
+          if (!existing) {
+            await supabase.from('experiences').insert({
+              user_id: profile.id,
+              name: title,
+              category: categoryMap[tag],
+              source: 'review',
+            })
+          }
+        }
       }
 
       if (reviewId && recommendToFriends.length > 0) {
@@ -336,9 +403,61 @@ export const Reviews = () => {
       setShowModal(false)
       fetchReviews()
       toast.success(editingReview ? 'Review updated' : 'Review saved')
+
+      // If this is a new book review, trigger cover + genre enrichment (fire-and-forget)
+      // The DB trigger already created the books entry — this fetches the cover image
+      if (!editingReview && tag === 'book') {
+        triggerBookEnrichment(title)
+      }
     } catch (err) {
       setError(err.message)
       toast.error('Failed to save review')
+    }
+  }
+
+  const triggerBookEnrichment = async (reviewTitle) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+
+      // Parse author from title if format is "Title by Author" or "Title, Author"
+      const byMatch = reviewTitle.match(/^(.+?)\s+by\s+(.+)$/i)
+      const commaMatch = reviewTitle.match(/^(.+?),\s+(.+)$/)
+      const bookTitle = byMatch?.[1] || commaMatch?.[1] || reviewTitle
+      const author = byMatch?.[2] || commaMatch?.[2] || undefined
+
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/book-enrich`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+            apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({ title: bookTitle, author }),
+        }
+      )
+      if (!res.ok) return
+      const data = await res.json()
+      if (!data.cover_url && !data.google_books_id) return
+
+      // Update the books table entry (created by DB trigger on review insert)
+      const updateFields = {}
+      if (data.cover_url) updateFields.cover_url = data.cover_url
+      if (data.google_books_id) updateFields.google_books_id = data.google_books_id
+      if (data.genres) updateFields.google_books_genres = data.genres
+      if (data.description) updateFields.google_books_description = data.description
+
+      if (Object.keys(updateFields).length > 0) {
+        await supabase
+          .from('books')
+          .update(updateFields)
+          .eq('user_id', profile.id)
+          .ilike('title', `%${bookTitle}%`)
+      }
+    } catch (_err) {
+      // Silent — enrichment is non-critical
     }
   }
 
@@ -399,14 +518,15 @@ export const Reviews = () => {
         reviews={reviews}
         title="My Reviews"
         emptyMessage="No reviews yet. Share your thoughts on movies, books, and more!"
-        renderExpandedText={(review) => {
+        renderExpandedText={(review, opts) => {
           const commentsForReview = reviewComments.filter(c => c.review_id === review.id)
-          if (commentsForReview.length === 0) return null
+          if (commentsForReview.length === 0 && !opts?.inReader) return null
           return (
             <ExpandedReviewText
               review={review}
               comments={commentsForReview}
               isOwner={true}
+              inReader={opts?.inReader}
               currentUserId={profile.id}
               ownerName={profile.display_name}
               onReplyToComment={handleReplyToComment}

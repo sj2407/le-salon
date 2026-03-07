@@ -202,15 +202,16 @@ test.describe('Reviews Modal', () => {
     await waitForModalClose(page)
   })
 
-  test('click outside closes modal', async ({ page }) => {
+  test('click outside does NOT close modal (clean form)', async ({ page }) => {
     const addButton = page.locator('button:has-text("+")').first()
     await addButton.click()
     await waitForModalOpen(page)
     await page.click('[style*="position: fixed"]', { position: { x: 10, y: 10 } })
-    await waitForModalClose(page)
+    await page.waitForTimeout(500)
+    await expect(page.locator('[style*="position: fixed"]')).toBeVisible()
   })
 
-  test('click outside does NOT close modal when form is dirty', async ({ page }) => {
+  test('click outside does NOT close modal (dirty form)', async ({ page }) => {
     const addButton = page.locator('button:has-text("+")').first()
     await addButton.click()
     await waitForModalOpen(page)

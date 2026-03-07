@@ -502,11 +502,12 @@ export const FriendCard = () => {
                       reviews={reviews}
                       title={`${friendProfile.display_name}'s Reviews`}
                       emptyMessage={`${friendProfile.display_name} hasn't added any reviews yet.`}
-                      renderExpandedText={(review) => (
+                      renderExpandedText={(review, opts) => (
                         <ExpandedReviewText
                           review={review}
                           comments={reviewComments.filter(c => c.review_id === review.id)}
                           isOwner={false}
+                          inReader={opts?.inReader}
                           currentUserId={profile.id}
                           ownerName={friendProfile.display_name}
                           commenterName={profile.display_name}

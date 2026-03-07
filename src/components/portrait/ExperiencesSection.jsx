@@ -1,4 +1,5 @@
 import { EXPERIENCE_CATEGORIES } from './mockData'
+import { QuillMenu } from './QuillMenu'
 
 /**
  * Get the emoji icon for an experience category.
@@ -21,11 +22,23 @@ const formatShortDate = (dateStr) => {
   }
 }
 
+const emptyStateButtonStyle = {
+  padding: '10px 14px',
+  background: '#F5F1EB',
+  border: 'none',
+  borderRadius: '8px',
+  cursor: 'pointer',
+  fontSize: '13px',
+  color: '#2C2C2C',
+  textAlign: 'left',
+  transition: 'background 0.15s',
+}
+
 /**
  * Experiences section — 3-column grid of cultural experiences.
- * Final cell is an "add experience" prompt for owners.
+ * Quill menu for owners with scan/add options.
  */
-export const ExperiencesSection = ({ experiences, isOwner, onExperienceClick, onAddExperience }) => {
+export const ExperiencesSection = ({ experiences, isOwner, onExperienceClick, onAddExperience, onScanPlaybill }) => {
   const safeExperiences = experiences || []
 
   // Sort reverse chronological
@@ -39,8 +52,53 @@ export const ExperiencesSection = ({ experiences, isOwner, onExperienceClick, on
   // Empty state — only the add cell for owner, nothing for friend
   if (sorted.length === 0 && !isOwner) return null
 
+  // Empty state for owner — card with prompt buttons
+  if (sorted.length === 0 && isOwner) {
+    return (
+      <>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+          <span style={{ fontSize: '18px' }}>{'\ud83c\udfad'}</span>
+          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#2C2C2C' }}>Experiences</h3>
+        </div>
+        <p style={{ margin: '0 0 14px 0', fontSize: '14px', color: '#999', fontStyle: 'italic' }}>
+          Log a concert, exhibition, or trip that shaped you.
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {onScanPlaybill && (
+            <button
+              onClick={onScanPlaybill}
+              style={emptyStateButtonStyle}
+              onMouseEnter={(e) => { e.currentTarget.style.background = '#EDE6DA' }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = '#F5F1EB' }}
+            >
+              Scan a playbill
+            </button>
+          )}
+          {onAddExperience && (
+            <button
+              onClick={onAddExperience}
+              style={emptyStateButtonStyle}
+              onMouseEnter={(e) => { e.currentTarget.style.background = '#EDE6DA' }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = '#F5F1EB' }}
+            >
+              Add an experience
+            </button>
+          )}
+        </div>
+      </>
+    )
+  }
+
   return (
-    <div>
+    <>
+      {/* Quill menu — owner only */}
+      {isOwner && (onScanPlaybill || onAddExperience) && (
+        <QuillMenu items={[
+          onScanPlaybill && { label: 'Scan a playbill', onClick: onScanPlaybill },
+          onAddExperience && { label: 'Add an experience', onClick: onAddExperience },
+        ].filter(Boolean)} />
+      )}
+
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
         <span style={{ fontSize: '18px' }}>{'\ud83c\udfad'}</span>
@@ -98,49 +156,7 @@ export const ExperiencesSection = ({ experiences, isOwner, onExperienceClick, on
             </span>
           </div>
         ))}
-
-        {/* Add experience cell — owner only */}
-        {isOwner && onAddExperience && (
-          <div
-            onClick={onAddExperience}
-            style={{
-              background: 'transparent',
-              borderRadius: '10px',
-              padding: '14px 12px',
-              cursor: 'pointer',
-              minHeight: '80px',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px',
-              animation: 'portraitPulse 3s ease-in-out infinite',
-            }}
-          >
-            <span style={{ fontSize: '22px', color: '#999', lineHeight: 1 }}>+</span>
-            <span style={{ fontSize: '12px', color: '#999', fontStyle: 'italic', textAlign: 'center' }}>
-              Add an experience
-            </span>
-          </div>
-        )}
       </div>
-
-      {/* Pulse animation keyframes — injected inline */}
-      <style>{`
-        @keyframes portraitPulse {
-          0%, 100% { opacity: 0.5; }
-          50% { opacity: 0.8; }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          * { animation-duration: 0s !important; }
-        }
-        @media (max-width: 500px) {
-          /* Stack to 2 columns on narrow screens */
-          .portrait-experiences-grid {
-            grid-template-columns: repeat(2, 1fr) !important;
-          }
-        }
-      `}</style>
-    </div>
+    </>
   )
 }

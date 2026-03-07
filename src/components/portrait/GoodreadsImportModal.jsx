@@ -3,7 +3,8 @@ import { PortraitModal } from './PortraitModal'
 import { supabase } from '../../lib/supabase'
 
 /**
- * Goodreads Import modal — upload CSV export, imports read books.
+ * Goodreads Import modal — upload CSV export, imports recently read books.
+ * Only imports books read in the last 6 months.
  */
 export const GoodreadsImportModal = ({ isOpen, onClose, onImported }) => {
   const [importing, setImporting] = useState(false)
@@ -19,8 +20,11 @@ export const GoodreadsImportModal = ({ isOpen, onClose, onImported }) => {
   }
 
   const handleClose = () => {
+    if (importing) return // prevent dismissal during import
+    const hadResult = !!result
     reset()
     onClose()
+    if (hadResult && onImported) onImported()
   }
 
   const handleFileSelect = async (e) => {
@@ -47,6 +51,7 @@ export const GoodreadsImportModal = ({ isOpen, onClose, onImported }) => {
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${session.session.access_token}`,
+            apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
           },
           body: JSON.stringify({ csv_content: csvContent }),
         }
@@ -59,7 +64,6 @@ export const GoodreadsImportModal = ({ isOpen, onClose, onImported }) => {
       }
 
       setResult(data)
-      if (onImported) onImported()
     } catch (err) {
       console.error('Goodreads import error:', err)
       setError(err.message || 'Import failed')
@@ -73,8 +77,11 @@ export const GoodreadsImportModal = ({ isOpen, onClose, onImported }) => {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         {/* Instructions */}
         <div style={{ fontSize: '14px', color: '#666', lineHeight: 1.6 }}>
-          <p style={{ margin: '0 0 12px 0' }}>
-            Export your library from Goodreads, then upload the CSV file here.
+          <p style={{ margin: '0 0 4px 0' }}>
+            Export your library from Goodreads, then upload the CSV here.
+          </p>
+          <p style={{ margin: '0 0 12px 0', fontSize: '13px', color: '#999', fontStyle: 'italic' }}>
+            Only books read in the last 2 years will be imported.
           </p>
           <ol style={{ margin: 0, paddingLeft: '20px' }}>
             <li>Go to <strong>My Books</strong> on Goodreads</li>
@@ -108,14 +115,33 @@ export const GoodreadsImportModal = ({ isOpen, onClose, onImported }) => {
               transition: 'background 0.15s',
             }}
           >
-            {importing ? 'Importing... this may take a minute' : 'Choose CSV file'}
+            {importing ? 'Importing...' : 'Choose CSV file'}
           </button>
         </div>
 
         {/* Import progress */}
         {importing && (
-          <div style={{ fontSize: '13px', color: '#999', fontStyle: 'italic', textAlign: 'center' }}>
-            Enriching books with cover images and metadata...
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            padding: '12px 16px',
+            background: '#F5F1EB',
+            borderRadius: '10px',
+          }}>
+            <div style={{
+              width: '16px',
+              height: '16px',
+              border: '2px solid #E8DCC8',
+              borderTopColor: '#7A3B2E',
+              borderRadius: '50%',
+              animation: 'spin 0.8s linear infinite',
+            }} />
+            <span style={{ fontSize: '13px', color: '#666' }}>
+              Parsing your library and importing recent reads...
+            </span>
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
           </div>
         )}
 
@@ -127,10 +153,18 @@ export const GoodreadsImportModal = ({ isOpen, onClose, onImported }) => {
             borderRadius: '10px',
             fontSize: '14px',
             color: '#2C2C2C',
+            lineHeight: 1.6,
           }}>
-            Imported <strong>{result.imported_count}</strong> books
-            {result.skipped_count > 0 && (
-              <span style={{ color: '#999' }}> ({result.skipped_count} already in your library)</span>
+            <div>
+              Imported <strong>{result.imported_count}</strong> book{result.imported_count !== 1 ? 's' : ''}
+              {result.skipped_count > 0 && (
+                <span style={{ color: '#999' }}> ({result.skipped_count} already in your library)</span>
+              )}
+            </div>
+            {result.total_read_in_csv > 0 && (
+              <div style={{ fontSize: '12px', color: '#999', marginTop: '4px' }}>
+                {result.total_read_in_csv} total read books in your Goodreads — filtered to the last 2 years
+              </div>
             )}
           </div>
         )}

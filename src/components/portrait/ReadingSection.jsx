@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { QuillMenu } from './QuillMenu'
 
 /**
  * Book cover placeholder — warm gold background with title text.
@@ -45,6 +46,7 @@ const BookCoverPlaceholder = ({ title, size = 'small' }) => {
  */
 export const ReadingSection = ({ books, readingThemes, onBookClick, onThemeClick, onSeeAll, isOwner, onAddBook, onImportGoodreads, onScanBookshelf }) => {
   const [hoveredBook, setHoveredBook] = useState(null)
+  const [hoveredChip, setHoveredChip] = useState(null) // { type: 'author'|'genre', value: string, rect: DOMRect }
   const scrollRef = useRef(null)
 
   const safeBooks = books || []
@@ -53,12 +55,7 @@ export const ReadingSection = ({ books, readingThemes, onBookClick, onThemeClick
   if (safeBooks.length === 0) {
     if (!isOwner) return null
     return (
-      <div style={{
-        background: '#FFFEFA',
-        borderRadius: '12px',
-        padding: '20px',
-        boxShadow: '2px 3px 8px rgba(0,0,0,0.1)',
-      }}>
+      <>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
           <span style={{ fontSize: '18px' }}>{'\ud83d\udcd6'}</span>
           <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#2C2C2C' }}>Reading</h3>
@@ -128,7 +125,7 @@ export const ReadingSection = ({ books, readingThemes, onBookClick, onThemeClick
             </button>
           )}
         </div>
-      </div>
+      </>
     )
   }
 
@@ -137,20 +134,102 @@ export const ReadingSection = ({ books, readingThemes, onBookClick, onThemeClick
   // Recent reads (exclude currently reading)
   const recentReads = safeBooks.filter(b => b.status !== 'reading').slice(0, 8)
 
+  // Most read authors (count books per author, top 3)
+  const authorCounts = {}
+  safeBooks.forEach(b => {
+    if (b.author) {
+      const a = b.author.trim()
+      authorCounts[a] = (authorCounts[a] || 0) + 1
+    }
+  })
+  const topAuthors = Object.entries(authorCounts)
+    .filter(([, count]) => count >= 1)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 3)
+    .map(([name, count]) => ({ name, count, books: safeBooks.filter(b => b.author?.trim() === name).map(b => b.title) }))
+
+  // Genre buckets — map messy Open Library subjects into bookstore-style labels
+  // Each bucket has keywords: if any subject contains a keyword, the book counts for that genre
+  const GENRE_BUCKETS = [
+    { label: 'Mystery & Crime', keywords: ['police', 'detective', 'mystery', 'murder', 'crime', 'serial murder', 'private investigator', 'p.i.', 'meurtre'] },
+    { label: 'Historical Fiction', keywords: ['fiction, historical', 'historical fiction', 'revolution, 1789'] },
+    { label: 'War & Conflict', keywords: ['fiction, war', 'world war', 'vietnam war', 'soldiers', 'famine'] },
+    { label: 'Psychological Fiction', keywords: ['fiction, psychological', 'psychological fiction', 'stream of consciousness'] },
+    { label: 'Gothic & Horror', keywords: ['haunted houses', 'gothic revival', 'horror tales', 'horror stories', 'casas embrujadas', 'cuentos de terror'] },
+    { label: 'Postcolonial', keywords: ['colonialism', 'imperialism', 'postcolonial', 'colonial question', 'apartheid'] },
+    { label: 'Political Fiction', keywords: ['political corruption', 'dystopian fiction', 'totalitarianism', 'politicians'] },
+    { label: 'Romance', keywords: ['fiction, romance', 'romance literature'] },
+  ]
+  const genreBucketCounts = {}
+  safeBooks.forEach(b => {
+    const subjects = (b.goodreads_genres || b.google_books_genres || []).map(s => s.toLowerCase())
+    if (subjects.length === 0) return
+    const matched = new Set()
+    for (const bucket of GENRE_BUCKETS) {
+      if (matched.has(bucket.label)) continue
+      for (const kw of bucket.keywords) {
+        if (subjects.some(s => s.includes(kw))) {
+          matched.add(bucket.label)
+          genreBucketCounts[bucket.label] = (genreBucketCounts[bucket.label] || 0) + 1
+          break
+        }
+      }
+    }
+    // Fallback: if book has genres but matched no specific bucket, count as "Fiction"
+    if (matched.size === 0 && subjects.some(s => s.includes('fiction'))) {
+      genreBucketCounts['Fiction'] = (genreBucketCounts['Fiction'] || 0) + 1
+    }
+  })
+  // Build genre → book titles mapping for hover tooltips
+  const genreBooks = {}
+  safeBooks.forEach(b => {
+    const subjects = (b.goodreads_genres || b.google_books_genres || []).map(s => s.toLowerCase())
+    if (subjects.length === 0) return
+    let matchedAny = false
+    for (const bucket of GENRE_BUCKETS) {
+      for (const kw of bucket.keywords) {
+        if (subjects.some(s => s.includes(kw))) {
+          if (!genreBooks[bucket.label]) genreBooks[bucket.label] = []
+          if (!genreBooks[bucket.label].includes(b.title)) genreBooks[bucket.label].push(b.title)
+          matchedAny = true
+          break
+        }
+      }
+    }
+    // Fallback: if no specific bucket matched, file under "Fiction"
+    if (!matchedAny && subjects.some(s => s.includes('fiction'))) {
+      if (!genreBooks['Fiction']) genreBooks['Fiction'] = []
+      if (!genreBooks['Fiction'].includes(b.title)) genreBooks['Fiction'].push(b.title)
+    }
+  })
+
+  const topGenres = Object.entries(genreBucketCounts)
+    .filter(([, count]) => count >= 1)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 3)
+    .map(([genre, count]) => ({ genre, count, books: genreBooks[genre] || [] }))
+
+  // Latest 5-star book (rating 10 = 5 stars in Goodreads scale)
+  const latestFiveStar = safeBooks.find(b => b.rating != null && Number(b.rating) >= 10)
+
   return (
-    <div style={{
-      background: '#FFFEFA',
-      borderRadius: '12px',
-      padding: '20px',
-      boxShadow: '2px 3px 8px rgba(0,0,0,0.1)',
-    }}>
+    <>
+      {/* Quill edit button (owner only) */}
+      {isOwner && (onAddBook || onImportGoodreads || onScanBookshelf) && (
+        <QuillMenu items={[
+          onScanBookshelf && { label: 'Scan your bookshelf', onClick: onScanBookshelf },
+          onImportGoodreads && { label: 'Import from Goodreads', onClick: onImportGoodreads },
+          onAddBook && { label: 'Add a book manually', onClick: onAddBook },
+        ].filter(Boolean)} />
+      )}
+
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '18px' }}>{'\ud83d\udcd6'}</span>
           <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#2C2C2C' }}>Reading</h3>
         </div>
-        {onSeeAll && (
+        {onSeeAll && !(readingThemes && readingThemes.length > 0) && (
           <button
             onClick={onSeeAll}
             style={{
@@ -255,18 +334,126 @@ export const ReadingSection = ({ books, readingThemes, onBookClick, onThemeClick
         </div>
       )}
 
-      {/* Theme tags */}
-      {readingThemes && readingThemes.length > 0 && (
+      {/* Hover tooltip for author/genre chips */}
+      {hoveredChip && (
         <div style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '8px',
-          marginTop: '14px',
+          position: 'fixed',
+          left: Math.min(hoveredChip.rect.left, window.innerWidth - 220),
+          top: hoveredChip.rect.bottom + 6,
+          background: '#FFFEFA',
+          borderRadius: '8px',
+          boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
+          padding: '8px 12px',
+          zIndex: 100,
+          maxWidth: '200px',
+          pointerEvents: 'none',
         }}>
-          {readingThemes.map((theme, i) => (
+          {hoveredChip.books.map((title, i) => (
+            <div key={i} style={{ fontSize: '12px', color: '#2C2C2C', lineHeight: 1.5, fontStyle: 'italic' }}>
+              {title}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Reading stats: top authors, genres, latest 5-star */}
+      {(topAuthors.length > 0 || topGenres.length > 0 || latestFiveStar) && (
+        <div style={{ marginTop: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {/* Top authors */}
+          {topAuthors.length > 0 && (
+            <div>
+              <p style={{ margin: '0 0 4px 0', fontSize: '11px', color: '#999', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>
+                {topAuthors.some(a => a.count >= 2) ? 'Most read' : 'Authors'}
+              </p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                {topAuthors.map(({ name, count, books: authorBooks }) => (
+                  <span
+                    key={name}
+                    onMouseEnter={(e) => setHoveredChip({ type: 'author', books: authorBooks, rect: e.currentTarget.getBoundingClientRect() })}
+                    onMouseLeave={() => setHoveredChip(null)}
+                    style={{
+                      display: 'inline-block',
+                      padding: '3px 10px',
+                      borderRadius: '14px',
+                      background: '#F5F1EB',
+                      fontSize: '12px',
+                      color: '#2C2C2C',
+                      cursor: 'default',
+                    }}
+                  >
+                    {name}{count >= 2 && <span style={{ color: '#999' }}> ({count})</span>}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Top genres */}
+          {topGenres.length > 0 && (
+            <div>
+              <p style={{ margin: '0 0 4px 0', fontSize: '11px', color: '#999', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>
+                {topGenres.some(g => g.count >= 2) ? 'Top genres' : 'Genres'}
+              </p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                {topGenres.map(({ genre, count, books: genreBooksList }) => (
+                  <span
+                    key={genre}
+                    onMouseEnter={(e) => setHoveredChip({ type: 'genre', books: genreBooksList, rect: e.currentTarget.getBoundingClientRect() })}
+                    onMouseLeave={() => setHoveredChip(null)}
+                    style={{
+                      display: 'inline-block',
+                      padding: '3px 10px',
+                      borderRadius: '14px',
+                      background: '#F5F1EB',
+                      fontSize: '12px',
+                      color: '#6B6156',
+                      cursor: 'default',
+                    }}
+                  >
+                    {genre}{count >= 2 && <span style={{ color: '#999' }}> ({count})</span>}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Latest 5-star */}
+          {latestFiveStar && (
+            <div>
+              <p style={{ margin: '0 0 4px 0', fontSize: '11px', color: '#999', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>
+                Latest 5-star
+              </p>
+              <p style={{ margin: 0, fontSize: '13px', color: '#2C2C2C', fontStyle: 'italic' }}>
+                {latestFiveStar.title}{latestFiveStar.author ? ` — ${latestFiveStar.author}` : ''}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Theme tags — show max 3, link to knowledge graph for more */}
+      {readingThemes && readingThemes.length > 0 && (
+        <div style={{ marginTop: '14px' }}>
+          <p style={{
+            margin: '0 0 8px 0',
+            fontSize: '11px',
+            color: '#999',
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
+            fontWeight: 600,
+          }}>
+            Recurring themes
+          </p>
+          <div style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '8px',
+            alignItems: 'center',
+          }}>
+          {readingThemes.slice(0, 3).map((theme, i) => (
             <span
               key={i}
-              onClick={() => onThemeClick && onThemeClick(theme)}
+              onClick={() => onSeeAll && onSeeAll()}
               style={{
                 display: 'inline-block',
                 padding: '4px 10px',
@@ -274,17 +461,34 @@ export const ReadingSection = ({ books, readingThemes, onBookClick, onThemeClick
                 background: '#E8DCC8',
                 fontSize: '12px',
                 color: '#2C2C2C',
-                cursor: onThemeClick ? 'pointer' : 'default',
+                cursor: onSeeAll ? 'pointer' : 'default',
                 transition: 'opacity 0.15s',
               }}
-              onMouseEnter={(e) => { if (onThemeClick) e.currentTarget.style.opacity = '0.75' }}
+              onMouseEnter={(e) => { if (onSeeAll) e.currentTarget.style.opacity = '0.75' }}
               onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
             >
               {theme}
             </span>
           ))}
+          {onSeeAll && (
+            <button
+              onClick={onSeeAll}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '12px',
+                color: '#4A7BA7',
+                padding: '4px 2px',
+                fontStyle: 'italic',
+              }}
+            >
+              see more connections
+            </button>
+          )}
+          </div>
         </div>
       )}
-    </div>
+    </>
   )
 }

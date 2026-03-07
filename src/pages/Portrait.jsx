@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { startSpotifyConnect, getSpotifyCallbackCode } from '../lib/spotifyAuth'
@@ -13,6 +14,7 @@ import { AddExperienceModal } from '../components/portrait/AddExperienceModal'
 import { AddBookModal } from '../components/portrait/AddBookModal'
 import { GoodreadsImportModal } from '../components/portrait/GoodreadsImportModal'
 import { BookshelfScanModal } from '../components/portrait/BookshelfScanModal'
+import { PlaybillScanModal } from '../components/portrait/PlaybillScanModal'
 
 /**
  * Portrait tab page — fetches live data, manages all interactions.
@@ -20,6 +22,7 @@ import { BookshelfScanModal } from '../components/portrait/BookshelfScanModal'
  */
 export const Portrait = ({ userId: friendUserId }) => {
   const { profile } = useAuth()
+  const navigate = useNavigate()
   const isOwner = !friendUserId
   const targetUserId = friendUserId || profile?.id
 
@@ -27,10 +30,16 @@ export const Portrait = ({ userId: friendUserId }) => {
   const [spotifyProfile, setSpotifyProfile] = useState(null)
   const [books, setBooks] = useState([])
   const [readingThemes, setReadingThemes] = useState(null)
+  const [readingGraph, setReadingGraph] = useState(null)
   const [creations, setCreations] = useState([])
   const [experiences, setExperiences] = useState([])
   const [loading, setLoading] = useState(true)
   const [spotifyConnecting, setSpotifyConnecting] = useState(false)
+  const [spotifyError, setSpotifyError] = useState(null)
+
+  // Portrait section preferences (local state for optimistic updates)
+  const [portraitHidden, setPortraitHidden] = useState(profile?.portrait_hidden_sections || [])
+  const [portraitOrder, setPortraitOrder] = useState(profile?.portrait_section_order || [])
 
   // Modal state
   const [showMusicModal, setShowMusicModal] = useState(false)
@@ -41,9 +50,91 @@ export const Portrait = ({ userId: friendUserId }) => {
   const [showAddBook, setShowAddBook] = useState(false)
   const [showGoodreadsImport, setShowGoodreadsImport] = useState(false)
   const [showBookshelfScan, setShowBookshelfScan] = useState(false)
+  const [showPlaybillScan, setShowPlaybillScan] = useState(false)
+  const [addCreationMode, setAddCreationMode] = useState(null)
   const [selectedExperience, setSelectedExperience] = useState(null)
   const [selectedBook, setSelectedBook] = useState(null)
   const [bookPopoverRect, setBookPopoverRect] = useState(null)
+
+  // --- Helper: call an Edge Function with auth ---
+  const callEdgeFunction = async (name, body = {}) => {
+    // Force a session refresh to get a fresh JWT (critical after full-page redirects like Spotify OAuth)
+    let { data: { session } } = await supabase.auth.refreshSession()
+    if (!session) {
+      // Fallback: try stored session
+      const stored = await supabase.auth.getSession()
+      session = stored.data?.session
+    }
+    if (!session) {
+      throw new Error('Not authenticated — please sign in again')
+    }
+    const res = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${name}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+          apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify(body),
+      }
+    )
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err.error || `${name} failed (${res.status})`)
+    }
+    return res.json()
+  }
+
+  // --- Generation triggers (fire-and-forget, non-blocking) ---
+
+  const triggerReadingThemes = async (targetId) => {
+    try {
+      const payload = targetId && targetId !== user?.id ? { target_user_id: targetId } : {}
+      const result = await callEdgeFunction('reading-themes', payload)
+      if (result.themes) {
+        setReadingThemes(result.themes)
+      }
+      if (result.reading_graph) {
+        setReadingGraph(result.reading_graph)
+      }
+    } catch (err) {
+      console.warn('Reading themes generation:', err.message)
+    }
+  }
+
+  const triggerCoverEnrichment = async (userId) => {
+    try {
+      await callEdgeFunction('book-enrich-batch', { user_id: userId, enrich_genres: true })
+      // Refresh books to show new covers and genres
+      const { data } = await supabase
+        .from('books')
+        .select('*')
+        .eq('user_id', userId)
+        .order('date_read', { ascending: false, nullsFirst: false })
+        .order('created_at', { ascending: false })
+      if (data) setBooks(data)
+    } catch (err) {
+      console.warn('Cover enrichment:', err.message)
+    }
+  }
+
+  const triggerPortraitGeneration = async () => {
+    try {
+      const result = await callEdgeFunction('portrait-generate', {})
+      if (result.portrait_text) {
+        setSpotifyProfile(prev => prev ? {
+          ...prev,
+          portrait_text: result.portrait_text,
+          mood_label: result.mood_label || prev.mood_label,
+          mood_line: result.mood_line || prev.mood_line,
+        } : prev)
+      }
+    } catch (err) {
+      console.warn('Portrait generation:', err.message)
+    }
+  }
 
   // --- Spotify OAuth callback handling ---
   useEffect(() => {
@@ -62,54 +153,25 @@ export const Portrait = ({ userId: friendUserId }) => {
   const handleSpotifyCallback = async ({ code, codeVerifier, redirectUri }) => {
     setSpotifyConnecting(true)
     try {
-      const { data: session } = await supabase.auth.getSession()
+      // Exchange code for tokens
+      await callEdgeFunction('spotify-auth', {
+        action: 'callback',
+        code,
+        code_verifier: codeVerifier,
+        redirect_uri: redirectUri,
+      })
 
-      // Exchange code for tokens via Edge Function
-      const authRes = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/spotify-auth`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session.session.access_token}`,
-          },
-          body: JSON.stringify({
-            action: 'callback',
-            code,
-            code_verifier: codeVerifier,
-            redirect_uri: redirectUri,
-          }),
-        }
-      )
-
-      if (!authRes.ok) {
-        const err = await authRes.json()
-        throw new Error(err.error || 'Spotify auth failed')
-      }
-
-      // Now sync Spotify data
-      const syncRes = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/spotify-sync`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session.session.access_token}`,
-          },
-          body: JSON.stringify({}),
-        }
-      )
-
-      if (!syncRes.ok) {
-        const err = await syncRes.json()
-        throw new Error(err.error || 'Spotify sync failed')
-      }
+      // Sync Spotify data
+      await callEdgeFunction('spotify-sync', {})
 
       // Refresh data
       await fetchAllData()
+
+      // Generate portrait prose (fire-and-forget — updates state when ready)
+      triggerPortraitGeneration()
     } catch (err) {
       console.error('Spotify connection error:', err)
-      alert('Failed to connect Spotify: ' + err.message)
+      setSpotifyError('Failed to connect Spotify: ' + err.message)
     } finally {
       setSpotifyConnecting(false)
     }
@@ -129,6 +191,7 @@ export const Portrait = ({ userId: friendUserId }) => {
           .from('books')
           .select('*')
           .eq('user_id', targetUserId)
+          .order('date_read', { ascending: false, nullsFirst: false })
           .order('created_at', { ascending: false }),
         supabase
           .from('creations')
@@ -142,18 +205,44 @@ export const Portrait = ({ userId: friendUserId }) => {
           .order('date', { ascending: false }),
       ])
 
+      const fetchedBooks = booksResult.data && !booksResult.error ? booksResult.data : []
       setSpotifyProfile(spotifyResult.data && !spotifyResult.error ? spotifyResult.data : null)
-      setBooks(booksResult.data && !booksResult.error ? booksResult.data : [])
+      setBooks(fetchedBooks)
       setCreations(creationsResult.data && !creationsResult.error ? creationsResult.data : [])
       setExperiences(experiencesResult.data && !experiencesResult.error ? experiencesResult.data : [])
 
       // Reading themes from profiles table
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('reading_themes')
+        .select('reading_themes, reading_graph')
         .eq('id', targetUserId)
         .single()
-      setReadingThemes(profileData?.reading_themes || null)
+      const themes = profileData?.reading_themes || null
+      setReadingThemes(themes)
+      setReadingGraph(profileData?.reading_graph || null)
+
+      // Enrich missing covers/genres (owner only)
+      if (isOwner && fetchedBooks.length >= 1) {
+        if (fetchedBooks.some(b => !b.cover_url || !b.goodreads_genres)) {
+          triggerCoverEnrichment(targetUserId)
+        }
+      }
+
+      // Generate reading themes if user has books — works for owner AND friend view
+      // (populates on first visit so portraits aren't blank)
+      if (fetchedBooks.length >= 1) {
+        triggerReadingThemes(targetUserId)
+      }
+
+      // Auto-generate portrait prose if data exists but prose is missing or stale (owner only)
+      const sp = spotifyResult.data && !spotifyResult.error ? spotifyResult.data : null
+      const hasAnyData = sp?.is_active || fetchedBooks.length > 0 ||
+        (experiencesResult.data?.length > 0) || (creationsResult.data?.length > 0)
+      const isPortraitStale = sp?.portrait_generated_at &&
+        (Date.now() - new Date(sp.portrait_generated_at).getTime()) > 30 * 24 * 3600 * 1000
+      if (isOwner && hasAnyData && (!sp?.portrait_text || isPortraitStale)) {
+        triggerPortraitGeneration()
+      }
     } catch (_err) {
       // Leave empty state — user starts from scratch
     } finally {
@@ -163,25 +252,17 @@ export const Portrait = ({ userId: friendUserId }) => {
 
   // --- Spotify connect/disconnect ---
 
-  const handleConnectSpotify = () => {
-    startSpotifyConnect()
+  const handleConnectSpotify = async () => {
+    setSpotifyError(null) // Clear previous error before retrying
+    const result = await startSpotifyConnect()
+    if (result?.ok === false) {
+      setSpotifyError('Spotify is not configured yet. Ask the admin to add the Spotify Client ID.')
+    }
   }
 
   const handleDisconnectSpotify = async () => {
     try {
-      const { data: session } = await supabase.auth.getSession()
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/spotify-auth`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session.session.access_token}`,
-          },
-          body: JSON.stringify({ action: 'disconnect' }),
-        }
-      )
-      if (!res.ok) throw new Error('Disconnect failed')
+      await callEdgeFunction('spotify-auth', { action: 'disconnect' })
       setSpotifyProfile(null)
     } catch (err) {
       console.error('Spotify disconnect error:', err)
@@ -231,9 +312,11 @@ export const Portrait = ({ userId: friendUserId }) => {
 
   // --- Modal open callbacks ---
 
-  const handleAddCreation = () => setShowAddCreation(true)
+  const handleAddCreationText = () => { setAddCreationMode('text'); setShowAddCreation(true) }
+  const handleAddCreationImage = () => { setAddCreationMode('image'); setShowAddCreation(true) }
   const handleViewCreationArchive = () => setShowCreationArchive(true)
   const handleAddExperience = () => setShowAddExperience(true)
+  const handleScanPlaybill = () => setShowPlaybillScan(true)
   const handleMusicSeeAll = () => setShowMusicModal(true)
   const handleReadingSeeAll = () => setShowReadingModal(true)
 
@@ -263,16 +346,79 @@ export const Portrait = ({ userId: friendUserId }) => {
   }
 
   const handleBookCreated = (newBook) => {
-    setBooks(prev => [newBook, ...prev])
+    setBooks(prev => {
+      const updated = [newBook, ...prev]
+      // Fire-and-forget: enrich cover + genres, then regenerate themes
+      triggerCoverEnrichment(targetUserId)
+      triggerReadingThemes(targetUserId)
+      return updated
+    })
   }
 
   const handleBooksImported = () => {
-    // Re-fetch books after import
-    fetchAllData()
+    fetchAllData().then(() => {
+      triggerCoverEnrichment(targetUserId)
+      triggerReadingThemes(targetUserId)
+    })
   }
 
   const handleBooksAdded = () => {
-    fetchAllData()
+    fetchAllData().then(() => {
+      triggerCoverEnrichment(targetUserId)
+      triggerReadingThemes(targetUserId)
+    })
+  }
+
+  // --- Portrait section preferences (drag + hide) ---
+
+  const handleTogglePortraitHidden = async (sectionKey) => {
+    if (!profile?.id) return
+    const current = portraitHidden
+    const next = current.includes(sectionKey)
+      ? current.filter(s => s !== sectionKey)
+      : [...current, sectionKey]
+
+    setPortraitHidden(next)
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ portrait_hidden_sections: next })
+      .eq('id', profile.id)
+
+    if (error) setPortraitHidden(current)
+  }
+
+  const handlePortraitSectionOrderChange = async (newOrder) => {
+    if (!profile?.id) return
+    const previous = portraitOrder
+
+    setPortraitOrder(newOrder)
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ portrait_section_order: newOrder })
+      .eq('id', profile.id)
+
+    if (error) setPortraitOrder(previous)
+  }
+
+  const handleExperiencesAdded = () => {
+    supabase
+      .from('experiences')
+      .select('*')
+      .eq('user_id', targetUserId)
+      .order('date', { ascending: false })
+      .then(({ data }) => { if (data) setExperiences(data) })
+  }
+
+  const handleViewReview = (reviewId) => {
+    setSelectedBook(null)
+    setBookPopoverRect(null)
+    if (isOwner) {
+      navigate(`/my-corner?tab=reviews&review=${reviewId}`)
+    } else if (friendUserId) {
+      navigate(`/friend/${friendUserId}?tab=reviews&review=${reviewId}`)
+    }
   }
 
   if (loading) {
@@ -298,10 +444,12 @@ export const Portrait = ({ userId: friendUserId }) => {
           experiences={experiences}
           isOwner={isOwner}
           onToggleCreationVisibility={isOwner ? handleToggleCreationVisibility : undefined}
-          onAddCreation={isOwner ? handleAddCreation : undefined}
+          onAddCreationText={isOwner ? handleAddCreationText : undefined}
+          onAddCreationImage={isOwner ? handleAddCreationImage : undefined}
           onDeleteCreation={isOwner ? handleDeleteCreation : undefined}
           onViewCreationArchive={handleViewCreationArchive}
           onAddExperience={isOwner ? handleAddExperience : undefined}
+          onScanPlaybill={isOwner ? handleScanPlaybill : undefined}
           onPortraitImageClick={handlePortraitImageClick}
           onBookClick={handleBookClick}
           onThemeClick={handleThemeClick}
@@ -310,9 +458,14 @@ export const Portrait = ({ userId: friendUserId }) => {
           onReadingSeeAll={handleReadingSeeAll}
           onConnectSpotify={isOwner ? handleConnectSpotify : undefined}
           onDisconnectSpotify={isOwner ? handleDisconnectSpotify : undefined}
+          spotifyError={spotifyError}
           onAddBook={isOwner ? () => setShowAddBook(true) : undefined}
           onImportGoodreads={isOwner ? () => setShowGoodreadsImport(true) : undefined}
           onScanBookshelf={isOwner ? () => setShowBookshelfScan(true) : undefined}
+          hiddenSections={portraitHidden}
+          onToggleHidden={isOwner ? handleTogglePortraitHidden : undefined}
+          sectionOrder={portraitOrder}
+          onSectionOrderChange={isOwner ? handlePortraitSectionOrderChange : undefined}
         />
       </div>
 
@@ -322,6 +475,7 @@ export const Portrait = ({ userId: friendUserId }) => {
           book={selectedBook}
           anchorRect={bookPopoverRect}
           onClose={() => { setSelectedBook(null); setBookPopoverRect(null) }}
+          onViewReview={handleViewReview}
         />
       )}
 
@@ -337,6 +491,7 @@ export const Portrait = ({ userId: friendUserId }) => {
         onClose={() => setShowReadingModal(false)}
         books={books}
         readingThemes={readingThemes}
+        readingGraph={readingGraph}
         onBookClick={(book) => {
           setShowReadingModal(false)
           setSelectedBook(book)
@@ -363,8 +518,9 @@ export const Portrait = ({ userId: friendUserId }) => {
         <>
           <AddCreationModal
             isOpen={showAddCreation}
-            onClose={() => setShowAddCreation(false)}
+            onClose={() => { setShowAddCreation(false); setAddCreationMode(null) }}
             onCreated={handleCreationCreated}
+            initialMode={addCreationMode}
           />
           <AddExperienceModal
             isOpen={showAddExperience}
@@ -385,6 +541,11 @@ export const Portrait = ({ userId: friendUserId }) => {
             isOpen={showBookshelfScan}
             onClose={() => setShowBookshelfScan(false)}
             onBooksAdded={handleBooksAdded}
+          />
+          <PlaybillScanModal
+            isOpen={showPlaybillScan}
+            onClose={() => setShowPlaybillScan(false)}
+            onExperiencesAdded={handleExperiencesAdded}
           />
         </>
       )}

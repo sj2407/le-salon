@@ -15,7 +15,11 @@ const MY_CORNER_TABS = ['card', 'reviews', 'liste', 'wishlist', 'portrait']
 
 export const MyCorner = () => {
   const [searchParams] = useSearchParams()
-  const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'card')
+  const [activeTab, setActiveTab] = useState(() => {
+    // Auto-switch to portrait tab on Spotify OAuth callback
+    if (searchParams.get('code')) return 'portrait'
+    return searchParams.get('tab') || 'card'
+  })
   const [showProfileEdit, setShowProfileEdit] = useState(false)
   // Update active tab when URL param changes (adjust state during render, not in effect)
   const [prevSearchParams, setPrevSearchParams] = useState(searchParams)

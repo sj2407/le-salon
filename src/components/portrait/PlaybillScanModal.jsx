@@ -2,16 +2,22 @@ import { useState, useRef } from 'react'
 import { PortraitModal } from './PortraitModal'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
+import { EXPERIENCE_CATEGORIES } from './mockData'
+
+const getCategoryIcon = (category) => {
+  const found = EXPERIENCE_CATEGORIES.find(c => c.value === category)
+  return found ? found.icon : '\u2728'
+}
 
 /**
- * Bookshelf Scan modal — upload a photo of a bookshelf, OCR extracts titles.
- * User reviews detected books and adds them to their library.
+ * Playbill Scan modal — upload a photo of a playbill/ticket, AI extracts events.
+ * User reviews detected experiences and adds them to their library.
  */
-export const BookshelfScanModal = ({ isOpen, onClose, onBooksAdded }) => {
+export const PlaybillScanModal = ({ isOpen, onClose, onExperiencesAdded }) => {
   const { profile } = useAuth()
   const [scanning, setScanning] = useState(false)
-  const [detectedBooks, setDetectedBooks] = useState(null)
-  const [selectedBooks, setSelectedBooks] = useState({})
+  const [detectedExperiences, setDetectedExperiences] = useState(null)
+  const [selectedItems, setSelectedItems] = useState({})
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
@@ -19,8 +25,8 @@ export const BookshelfScanModal = ({ isOpen, onClose, onBooksAdded }) => {
 
   const reset = () => {
     setScanning(false)
-    setDetectedBooks(null)
-    setSelectedBooks({})
+    setDetectedExperiences(null)
+    setSelectedItems({})
     setSaving(false)
     setError(null)
     setImagePreview(null)
@@ -28,6 +34,7 @@ export const BookshelfScanModal = ({ isOpen, onClose, onBooksAdded }) => {
   }
 
   const handleClose = () => {
+    if (scanning) return
     reset()
     onClose()
   }
@@ -42,7 +49,7 @@ export const BookshelfScanModal = ({ isOpen, onClose, onBooksAdded }) => {
     }
 
     setError(null)
-    setDetectedBooks(null)
+    setDetectedExperiences(null)
     setImagePreview(URL.createObjectURL(file))
     setScanning(true)
 
@@ -58,7 +65,7 @@ export const BookshelfScanModal = ({ isOpen, onClose, onBooksAdded }) => {
 
       const { data: session } = await supabase.auth.getSession()
       const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bookshelf-scan`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/playbill-scan`,
         {
           method: 'POST',
           headers: {
@@ -75,103 +82,68 @@ export const BookshelfScanModal = ({ isOpen, onClose, onBooksAdded }) => {
         throw new Error(data.error || 'Scan failed')
       }
 
-      if (data.books && data.books.length > 0) {
-        setDetectedBooks(data.books)
+      if (data.experiences && data.experiences.length > 0) {
+        setDetectedExperiences(data.experiences)
         // Select all by default
         const selected = {}
-        data.books.forEach((_, i) => { selected[i] = true })
-        setSelectedBooks(selected)
+        data.experiences.forEach((_, i) => { selected[i] = true })
+        setSelectedItems(selected)
       } else {
-        setError(data.message || 'No books detected — try a better-lit photo.')
+        setError(data.message || 'No events detected — try a clearer photo.')
       }
     } catch (err) {
-      console.error('Bookshelf scan error:', err)
+      console.error('Playbill scan error:', err)
       setError(err.message || 'Scan failed')
     } finally {
       setScanning(false)
     }
   }
 
-  const toggleBook = (index) => {
-    setSelectedBooks(prev => ({ ...prev, [index]: !prev[index] }))
+  const toggleItem = (index) => {
+    setSelectedItems(prev => ({ ...prev, [index]: !prev[index] }))
   }
 
   const handleAddSelected = async () => {
     if (!profile?.id) return
 
-    const booksToAdd = detectedBooks.filter((_, i) => selectedBooks[i])
-    if (booksToAdd.length === 0) return
+    const toAdd = detectedExperiences.filter((_, i) => selectedItems[i])
+    if (toAdd.length === 0) return
 
     setSaving(true)
 
     try {
-      const { data: session } = await supabase.auth.getSession()
-      let added = 0
+      const rows = toAdd.map(exp => ({
+        user_id: profile.id,
+        name: exp.name,
+        category: exp.category || 'other',
+        date: exp.date || null,
+        city: exp.city || null,
+        source: 'playbill_scan',
+      }))
 
-      for (const book of booksToAdd) {
-        // Enrich each book
-        let enrichment = {}
-        try {
-          const enrichRes = await fetch(
-            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/book-enrich`,
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${session.session.access_token}`,
-              },
-              body: JSON.stringify({ title: book.title, author: book.author || undefined }),
-            }
-          )
-          if (enrichRes.ok) {
-            const result = await enrichRes.json()
-            if (result.success) {
-              enrichment = {
-                cover_url: result.cover_url,
-                google_books_id: result.google_books_id,
-                google_books_genres: result.genres,
-                google_books_description: result.description,
-              }
-            }
-          }
-        } catch (_) {
-          // Continue without enrichment
-        }
+      const { error } = await supabase.from('experiences').insert(rows)
+      if (error) throw error
 
-        const { error } = await supabase
-          .from('books')
-          .upsert({
-            user_id: profile.id,
-            title: book.title,
-            author: book.author || null,
-            status: 'read',
-            source: 'bookshelf_import',
-            ...enrichment,
-          }, { ignoreDuplicates: true })
-
-        if (!error) added++
-      }
-
-      if (onBooksAdded) onBooksAdded(added)
+      if (onExperiencesAdded) onExperiencesAdded(toAdd.length)
       handleClose()
     } catch (err) {
-      console.error('Error adding scanned books:', err)
-      setError('Failed to add some books')
+      console.error('Error adding scanned experiences:', err)
+      setError('Failed to add some experiences')
     } finally {
       setSaving(false)
     }
   }
 
-  const selectedCount = Object.values(selectedBooks).filter(Boolean).length
+  const selectedCount = Object.values(selectedItems).filter(Boolean).length
 
   return (
-    <PortraitModal isOpen={isOpen} onClose={handleClose} title="Scan your bookshelf" maxWidth="480px">
+    <PortraitModal isOpen={isOpen} onClose={handleClose} title="Scan a playbill" maxWidth="480px">
       <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
         {/* Upload prompt */}
-        {!detectedBooks && !scanning && (
+        {!detectedExperiences && !scanning && (
           <>
             <p style={{ margin: 0, fontSize: '14px', color: '#666', lineHeight: 1.6 }}>
-              Take a photo of your bookshelf. We'll detect the titles and add them to your library.
+              Take a photo of a playbill, event ticket, or concert poster. We'll extract the event details.
             </p>
 
             <input
@@ -206,7 +178,7 @@ export const BookshelfScanModal = ({ isOpen, onClose, onBooksAdded }) => {
             {imagePreview && (
               <img
                 src={imagePreview}
-                alt="Bookshelf"
+                alt="Playbill"
                 style={{
                   width: '100%',
                   maxHeight: '200px',
@@ -218,20 +190,20 @@ export const BookshelfScanModal = ({ isOpen, onClose, onBooksAdded }) => {
               />
             )}
             <p style={{ margin: 0, fontSize: '14px', color: '#999', fontStyle: 'italic' }}>
-              Reading spines... this takes a few seconds
+              Reading playbill... this takes a few seconds
             </p>
           </div>
         )}
 
-        {/* Detected books */}
-        {detectedBooks && (
+        {/* Detected experiences */}
+        {detectedExperiences && (
           <>
             <p style={{ margin: 0, fontSize: '14px', color: '#666' }}>
-              Found <strong>{detectedBooks.length}</strong> books. Uncheck any you don't want to add.
+              Found <strong>{detectedExperiences.length}</strong> event{detectedExperiences.length !== 1 ? 's' : ''}. Uncheck any you don't want to add.
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '300px', overflowY: 'auto' }}>
-              {detectedBooks.map((book, i) => (
+              {detectedExperiences.map((exp, i) => (
                 <label
                   key={i}
                   style={{
@@ -240,21 +212,26 @@ export const BookshelfScanModal = ({ isOpen, onClose, onBooksAdded }) => {
                     gap: '10px',
                     padding: '8px 10px',
                     borderRadius: '8px',
-                    background: selectedBooks[i] ? '#F5F1EB' : 'transparent',
+                    background: selectedItems[i] ? '#F5F1EB' : 'transparent',
                     cursor: 'pointer',
                     transition: 'background 0.15s',
                   }}
                 >
                   <input
                     type="checkbox"
-                    checked={!!selectedBooks[i]}
-                    onChange={() => toggleBook(i)}
+                    checked={!!selectedItems[i]}
+                    onChange={() => toggleItem(i)}
                     style={{ accentColor: '#2C2C2C' }}
                   />
+                  <span style={{ fontSize: '18px', flexShrink: 0 }}>
+                    {getCategoryIcon(exp.category)}
+                  </span>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '14px', color: '#2C2C2C', fontWeight: 500 }}>{book.title}</div>
-                    {book.author && (
-                      <div style={{ fontSize: '12px', color: '#999' }}>{book.author}</div>
+                    <div style={{ fontSize: '14px', color: '#2C2C2C', fontWeight: 500 }}>{exp.name}</div>
+                    {(exp.city || exp.date) && (
+                      <div style={{ fontSize: '12px', color: '#999' }}>
+                        {[exp.city, exp.date].filter(Boolean).join(' \u00b7 ')}
+                      </div>
                     )}
                   </div>
                 </label>
@@ -294,7 +271,7 @@ export const BookshelfScanModal = ({ isOpen, onClose, onBooksAdded }) => {
                     fontWeight: 500,
                   }}
                 >
-                  {saving ? 'Adding...' : `Add ${selectedCount} books`}
+                  {saving ? 'Adding...' : `Add ${selectedCount} experience${selectedCount !== 1 ? 's' : ''}`}
                 </button>
               </div>
             </div>
