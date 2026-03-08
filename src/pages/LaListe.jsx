@@ -56,6 +56,7 @@ export const LaListe = () => {
   const navigate = useNavigate()
   const [items, setItems] = useState([])
   const [recommendations, setRecommendations] = useState([])
+  const [recsWithNotes, setRecsWithNotes] = useState(new Set())
   const [loading, setLoading] = useState(true)
   const [filterTag, setFilterTag] = useState('all')
   const [showAddForm, setShowAddForm] = useState(false)
@@ -154,6 +155,13 @@ export const LaListe = () => {
 
       if (reviewsError) throw reviewsError
       setRecommendations(reviewsData || [])
+
+      // Check which recommended reviews have notes
+      const { data: notesData } = await supabase
+        .from('review_notes')
+        .select('review_id')
+        .in('review_id', reviewIds)
+      setRecsWithNotes(new Set((notesData || []).map(n => n.review_id)))
     } catch (_err) {
       // silently handled
     }
@@ -1050,7 +1058,7 @@ export const LaListe = () => {
                       </div>
 
                       {/* Review text preview + link to friend's review */}
-                      {review.review_text && (
+                      {(review.review_text || recsWithNotes.has(review.id)) && (
                         <button
                           onClick={() => navigate(`/friend/${review.user_id}?tab=reviews&review=${review.id}`)}
                           style={{
@@ -1066,10 +1074,18 @@ export const LaListe = () => {
                             gap: '6px'
                           }}
                         >
-                          <span style={{ fontSize: '13px', color: '#666', fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>
-                            {review.review_text}
+                          {review.review_text ? (
+                            <span style={{ fontSize: '13px', color: '#666', fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>
+                              {review.review_text}
+                            </span>
+                          ) : (
+                            <span style={{ fontSize: '13px', color: '#666', fontStyle: 'italic' }}>
+                              Has notes & quotes
+                            </span>
+                          )}
+                          <span style={{ fontSize: '12px', color: '#4A7BA7', flexShrink: 0 }}>
+                            {review.review_text ? 'Read more' : 'See notes'}
                           </span>
-                          <span style={{ fontSize: '12px', color: '#4A7BA7', flexShrink: 0 }}>Read more</span>
                         </button>
                       )}
                     </div>

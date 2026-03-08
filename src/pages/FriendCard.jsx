@@ -12,6 +12,7 @@ import { TAG_ICONS } from '../lib/reviewConstants'
 import { ExpandedReviewText } from '../components/review-comments/ExpandedReviewText'
 import { GearSix } from '@phosphor-icons/react'
 import { Portrait } from './Portrait'
+import { ReviewNotesSection } from '../components/review-notes/ReviewNotesSection'
 
 const FRIEND_TABS = ['card', 'reviews', 'liste', 'wishlist', 'portrait']
 
@@ -26,6 +27,7 @@ export const FriendCard = () => {
   const [reviews, setReviews] = useState([])
   const [myNotes, setMyNotes] = useState([])
   const [reviewComments, setReviewComments] = useState([])
+  const [friendReviewNotes, setFriendReviewNotes] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const initialTab = searchParams.get('tab') || 'card'
@@ -58,14 +60,15 @@ export const FriendCard = () => {
       setLoading(true)
 
       // Fetch friendship check AND all data in one parallel batch
-      const [friendshipResult, profileResult, cardResult, reviewsResult, commentsResult] = await Promise.all([
+      const [friendshipResult, profileResult, cardResult, reviewsResult, commentsResult, notesResult] = await Promise.all([
         supabase.from('friendships').select('id').eq('status', 'accepted')
           .or(`and(requester_id.eq.${profile.id},recipient_id.eq.${friendId}),and(requester_id.eq.${friendId},recipient_id.eq.${profile.id})`)
           .single(),
         supabase.from('profiles').select('*').eq('id', friendId).single(),
         supabase.from('cards').select('*').eq('user_id', friendId).eq('is_current', true).single(),
         supabase.from('reviews').select('*').eq('user_id', friendId).order('created_at', { ascending: false }),
-        supabase.from('review_comments').select('*').eq('from_user_id', profile.id).eq('to_user_id', friendId)
+        supabase.from('review_comments').select('*').eq('from_user_id', profile.id).eq('to_user_id', friendId),
+        supabase.from('review_notes').select('*').eq('user_id', friendId).order('created_at', { ascending: true })
       ])
 
       // Check friendship before using data
@@ -88,6 +91,9 @@ export const FriendCard = () => {
       } else {
         setReviewComments(commentsResult.data || [])
       }
+
+      // Handle review notes
+      setFriendReviewNotes(notesResult.error ? [] : (notesResult.data || []))
 
       // Handle card
       const cardData = cardResult.data
@@ -506,6 +512,12 @@ export const FriendCard = () => {
                       title={`${friendProfile.display_name}'s Reviews`}
                       emptyMessage={`${friendProfile.display_name} hasn't added any reviews yet.`}
                       initialReviewId={initialReviewId}
+                      reviewHasContent={(review) => !!review.review_text || friendReviewNotes.some(n => n.review_id === review.id)}
+                      getReaderLabel={(review) => {
+                        if (review.review_text) return 'read'
+                        if (friendReviewNotes.some(n => n.review_id === review.id)) return 'notes'
+                        return 'read'
+                      }}
                       renderExpandedText={(review, opts) => (
                         <ExpandedReviewText
                           review={review}
@@ -520,6 +532,18 @@ export const FriendCard = () => {
                           onDeleteComment={handleDeleteReviewComment}
                         />
                       )}
+                      renderNotesSection={(review) => {
+                        const notesForReview = friendReviewNotes.filter(n => n.review_id === review.id)
+                        if (notesForReview.length === 0) return null
+                        return (
+                          <ReviewNotesSection
+                            notes={notesForReview}
+                            reviewId={review.id}
+                            isOwner={false}
+                            hasReviewText={!!review.review_text}
+                          />
+                        )
+                      }}
                     />
                   )}
 

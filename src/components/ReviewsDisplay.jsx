@@ -47,7 +47,10 @@ export const ReviewsDisplay = ({
   onDelete,
   renderHeaderActions,
   renderExpandedText,
-  initialReviewId
+  initialReviewId,
+  renderNotesSection,
+  reviewHasContent,
+  getReaderLabel
 }) => {
   const [filterTag, setFilterTag] = useState('all')
   const [openMenuId, setOpenMenuId] = useState(null)
@@ -140,7 +143,8 @@ export const ReviewsDisplay = ({
   }, [openReviewId])
 
   const handleCoverClick = (review) => {
-    if (!review.review_text) return
+    const hasContent = reviewHasContent ? reviewHasContent(review) : !!review.review_text
+    if (!hasContent) return
     setOpenReviewId(review.id)
   }
 
@@ -199,7 +203,7 @@ export const ReviewsDisplay = ({
             <div className="shelf-section" key={`row-${rowIndex}-${rowItems[0]?.id}`}>
               <div className="shelf-row">
                 {rowItems.map((review, itemIndex) => {
-                  const hasReview = !!review.review_text
+                  const hasReview = reviewHasContent ? reviewHasContent(review) : !!review.review_text
                   const isActive = openReviewId === review.id
                   const gradient = FALLBACK_GRADIENTS[review.tag] || FALLBACK_GRADIENTS.other
 
@@ -270,7 +274,7 @@ export const ReviewsDisplay = ({
                         <span>{review.title}</span>
                         {hasReview && (
                           <span className="review-indicator">
-                            <span className="ri-label">read</span>
+                            <span className="ri-label">{getReaderLabel ? getReaderLabel(review) : 'read'}</span>
                             <span className="ri-arrow">&#9656;</span>
                           </span>
                         )}
@@ -327,6 +331,7 @@ export const ReviewsDisplay = ({
                 <div className="reader-body">
                   {renderReaderBody()}
                 </div>
+                {renderNotesSection && renderNotesSection(displayedReview)}
               </>
             )}
           </div>

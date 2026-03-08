@@ -14,6 +14,7 @@ import { CoverThumbnail } from '../components/cover-search/CoverThumbnail'
 import { scrollLock } from '../lib/scrollLock'
 import { TAG_TO_MEDIA_TYPE } from '../lib/coverSearchApis'
 import { Microphone, Plus } from '@phosphor-icons/react'
+import { ReviewNotesSection } from '../components/review-notes/ReviewNotesSection'
 
 export const Reviews = () => {
   const { profile } = useAuth()
@@ -35,6 +36,7 @@ export const Reviews = () => {
   const [friendQuery, setFriendQuery] = useState('')
   const [error, setError] = useState('')
   const [reviewComments, setReviewComments] = useState([])
+  const [reviewNotes, setReviewNotes] = useState([])
   const [imageUrl, setImageUrl] = useState('')
   const [showCoverSearch, setShowCoverSearch] = useState(false)
 
@@ -46,6 +48,7 @@ export const Reviews = () => {
       fetchReviews()
       fetchFriends()
       fetchReviewComments()
+      fetchReviewNotes()
     }
   }, [profile])
 
@@ -214,6 +217,69 @@ export const Reviews = () => {
       })))
     } catch (_err) {
       setReviewComments([])
+    }
+  }
+
+  const fetchReviewNotes = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('review_notes')
+        .select('*')
+        .eq('user_id', profile.id)
+        .order('created_at', { ascending: true })
+
+      if (error) throw error
+      setReviewNotes(data || [])
+    } catch (_err) {
+      setReviewNotes([])
+    }
+  }
+
+  const handleAddNote = async (reviewId, { content, is_quote, page_ref }) => {
+    try {
+      const { error } = await supabase.from('review_notes').insert({
+        review_id: reviewId,
+        user_id: profile.id,
+        content,
+        is_quote: is_quote || false,
+        page_ref: page_ref || null
+      })
+      if (error) throw error
+      await fetchReviewNotes()
+      toast.success('Note saved')
+    } catch (_err) {
+      toast.error('Failed to save note')
+    }
+  }
+
+  const handleEditNote = async (noteId, { content, is_quote, page_ref }) => {
+    try {
+      const { error } = await supabase.from('review_notes')
+        .update({
+          content,
+          is_quote: is_quote || false,
+          page_ref: page_ref || null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', noteId)
+      if (error) throw error
+      await fetchReviewNotes()
+      toast.success('Note updated')
+    } catch (_err) {
+      toast.error('Failed to update note')
+    }
+  }
+
+  const handleDeleteNote = async (noteId) => {
+    try {
+      const { error } = await supabase.from('review_notes')
+        .delete()
+        .eq('id', noteId)
+      if (error) throw error
+      await fetchReviewNotes()
+      toast.success('Note deleted')
+    } catch (_err) {
+      toast.error('Failed to delete note')
     }
   }
 
@@ -518,6 +584,12 @@ export const Reviews = () => {
         reviews={reviews}
         title="My Reviews"
         emptyMessage="No reviews yet. Share your thoughts on movies, books, and more!"
+        reviewHasContent={(review) => !!review.review_text || reviewNotes.some(n => n.review_id === review.id)}
+        getReaderLabel={(review) => {
+          if (review.review_text) return 'read'
+          if (reviewNotes.some(n => n.review_id === review.id)) return 'notes'
+          return 'read'
+        }}
         renderExpandedText={(review, opts) => {
           const commentsForReview = reviewComments.filter(c => c.review_id === review.id)
           if (commentsForReview.length === 0 && !opts?.inReader) return null
@@ -533,6 +605,17 @@ export const Reviews = () => {
             />
           )
         }}
+        renderNotesSection={(review) => (
+          <ReviewNotesSection
+            notes={reviewNotes.filter(n => n.review_id === review.id)}
+            reviewId={review.id}
+            isOwner={true}
+            hasReviewText={!!review.review_text}
+            onAdd={handleAddNote}
+            onEdit={handleEditNote}
+            onDelete={handleDeleteNote}
+          />
+        )}
         renderHeaderActions={() => (
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <button
