@@ -598,10 +598,12 @@ export const Salon = () => {
             </div>
           )}
 
-          <div style={{ display: 'flex', alignItems: 'center', margin: '0 0 8px 0' }}>
-            <h2 key={activeIndex} style={{ margin: 0, flex: 1 }}>
-              <CalligraphyTitle text={activeWeek?.parlor_title} fontSize={26} />
-            </h2>
+          {/* Title row */}
+          <h2 key={activeIndex} style={{ margin: '0 0 4px 0' }}>
+            <CalligraphyTitle text={activeWeek?.parlor_title} fontSize={26} />
+          </h2>
+          {/* Controls row: audio + text size slider */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px', margin: '0 0 8px 0' }}>
             {/* Audio play/pause */}
             <button
               onClick={handleAudioToggle}
@@ -614,7 +616,6 @@ export const Salon = () => {
                 lineHeight: 1,
                 display: 'flex',
                 alignItems: 'center',
-                flexShrink: 0
               }}
               aria-label={audioState === 'playing' ? 'Pause audio' : 'Listen to essay'}
             >
@@ -646,7 +647,7 @@ export const Salon = () => {
               )}
             </button>
             {/* Text size slider */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ fontSize: '10px', color: '#8C8578', fontFamily: "'Source Serif 4', Georgia, serif", fontWeight: 300 }}>A</span>
               <input
                 type="range"

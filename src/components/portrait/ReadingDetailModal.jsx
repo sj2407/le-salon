@@ -1,30 +1,20 @@
-import { lazy, Suspense } from 'react'
 import { PortraitModal } from './PortraitModal'
-
-const ReadingKnowledgeGraph = lazy(() =>
-  import('./ReadingKnowledgeGraph').then(m => ({ default: m.ReadingKnowledgeGraph }))
-)
+import { ReadingGraph2D } from './ReadingGraph2D'
 
 /**
- * Reading "See all" modal — 3D knowledge graph when graph data exists,
+ * Reading "See all" modal — 2D bipartite graph when graph data exists,
  * flat book list as fallback.
  */
 export const ReadingDetailModal = ({ isOpen, onClose, books, readingThemes, readingGraph, onBookClick }) => {
   const hasGraph = readingGraph && readingGraph.themes?.length > 0 && readingGraph.edges?.length > 0
 
   return (
-    <PortraitModal isOpen={isOpen} onClose={onClose} title="Reading" maxWidth={hasGraph ? '850px' : '520px'}>
+    <PortraitModal isOpen={isOpen} onClose={onClose} title="Reading" maxWidth={hasGraph ? '520px' : '520px'}>
       {hasGraph ? (
-        <Suspense fallback={
-          <div style={{ textAlign: 'center', padding: '60px 0', color: '#9B8F82', fontSize: '13px' }}>
-            Loading graph…
-          </div>
-        }>
-          <ReadingKnowledgeGraph
-            books={books}
-            readingGraph={readingGraph}
-          />
-        </Suspense>
+        <ReadingGraph2D
+          books={books}
+          readingGraph={readingGraph}
+        />
       ) : (
         <>
           {/* Theme tags */}
