@@ -62,7 +62,6 @@ export const LaListe = () => {
   const [showDone, setShowDone] = useState(false)
   const [sortBy, setSortBy] = useState('newest')
   const [recsExpanded, setRecsExpanded] = useState(false)
-  const [expandedRecs, setExpandedRecs] = useState(new Set())
   const [showDictation, setShowDictation] = useState(false)
   const [openMenuId, setOpenMenuId] = useState(null)
   const [activeCarouselIndex, setActiveCarouselIndex] = useState(0)
@@ -318,16 +317,6 @@ export const LaListe = () => {
       prefill_tag: item.tag
     })
     navigate(`/my-corner?${params.toString()}`)
-  }
-
-  const toggleRecExpanded = (reviewId) => {
-    const newExpanded = new Set(expandedRecs)
-    if (newExpanded.has(reviewId)) {
-      newExpanded.delete(reviewId)
-    } else {
-      newExpanded.add(reviewId)
-    }
-    setExpandedRecs(newExpanded)
   }
 
   const handleDictationSave = async (transcript) => {
@@ -828,8 +817,8 @@ export const LaListe = () => {
                   border: 'none',
                   cursor: 'pointer',
                   padding: '4px 0',
-                  fontSize: '13px',
-                  color: '#999',
+                  fontSize: '15px',
+                  color: '#622722',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px'
@@ -973,31 +962,28 @@ export const LaListe = () => {
               )}
             </div>
           )}
-        </div>
-      )}
 
-      {/* From Friends — collapsible section */}
-      {recommendations.length > 0 && (
-        <div style={{ marginTop: '32px', position: 'relative', zIndex: 1 }}>
+          {/* From Friends — collapsible section */}
+          {recommendations.length > 0 && (
+            <div style={{ marginTop: '16px', position: 'relative', zIndex: 1 }}>
           <button
             onClick={() => setRecsExpanded(!recsExpanded)}
             style={{
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              padding: '8px 0',
-              fontFamily: "'Caveat', cursive",
-              fontSize: '22px',
-              color: '#4A7BA7',
+              padding: '4px 0',
+              fontSize: '15px',
+              color: '#622722',
               display: 'flex',
               alignItems: 'center',
-              gap: '8px'
+              gap: '6px'
             }}
           >
             From Friends ({recommendations.length})
             <span style={{
-              fontSize: '14px',
-              transition: 'transform 0.2s ease',
+              fontSize: '11px',
+              transition: 'transform 0.2s',
               transform: recsExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
               display: 'inline-block'
             }}>▸</span>
@@ -1024,8 +1010,13 @@ export const LaListe = () => {
                         position: 'relative'
                       }}
                     >
-                      <div style={{ fontSize: '12px', color: '#999', marginBottom: '8px', fontStyle: 'italic' }}>
-                        Recommended by {review.profiles?.display_name || 'a friend'}
+                      <div style={{ fontSize: '12px', color: '#999', marginBottom: '8px', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span>Recommended by {review.profiles?.display_name || 'a friend'}</span>
+                        {items.some(item => item.title?.toLowerCase() === review.title?.toLowerCase()) && (
+                          <span style={{ fontSize: '11px', color: '#5A8A5A', fontWeight: 600, fontStyle: 'normal' }}>
+                            Added
+                          </span>
+                        )}
                       </div>
 
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1037,68 +1028,58 @@ export const LaListe = () => {
                           {review.rating}/10
                         </span>
 
-                        {/* Adopt button */}
-                        <button
-                          onClick={() => handleAdoptRec(review)}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            cursor: 'pointer',
-                            padding: 0,
-                            lineHeight: 1,
-                            flexShrink: 0,
-                            display: 'flex',
-                            alignItems: 'center'
-                          }}
-                          title="Add to my list"
-                        >
-                          <Plus size={18} weight="duotone" color="#622722" />
-                        </button>
-                      </div>
-
-                      {/* Expandable review text */}
-                      {review.review_text && (
-                        expandedRecs.has(review.id) ? (
-                          <div>
-                            <div style={{ marginTop: '10px', fontSize: '14px', lineHeight: 1.6, color: '#2C2C2C', fontStyle: 'italic', whiteSpace: 'pre-wrap' }}>
-                              {review.review_text}
-                            </div>
-                            <button
-                              onClick={() => toggleRecExpanded(review.id)}
-                              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0', fontSize: '12px', color: '#4A7BA7', marginTop: '4px' }}
-                            >
-                              Show less
-                            </button>
-                          </div>
-                        ) : (
+                        {/* Adopt button — hidden if already added */}
+                        {!items.some(item => item.title?.toLowerCase() === review.title?.toLowerCase()) && (
                           <button
-                            onClick={() => toggleRecExpanded(review.id)}
+                            onClick={() => handleAdoptRec(review)}
                             style={{
                               background: 'none',
                               border: 'none',
                               cursor: 'pointer',
-                              padding: '4px 0',
-                              marginTop: '6px',
-                              width: '100%',
-                              textAlign: 'left',
+                              padding: 0,
+                              lineHeight: 1,
+                              flexShrink: 0,
                               display: 'flex',
-                              alignItems: 'center',
-                              gap: '6px'
+                              alignItems: 'center'
                             }}
+                            title="Add to my list"
                           >
-                            <span style={{ fontSize: '13px', color: '#666', fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>
-                              {review.review_text}
-                            </span>
-                            <span style={{ fontSize: '12px', color: '#4A7BA7', flexShrink: 0 }}>Read more</span>
+                            <Plus size={18} weight="duotone" color="#622722" />
                           </button>
-                        )
+                        )}
+                      </div>
+
+                      {/* Review text preview + link to friend's review */}
+                      {review.review_text && (
+                        <button
+                          onClick={() => navigate(`/friend/${review.user_id}?tab=reviews&review=${review.id}`)}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            padding: '4px 0',
+                            marginTop: '6px',
+                            width: '100%',
+                            textAlign: 'left',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}
+                        >
+                          <span style={{ fontSize: '13px', color: '#666', fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>
+                            {review.review_text}
+                          </span>
+                          <span style={{ fontSize: '12px', color: '#4A7BA7', flexShrink: 0 }}>Read more</span>
+                        </button>
                       )}
                     </div>
                   ))}
                 </div>
               </Motion.div>
             )}
-          </AnimatePresence>
+            </AnimatePresence>
+          </div>
+          )}
         </div>
       )}
 

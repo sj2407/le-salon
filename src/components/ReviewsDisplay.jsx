@@ -46,11 +46,12 @@ export const ReviewsDisplay = ({
   onEdit,
   onDelete,
   renderHeaderActions,
-  renderExpandedText
+  renderExpandedText,
+  initialReviewId
 }) => {
   const [filterTag, setFilterTag] = useState('all')
   const [openMenuId, setOpenMenuId] = useState(null)
-  const [openReviewId, setOpenReviewId] = useState(null)
+  const [openReviewId, setOpenReviewId] = useState(initialReviewId || null)
   const menuRef = useRef(null)
   const readerScrollRef = useRef(null)
   const shelfRef = useRef(null)

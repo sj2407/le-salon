@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { motion as Motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
@@ -19,6 +19,7 @@ export const FriendCard = () => {
   const { friendId } = useParams()
   const { profile } = useAuth()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [friendProfile, setFriendProfile] = useState(null)
   const [card, setCard] = useState(null)
   const [entries, setEntries] = useState([])
@@ -27,7 +28,9 @@ export const FriendCard = () => {
   const [reviewComments, setReviewComments] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [activeTab, setActiveTab] = useState('card')
+  const initialTab = searchParams.get('tab') || 'card'
+  const initialReviewId = searchParams.get('review')
+  const [activeTab, setActiveTab] = useState(FRIEND_TABS.includes(initialTab) ? initialTab : 'card')
   const [showProfile, setShowProfile] = useState(false)
   const profileBackdropRef = useRef(null)
 
@@ -502,6 +505,7 @@ export const FriendCard = () => {
                       reviews={reviews}
                       title={`${friendProfile.display_name}'s Reviews`}
                       emptyMessage={`${friendProfile.display_name} hasn't added any reviews yet.`}
+                      initialReviewId={initialReviewId}
                       renderExpandedText={(review, opts) => (
                         <ExpandedReviewText
                           review={review}
