@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { QuillMenu } from './QuillMenu'
 
 const emptyStateButtonStyle = {
@@ -19,17 +18,12 @@ const emptyStateButtonStyle = {
  * Quill menu for owners with write/upload options.
  * Friend view: only visible creations; hidden entirely if none.
  */
-export const CreationSection = ({ creations, isOwner, onToggleVisibility, onAddCreationText, onAddCreationImage, onViewArchive, onDelete }) => {
-  const [openMenuId, setOpenMenuId] = useState(null)
-
+export const CreationSection = ({ creations, isOwner, onAddCreationText, onAddCreationImage, onViewArchive }) => {
   const safeCreations = creations || []
   const visibleCreations = isOwner ? safeCreations : safeCreations.filter(c => c.is_visible)
 
   // Most recent visible creation
   const latestCreation = visibleCreations[0] || null
-
-  // Count of archived visible creations (beyond the first)
-  const archivedVisibleCount = visibleCreations.length > 1 ? visibleCreations.length - 1 : 0
 
   // Completely empty — friend view: hide entirely
   if (!isOwner && visibleCreations.length === 0) return null
@@ -85,103 +79,12 @@ export const CreationSection = ({ creations, isOwner, onToggleVisibility, onAddC
       )}
 
       {/* Section header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '18px' }}>{'\u270d\ufe0f'}</span>
-          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#2C2C2C' }}>Creation</h3>
-        </div>
-        {onViewArchive && (
-          <button
-            onClick={onViewArchive}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '13px',
-              color: '#4A7BA7',
-              padding: 0,
-            }}
-          >
-            See all
-          </button>
-        )}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+        <span style={{ fontSize: '18px' }}>{'\u270d\ufe0f'}</span>
+        <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#2C2C2C' }}>Creation</h3>
       </div>
 
       {/* Latest creation */}
-          {/* Owner actions — absolute overlay */}
-          {isOwner && (
-            <div style={{ position: 'absolute', top: '12px', right: '12px', display: 'flex', gap: '8px', zIndex: 2 }}>
-              {/* Eye toggle */}
-              <button
-                onClick={() => onToggleVisibility && onToggleVisibility(latestCreation.id, !latestCreation.is_visible)}
-                title={latestCreation.is_visible ? 'Visible to friends' : 'Hidden from friends'}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: '2px',
-                  fontSize: '16px',
-                  opacity: latestCreation.is_visible ? 1 : 0.4,
-                  transition: 'opacity 0.15s',
-                }}
-              >
-                {'\ud83d\udc41\ufe0f'}
-              </button>
-
-              {/* Overflow menu */}
-              <div style={{ position: 'relative' }}>
-                <button
-                  onClick={() => setOpenMenuId(openMenuId === latestCreation.id ? null : latestCreation.id)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: '2px 6px',
-                    fontSize: '16px',
-                    color: '#A89F91',
-                    lineHeight: 1,
-                    letterSpacing: '1px',
-                  }}
-                  aria-label="Actions"
-                >
-                  &middot;&middot;&middot;
-                </button>
-                {openMenuId === latestCreation.id && (
-                  <div style={{
-                    position: 'absolute',
-                    top: '100%',
-                    right: 0,
-                    background: '#FFFEFA',
-                    borderRadius: '4px',
-                    boxShadow: '0 2px 12px rgba(0,0,0,0.12)',
-                    padding: '4px 0',
-                    minWidth: '100px',
-                    zIndex: 10,
-                  }}>
-                    {onDelete && (
-                      <button
-                        onClick={() => { onDelete(latestCreation.id); setOpenMenuId(null) }}
-                        style={{
-                          display: 'block',
-                          width: '100%',
-                          background: 'none',
-                          border: 'none',
-                          padding: '8px 16px',
-                          fontSize: '14px',
-                          color: '#C75D5D',
-                          cursor: 'pointer',
-                          textAlign: 'left',
-                        }}
-                      >
-                        Delete
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
           {/* Title */}
           {latestCreation.title && (
             <h3 style={{
@@ -190,7 +93,7 @@ export const CreationSection = ({ creations, isOwner, onToggleVisibility, onAddC
               fontWeight: 600,
               color: '#2C2C2C',
               fontStyle: 'italic',
-              paddingRight: isOwner ? '60px' : 0,
+              paddingRight: 0,
             }}>
               {latestCreation.title}
             </h3>
@@ -243,6 +146,26 @@ export const CreationSection = ({ creations, isOwner, onToggleVisibility, onAddC
                 background: 'linear-gradient(transparent, rgba(255,254,250,0.9))',
                 pointerEvents: 'none',
               }} />
+            </div>
+          )}
+
+          {/* "See all" at bottom */}
+          {onViewArchive && visibleCreations.length > 1 && (
+            <div style={{ marginTop: '10px' }}>
+              <button
+                onClick={onViewArchive}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                  color: '#4A7BA7',
+                  padding: '4px 2px',
+                  fontStyle: 'italic',
+                }}
+              >
+                see all creations
+              </button>
             </div>
           )}
     </>

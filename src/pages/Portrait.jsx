@@ -53,6 +53,7 @@ export const Portrait = ({ userId: friendUserId }) => {
   const [showBookshelfScan, setShowBookshelfScan] = useState(false)
   const [showPlaybillScan, setShowPlaybillScan] = useState(false)
   const [addCreationMode, setAddCreationMode] = useState(null)
+  const [editingCreation, setEditingCreation] = useState(null)
   const [selectedExperience, setSelectedExperience] = useState(null)
   const [selectedBook, setSelectedBook] = useState(null)
   const [bookPopoverRect, setBookPopoverRect] = useState(null)
@@ -314,8 +315,9 @@ export const Portrait = ({ userId: friendUserId }) => {
 
   // --- Modal open callbacks ---
 
-  const handleAddCreationText = () => { setAddCreationMode('text'); setShowAddCreation(true) }
-  const handleAddCreationImage = () => { setAddCreationMode('image'); setShowAddCreation(true) }
+  const handleAddCreationText = () => { setEditingCreation(null); setAddCreationMode('text'); setShowAddCreation(true) }
+  const handleAddCreationImage = () => { setEditingCreation(null); setAddCreationMode('image'); setShowAddCreation(true) }
+  const handleEditCreation = (creation) => { setEditingCreation(creation); setAddCreationMode(null); setShowAddCreation(true) }
   const handleViewCreationArchive = () => setShowCreationArchive(true)
   const handleAddExperience = () => setShowAddExperience(true)
   const handleScanPlaybill = () => setShowPlaybillScan(true)
@@ -341,6 +343,12 @@ export const Portrait = ({ userId: friendUserId }) => {
 
   const handleCreationCreated = (newCreation) => {
     setCreations(prev => [newCreation, ...prev])
+  }
+
+  const handleCreationUpdated = (updatedCreation) => {
+    setCreations(prev =>
+      prev.map(c => c.id === updatedCreation.id ? updatedCreation : c)
+    )
   }
 
   const handleExperienceCreated = (newExperience) => {
@@ -534,6 +542,7 @@ export const Portrait = ({ userId: friendUserId }) => {
         isOwner={isOwner}
         onToggleVisibility={handleToggleCreationVisibility}
         onDelete={deleteCreation}
+        onEdit={isOwner ? handleEditCreation : undefined}
       />
 
       <ExperienceDetailModal
@@ -547,9 +556,11 @@ export const Portrait = ({ userId: friendUserId }) => {
         <>
           <AddCreationModal
             isOpen={showAddCreation}
-            onClose={() => { setShowAddCreation(false); setAddCreationMode(null) }}
+            onClose={() => { setShowAddCreation(false); setAddCreationMode(null); setEditingCreation(null) }}
             onCreated={handleCreationCreated}
+            onUpdated={handleCreationUpdated}
             initialMode={addCreationMode}
+            editCreation={editingCreation}
           />
           <AddExperienceModal
             isOpen={showAddExperience}

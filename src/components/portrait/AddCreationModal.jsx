@@ -7,7 +7,7 @@ import { useAuth } from '../../contexts/AuthContext'
  * Add Creation modal — write text or upload an image.
  * Optional title (max 80 chars), visibility toggle (default visible).
  */
-export const AddCreationModal = ({ isOpen, onClose, onCreated, initialMode = null }) => {
+export const AddCreationModal = ({ isOpen, onClose, onCreated, onUpdated, initialMode = null, editCreation = null }) => {
   const { profile } = useAuth()
   const [mode, setMode] = useState(null) // null | 'text' | 'image'
   const [title, setTitle] = useState('')
@@ -18,15 +18,26 @@ export const AddCreationModal = ({ isOpen, onClose, onCreated, initialMode = nul
   const [saving, setSaving] = useState(false)
   const fileInputRef = useRef(null)
 
-  // Sync initialMode when modal opens
+  const isEditing = !!editCreation
+
+  // Sync initialMode or editCreation when modal opens
   useEffect(() => {
-    if (isOpen && initialMode) {
+    if (!isOpen) return
+    if (editCreation) {
+      setMode(editCreation.type)
+      setTitle(editCreation.title || '')
+      setTextContent(editCreation.text_content || '')
+      setIsVisible(editCreation.is_visible ?? true)
+      if (editCreation.type === 'image' && editCreation.image_url) {
+        setImagePreview(editCreation.image_url)
+      }
+    } else if (initialMode) {
       setMode(initialMode)
       if (initialMode === 'image') {
         setTimeout(() => fileInputRef.current?.click(), 100)
       }
     }
-  }, [isOpen, initialMode])
+  }, [isOpen, initialMode, editCreation])
 
   const reset = () => {
     setMode(null)
@@ -59,8 +70,9 @@ export const AddCreationModal = ({ isOpen, onClose, onCreated, initialMode = nul
     setSaving(true)
 
     try {
-      let image_url = null
+      let image_url = isEditing && editCreation.image_url ? editCreation.image_url : null
 
+      // Upload new image if one was selected
       if (mode === 'image' && imageFile) {
         const ext = imageFile.name.split('.').pop()
         const path = `${profile.id}/${crypto.randomUUID()}.${ext}`
@@ -76,25 +88,49 @@ export const AddCreationModal = ({ isOpen, onClose, onCreated, initialMode = nul
         image_url = urlData.publicUrl
       }
 
-      const { data, error } = await supabase
-        .from('creations')
-        .insert({
-          user_id: profile.id,
-          type: mode,
+      if (isEditing) {
+        // Update existing creation
+        const updates = {
           title: title.trim() || null,
-          text_content: mode === 'text' ? textContent : null,
-          image_url: mode === 'image' ? image_url : null,
           is_visible: isVisible,
-        })
-        .select()
-        .single()
+        }
+        if (mode === 'text') updates.text_content = textContent
+        if (mode === 'image' && image_url) updates.image_url = image_url
 
-      if (error) throw error
+        const { data, error } = await supabase
+          .from('creations')
+          .update(updates)
+          .eq('id', editCreation.id)
+          .eq('user_id', profile.id)
+          .select()
+          .single()
 
-      onCreated(data)
+        if (error) throw error
+
+        onUpdated?.(data)
+      } else {
+        // Insert new creation
+        const { data, error } = await supabase
+          .from('creations')
+          .insert({
+            user_id: profile.id,
+            type: mode,
+            title: title.trim() || null,
+            text_content: mode === 'text' ? textContent : null,
+            image_url: mode === 'image' ? image_url : null,
+            is_visible: isVisible,
+          })
+          .select()
+          .single()
+
+        if (error) throw error
+
+        onCreated(data)
+      }
+
       handleClose()
     } catch (err) {
-      console.error('Error creating:', err)
+      console.error('Error saving:', err)
       alert('Failed to save creation')
     } finally {
       setSaving(false)
@@ -104,11 +140,11 @@ export const AddCreationModal = ({ isOpen, onClose, onCreated, initialMode = nul
   const canSave = mode === 'text'
     ? textContent.trim().length > 0
     : mode === 'image'
-      ? imageFile !== null
+      ? (imageFile !== null || (isEditing && imagePreview))
       : false
 
   return (
-    <PortraitModal isOpen={isOpen} onClose={handleClose} title="Add a creation" maxWidth="460px">
+    <PortraitModal isOpen={isOpen} onClose={handleClose} title={isEditing ? 'Edit creation' : 'Add a creation'} maxWidth="460px">
       {/* Mode selection */}
       {!mode && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>

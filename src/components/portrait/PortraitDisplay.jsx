@@ -233,11 +233,9 @@ export const PortraitDisplay = ({
           <CreationSection
             creations={creations}
             isOwner={isOwner}
-            onToggleVisibility={onToggleCreationVisibility}
             onAddCreationText={onAddCreationText}
             onAddCreationImage={onAddCreationImage}
             onViewArchive={onViewCreationArchive}
-            onDelete={onDeleteCreation}
           />
         )
       default:
