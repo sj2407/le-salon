@@ -29,11 +29,10 @@ export const Help = () => {
           </p>
           <ul style={{ fontSize: '15px', lineHeight: '1.8', marginLeft: '24px', marginBottom: '12px' }}>
             <li><strong>Vos réflexions</strong> — share your thoughts on the week's theme and see what friends wrote</li>
-            <li><strong>The Commonplace Book</strong> — tap the typewriter icon to open a shared notebook where anyone can write. A badge shows how many new entries you haven't seen</li>
             <li>New essays appear every Monday automatically</li>
           </ul>
           <p style={{ fontSize: '14px', fontStyle: 'italic', color: '#666' }}>
-            💡 Tip: Use the Aa slider to adjust text size and the play button to listen to the essay read aloud!
+            💡 Tip: Use the Aa slider to adjust text size and the headphones icon to listen to the essay read aloud!
           </p>
         </div>
 
@@ -43,7 +42,7 @@ export const Help = () => {
             🪴 My Corner
           </h2>
           <p style={{ fontSize: '15px', lineHeight: '1.6' }}>
-            Your personal hub with four tabs: Card, Reviews, La Liste, and Wishlist.
+            Your personal hub with five tabs: Card, Reviews, La Liste, Wishlist, and Portrait.
             Everything about you lives here.
           </p>
         </div>
@@ -79,7 +78,7 @@ export const Help = () => {
             ⚖️ Reviews
           </h2>
           <p style={{ fontSize: '15px', lineHeight: '1.6', marginBottom: '12px' }}>
-            Rate and review movies, books, podcasts, shows, albums, performing arts, exhibitions, and more on a scale of 0-10.
+            Rate and review movies, books, articles, podcasts, shows, albums, performing arts, exhibitions, and more on a scale of 0-10.
           </p>
           <ul style={{ fontSize: '15px', lineHeight: '1.8', marginLeft: '24px', marginBottom: '12px' }}>
             <li>Write reviews to remember your thoughts</li>
@@ -89,7 +88,7 @@ export const Help = () => {
             <li>Leave paragraph-level comments on friends' reviews</li>
           </ul>
           <p style={{ fontSize: '14px', fontStyle: 'italic', color: '#666' }}>
-            💡 Tip: Use the post-it style cards to jot down quick ratings or detailed thoughts!
+            💡 Tip: Your reviews display on a bookshelf — tap a cover to read the full review!
           </p>
         </div>
 
@@ -99,11 +98,12 @@ export const Help = () => {
             📋 La Liste
           </h2>
           <p style={{ fontSize: '15px', lineHeight: '1.6', marginBottom: '12px' }}>
-            Your curated inbox of recommendations from friends. When a friend recommends a review to you,
-            it appears here. Think of it as a reading/watching/listening list built by the people who know you best.
+            Your personal discovery list — everything you want to read, watch, listen to, and experience.
+            Add items with cover art, mark them as done when you finish, and toggle visibility.
+            Friend recommendations also appear here in a separate section.
           </p>
           <p style={{ fontSize: '14px', fontStyle: 'italic', color: '#666' }}>
-            💡 Tip: Check La Liste regularly — it's the best way to discover what your friends think you'll love!
+            💡 Tip: Use La Liste to keep track of all the things you want to explore next!
           </p>
         </div>
 
@@ -135,9 +135,9 @@ export const Help = () => {
             Connect with friends to see their cards and share your interests.
           </p>
           <ul style={{ fontSize: '15px', lineHeight: '1.8', marginLeft: '24px' }}>
-            <li>Search for friends by username (use the magnifying glass in the nav bar for quick search)</li>
+            <li>Search for friends by name, email, or username (use the magnifying glass in the nav bar for quick search)</li>
             <li>Send and accept friend requests</li>
-            <li>View friends' current cards, reviews, wishlists, and profiles</li>
+            <li>View friends' current cards, reviews, La Liste, wishlists, portraits, and profiles</li>
             <li>See what your friends are into right now</li>
           </ul>
         </div>
@@ -171,6 +171,25 @@ export const Help = () => {
           </ul>
           <p style={{ fontSize: '14px', fontStyle: 'italic', color: '#666' }}>
             💡 Tip: Click the Wishlist tab on a friend's profile to see what they'd love!
+          </p>
+        </div>
+
+        {/* Portrait Section */}
+        <div style={{ marginBottom: '32px', borderTop: '1px dashed #E0E0E0', paddingTop: '24px' }}>
+          <h2 className="handwritten" style={{ fontSize: '32px', marginBottom: '16px', color: '#2C2C2C' }}>
+            🎨 Portrait
+          </h2>
+          <p style={{ fontSize: '15px', lineHeight: '1.6', marginBottom: '12px' }}>
+            Your auto-generated cultural profile, built from what you listen to, read, create, and experience.
+          </p>
+          <ul style={{ fontSize: '15px', lineHeight: '1.8', marginLeft: '24px', marginBottom: '12px' }}>
+            <li><strong>Music</strong> — connect Spotify to see your top artists, tracks, genres, and listening mood</li>
+            <li><strong>Reading</strong> — add books manually, scan a bookshelf photo, or import from Goodreads. See themes and connections across your reading</li>
+            <li><strong>Experiences</strong> — log concerts, exhibitions, restaurants, cinema, and theatre visits. Scan playbills to add them quickly</li>
+            <li><strong>Creations</strong> — share your own writing or images with friends</li>
+          </ul>
+          <p style={{ fontSize: '14px', fontStyle: 'italic', color: '#666' }}>
+            💡 Tip: Reorder or hide sections to customize how your portrait looks to friends!
           </p>
         </div>
 

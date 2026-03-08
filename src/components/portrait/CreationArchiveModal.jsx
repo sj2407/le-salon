@@ -1,72 +1,36 @@
+import { useState } from 'react'
 import { PortraitModal } from './PortraitModal'
 
 /**
  * Creation Archive — all past creations in reverse chronological order.
  * Owner sees all (visible + hidden). Friend view: only visible items.
+ * Images show full-size when expanded.
  */
 export const CreationArchiveModal = ({ isOpen, onClose, creations, isOwner, onToggleVisibility, onDelete }) => {
+  const [expandedId, setExpandedId] = useState(null)
+
   const formatDate = (dateStr) => {
     const d = new Date(dateStr)
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
   }
 
   return (
-    <PortraitModal isOpen={isOpen} onClose={onClose} title="Creations Archive" maxWidth="480px">
+    <PortraitModal isOpen={isOpen} onClose={onClose} title="All Creations" maxWidth="480px">
       <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
         {creations.map(creation => (
           <div
             key={creation.id}
             style={{
-              display: 'flex',
-              gap: '12px',
-              padding: '10px',
-              borderRadius: '8px',
+              padding: '12px',
+              borderRadius: '10px',
               background: '#F5F1EB',
               position: 'relative',
               opacity: creation.is_visible ? 1 : 0.55,
             }}
           >
-            {/* Thumbnail or preview */}
-            <div style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '6px',
-              overflow: 'hidden',
-              flexShrink: 0,
-              background: creation.type === 'image' ? '#E8DCC8' : '#FFFEFA',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-              {creation.type === 'image' && creation.image_url ? (
-                <img src={creation.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              ) : (
-                <span style={{ fontSize: '11px', color: '#666', fontStyle: 'italic', padding: '4px', textAlign: 'center', lineHeight: 1.2, overflow: 'hidden' }}>
-                  {(creation.text_content || '').slice(0, 40)}
-                </span>
-              )}
-            </div>
-
-            {/* Content preview */}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              {creation.title && (
-                <div style={{ fontSize: '14px', fontWeight: 500, color: '#2C2C2C', marginBottom: '2px' }}>
-                  {creation.title}
-                </div>
-              )}
-              <div style={{ fontSize: '13px', color: '#666', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {creation.type === 'text'
-                  ? (creation.text_content || '').split('\n')[0]
-                  : 'Image'}
-              </div>
-              <div style={{ fontSize: '11px', color: '#999', marginTop: '4px' }}>
-                {formatDate(creation.created_at)}
-              </div>
-            </div>
-
             {/* Owner actions — absolute overlay */}
             {isOwner && (
-              <div style={{ position: 'absolute', top: '8px', right: '8px', display: 'flex', gap: '6px' }}>
+              <div style={{ position: 'absolute', top: '8px', right: '8px', display: 'flex', gap: '6px', zIndex: 2 }}>
                 <button
                   onClick={() => onToggleVisibility(creation.id, !creation.is_visible)}
                   title={creation.is_visible ? 'Hide' : 'Show'}
@@ -79,7 +43,7 @@ export const CreationArchiveModal = ({ isOpen, onClose, creations, isOwner, onTo
                     opacity: 0.6,
                   }}
                 >
-                  {creation.is_visible ? '👁️' : '👁️‍🗨️'}
+                  {creation.is_visible ? '\ud83d\udc41\ufe0f' : '\ud83d\udc41\ufe0f\u200d\ud83d\udde8\ufe0f'}
                 </button>
                 <button
                   onClick={() => {
@@ -98,10 +62,79 @@ export const CreationArchiveModal = ({ isOpen, onClose, creations, isOwner, onTo
                     color: '#999',
                   }}
                 >
-                  ✕
+                  {'\u2715'}
                 </button>
               </div>
             )}
+
+            {/* Title */}
+            {creation.title && (
+              <div style={{
+                fontSize: '15px',
+                fontWeight: 600,
+                color: '#2C2C2C',
+                fontStyle: 'italic',
+                marginBottom: '6px',
+                paddingRight: isOwner ? '60px' : 0,
+              }}>
+                {creation.title}
+              </div>
+            )}
+
+            {/* Text content */}
+            {creation.type === 'text' && creation.text_content && (
+              <p style={{
+                margin: 0,
+                fontSize: '14px',
+                lineHeight: 1.6,
+                color: '#2C2C2C',
+                whiteSpace: 'pre-wrap',
+                fontFamily: 'Source Serif 4, Georgia, serif',
+                paddingRight: isOwner && !creation.title ? '60px' : 0,
+              }}>
+                {expandedId === creation.id
+                  ? creation.text_content
+                  : creation.text_content.length > 200
+                    ? creation.text_content.slice(0, 200) + '...'
+                    : creation.text_content
+                }
+                {creation.text_content.length > 200 && expandedId !== creation.id && (
+                  <button
+                    onClick={() => setExpandedId(creation.id)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: '#4A7BA7',
+                      fontSize: '13px',
+                      padding: '0 0 0 4px',
+                    }}
+                  >
+                    more
+                  </button>
+                )}
+              </p>
+            )}
+
+            {/* Image content — full size */}
+            {creation.type === 'image' && creation.image_url && (
+              <img
+                src={creation.image_url}
+                alt={creation.title || 'Creation'}
+                style={{
+                  width: '100%',
+                  maxHeight: '400px',
+                  objectFit: 'contain',
+                  borderRadius: '6px',
+                  display: 'block',
+                }}
+              />
+            )}
+
+            {/* Date */}
+            <div style={{ fontSize: '11px', color: '#999', marginTop: '8px' }}>
+              {formatDate(creation.created_at)}
+            </div>
           </div>
         ))}
 

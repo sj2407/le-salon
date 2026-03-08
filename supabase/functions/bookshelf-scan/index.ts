@@ -6,10 +6,10 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Cache Gemini key across warm invocations
-let cachedGeminiKey: string | null = null;
+// Cache Anthropic key across warm invocations
+let cachedAnthropicKey: string | null = null;
 
-const GEMINI_PROMPT =
+const SCAN_PROMPT =
   'Look at this bookshelf photograph. List every book title you can read on the spines. ' +
   'For each book, provide the title and author if visible. Return ONLY a JSON array of objects ' +
   'with "title" and "author" fields. If the author is not visible, set author to null. ' +
@@ -25,7 +25,7 @@ function extractJsonArray(text: string): unknown {
   try {
     return JSON.parse(text);
   } catch {
-    // Try to find a JSON array in the response (Gemini sometimes wraps in markdown)
+    // Try to find a JSON array in the response
     const match = text.match(/\[[\s\S]*\]/);
     if (match) {
       return JSON.parse(match[0]);
@@ -116,46 +116,60 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Fetch Gemini API key from vault
-    if (!cachedGeminiKey) {
+    // Fetch Anthropic API key from vault
+    if (!cachedAnthropicKey) {
       const { data: secrets } = await supabaseAdmin.rpc('get_secret', {
-        secret_name: 'gemini_api_key',
+        secret_name: 'anthropic_api_key',
       });
-      cachedGeminiKey = secrets?.[0]?.secret || null;
+      cachedAnthropicKey = secrets?.[0]?.secret || null;
     }
 
-    if (!cachedGeminiKey) {
+    if (!cachedAnthropicKey) {
       return new Response(
-        JSON.stringify({ error: 'Gemini API key not configured' }),
+        JSON.stringify({ error: 'Vision API key not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Call Gemini Flash Vision API
-    const geminiUrl =
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${cachedGeminiKey}`;
-
-    const geminiRes = await fetch(geminiUrl, {
+    // Call Claude Vision API
+    const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': cachedAnthropicKey,
+        'anthropic-version': '2023-06-01',
+      },
       body: JSON.stringify({
-        contents: [{
-          parts: [
-            { text: GEMINI_PROMPT },
-            { inline_data: { mime_type: 'image/jpeg', data: image_base64 } },
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1024,
+        messages: [{
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: {
+                type: 'base64',
+                media_type: 'image/jpeg',
+                data: image_base64,
+              },
+            },
+            {
+              type: 'text',
+              text: SCAN_PROMPT,
+            },
           ],
         }],
       }),
     });
 
-    if (!geminiRes.ok) {
-      const errText = await geminiRes.text();
-      throw new Error(`Gemini API error: ${geminiRes.status} ${errText}`);
+    if (!anthropicRes.ok) {
+      const errText = await anthropicRes.text();
+      throw new Error(`Vision API error: ${anthropicRes.status} ${errText}`);
     }
 
-    const geminiData = await geminiRes.json();
+    const anthropicData = await anthropicRes.json();
     const textContent =
-      geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      anthropicData.content?.[0]?.text || '';
 
     if (!textContent) {
       return new Response(
@@ -201,7 +215,7 @@ Deno.serve(async (req: Request) => {
     );
   } catch (err) {
     const message = (err as Error).message || 'Unknown error';
-    const status = message.includes('Gemini API error') ? 502 : 500;
+    const status = message.includes('Vision API error') ? 502 : 500;
     return new Response(
       JSON.stringify({ error: message }),
       { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

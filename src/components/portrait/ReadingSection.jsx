@@ -132,7 +132,7 @@ export const ReadingSection = ({ books, readingThemes, onBookClick, onThemeClick
   // Currently reading book (first with status 'reading')
   const currentlyReading = safeBooks.find(b => b.status === 'reading')
   // Recent reads (exclude currently reading)
-  const recentReads = safeBooks.filter(b => b.status !== 'reading').slice(0, 8)
+  const recentReads = safeBooks.filter(b => b.status !== 'reading')
 
   // Most read authors (count books per author, top 3)
   const authorCounts = {}
@@ -159,6 +159,13 @@ export const ReadingSection = ({ books, readingThemes, onBookClick, onThemeClick
     { label: 'Postcolonial', keywords: ['colonialism', 'imperialism', 'postcolonial', 'colonial question', 'apartheid'] },
     { label: 'Political Fiction', keywords: ['political corruption', 'dystopian fiction', 'totalitarianism', 'politicians'] },
     { label: 'Romance', keywords: ['fiction, romance', 'romance literature'] },
+    { label: 'Business & Tech', keywords: ['business', 'economics', 'management', 'entrepreneurship', 'technology', 'startup', 'leadership', 'marketing'] },
+    { label: 'Science', keywords: ['science', 'physics', 'biology', 'chemistry', 'mathematics', 'neuroscience', 'evolution'] },
+    { label: 'Philosophy', keywords: ['philosophy', 'ethics', 'metaphysics', 'existentialism', 'stoicism'] },
+    { label: 'Biography & Memoir', keywords: ['biography', 'memoir', 'autobiography', 'personal memoirs', 'personal narratives'] },
+    { label: 'History', keywords: ['history', 'civilization', 'ancient', 'medieval', 'modern history'] },
+    { label: 'Psychology', keywords: ['psychology', 'self-help', 'mental health', 'cognitive', 'behavioral'] },
+    { label: 'Poetry', keywords: ['poetry', 'poems', 'verse', 'poesie'] },
   ]
   const genreBucketCounts = {}
   safeBooks.forEach(b => {

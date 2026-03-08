@@ -39,25 +39,41 @@ export function jsonpFetch(url, callbackParam = 'callback') {
 
 /**
  * Search books via Open Library (free, no key, CORS OK)
+ * Fetches more results and filters to those with covers.
  */
 async function searchOpenLibrary(query) {
   const encoded = encodeURIComponent(query)
   const res = await fetch(
-    `https://openlibrary.org/search.json?q=${encoded}&limit=8&fields=key,title,author_name,cover_i,first_publish_year`
+    `https://openlibrary.org/search.json?q=${encoded}&limit=15&fields=key,title,author_name,cover_i,first_publish_year,edition_count`
   )
   const data = await res.json()
 
-  return (data.docs || []).map(doc => ({
-    id: doc.key,
-    title: doc.title,
-    subtitle: [
-      doc.author_name?.[0],
-      doc.first_publish_year
-    ].filter(Boolean).join(', '),
-    imageUrl: doc.cover_i
-      ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg`
-      : ''
-  }))
+  return (data.docs || [])
+    // Filter out study guides / companion books
+    .filter(doc => {
+      const t = (doc.title || '').toLowerCase()
+      return !t.startsWith('clés pour') && !t.startsWith('notes on') &&
+        !t.startsWith('study guide') && !t.startsWith('profil d')
+    })
+    // Prefer results with covers, sort by edition_count (popular editions have better covers)
+    .sort((a, b) => {
+      const aCover = a.cover_i ? 1 : 0
+      const bCover = b.cover_i ? 1 : 0
+      if (aCover !== bCover) return bCover - aCover
+      return (b.edition_count || 0) - (a.edition_count || 0)
+    })
+    .slice(0, 8)
+    .map(doc => ({
+      id: doc.key,
+      title: doc.title,
+      subtitle: [
+        doc.author_name?.[0],
+        doc.first_publish_year
+      ].filter(Boolean).join(', '),
+      imageUrl: doc.cover_i
+        ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg`
+        : ''
+    }))
 }
 
 /**
@@ -72,49 +88,66 @@ function enhanceGoogleBooksUrl(url) {
 }
 
 /**
- * Search books via Google Books (free, no key needed) with enhanced covers
+ * Search books via Google Books (free, no key needed) with enhanced covers.
+ * Fetches more results, filters out entries without real covers.
  */
 async function searchGoogleBooks(query) {
   try {
     const encoded = encodeURIComponent(query)
     const res = await fetch(
-      `https://www.googleapis.com/books/v1/volumes?q=${encoded}&maxResults=8`
+      `https://www.googleapis.com/books/v1/volumes?q=${encoded}&maxResults=12`
     )
     if (!res.ok) return []
     const data = await res.json()
 
-    return (data.items || []).map(item => {
-      const vi = item.volumeInfo || {}
-      return {
-        id: `gb_${item.id}`,
-        title: vi.title || '',
-        subtitle: [
-          vi.authors?.[0],
-          vi.publishedDate?.slice(0, 4)
-        ].filter(Boolean).join(', '),
-        imageUrl: enhanceGoogleBooksUrl(vi.imageLinks?.thumbnail)
-      }
-    })
+    return (data.items || [])
+      .map(item => {
+        const vi = item.volumeInfo || {}
+        return {
+          id: `gb_${item.id}`,
+          title: vi.title || '',
+          subtitle: [
+            vi.authors?.[0],
+            vi.publishedDate?.slice(0, 4)
+          ].filter(Boolean).join(', '),
+          imageUrl: enhanceGoogleBooksUrl(vi.imageLinks?.thumbnail),
+          // Metadata for sorting
+          _hasDescription: !!vi.description,
+          _pageCount: vi.pageCount || 0,
+        }
+      })
+      // Filter out results with no cover image
+      .filter(r => r.imageUrl)
+      // Sort: prefer results with richer metadata (real editions, not stubs)
+      .sort((a, b) => {
+        const aScore = (a._hasDescription ? 1 : 0) + (a._pageCount > 50 ? 1 : 0)
+        const bScore = (b._hasDescription ? 1 : 0) + (b._pageCount > 50 ? 1 : 0)
+        return bScore - aScore
+      })
+      .slice(0, 8)
   } catch {
     return []
   }
 }
 
 /**
- * Search books — Google Books first (better covers with zoom enhancement),
- * Open Library fallback for additional results
+ * Search books — Google Books + Open Library combined.
+ * Always fetches both sources for better coverage of classics and translations.
  */
 export async function searchBooks(query) {
-  const gbResults = await searchGoogleBooks(query)
-  const withCovers = gbResults.filter(r => r.imageUrl)
-  if (withCovers.length >= 3) return gbResults
+  // Fetch both in parallel for speed
+  const [gbResults, olResults] = await Promise.all([
+    searchGoogleBooks(query),
+    searchOpenLibrary(query),
+  ])
 
-  // Not enough Google Books results — supplement with Open Library
-  const olResults = await searchOpenLibrary(query)
+  // Merge: Google Books first (generally better covers), then Open Library deduped
   const seenTitles = new Set(gbResults.map(r => r.title.toLowerCase()))
-  const newResults = olResults.filter(r => !seenTitles.has(r.title.toLowerCase()))
+  const newOlResults = olResults.filter(r =>
+    r.imageUrl && !seenTitles.has(r.title.toLowerCase())
+  )
 
-  return [...gbResults, ...newResults]
+  return [...gbResults, ...newOlResults].slice(0, 12)
 }
 
 /**

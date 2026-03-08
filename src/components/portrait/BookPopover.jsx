@@ -5,7 +5,7 @@ import { useEffect, useRef } from 'react'
  * Shows title, author, star rating, link to full review.
  * Dismisses on click outside or Escape.
  */
-export const BookPopover = ({ book, anchorRect, onClose, onViewReview }) => {
+export const BookPopover = ({ book, anchorRect, onClose, onViewReview, isOwner, onChangeCover }) => {
   const popoverRef = useRef(null)
 
   useEffect(() => {
@@ -77,22 +77,40 @@ export const BookPopover = ({ book, anchorRect, onClose, onViewReview }) => {
         </div>
       )}
 
-      {book.review_id && (
-        <button
-          onClick={() => onViewReview && onViewReview(book.review_id)}
-          style={{
-            background: 'none',
-            border: 'none',
-            fontSize: '13px',
-            color: '#4A7BA7',
-            cursor: 'pointer',
-            padding: 0,
-            textDecoration: 'underline',
-          }}
-        >
-          View review →
-        </button>
-      )}
+      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+        {book.review_id && (
+          <button
+            onClick={() => onViewReview && onViewReview(book.review_id)}
+            style={{
+              background: 'none',
+              border: 'none',
+              fontSize: '13px',
+              color: '#4A7BA7',
+              cursor: 'pointer',
+              padding: 0,
+              textDecoration: 'underline',
+            }}
+          >
+            View review →
+          </button>
+        )}
+        {isOwner && onChangeCover && (
+          <button
+            onClick={() => onChangeCover(book)}
+            style={{
+              background: 'none',
+              border: 'none',
+              fontSize: '13px',
+              color: '#4A7BA7',
+              cursor: 'pointer',
+              padding: 0,
+              textDecoration: 'underline',
+            }}
+          >
+            {book.cover_url ? 'Change cover' : 'Add cover'}
+          </button>
+        )}
+      </div>
 
       {/* Arrow */}
       <div style={{

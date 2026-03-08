@@ -15,6 +15,7 @@ import { AddBookModal } from '../components/portrait/AddBookModal'
 import { GoodreadsImportModal } from '../components/portrait/GoodreadsImportModal'
 import { BookshelfScanModal } from '../components/portrait/BookshelfScanModal'
 import { PlaybillScanModal } from '../components/portrait/PlaybillScanModal'
+import { CoverSearchModal } from '../components/cover-search/CoverSearchModal'
 
 /**
  * Portrait tab page — fetches live data, manages all interactions.
@@ -55,6 +56,7 @@ export const Portrait = ({ userId: friendUserId }) => {
   const [selectedExperience, setSelectedExperience] = useState(null)
   const [selectedBook, setSelectedBook] = useState(null)
   const [bookPopoverRect, setBookPopoverRect] = useState(null)
+  const [coverSearchBook, setCoverSearchBook] = useState(null) // book being cover-searched
 
   // --- Helper: call an Edge Function with auth ---
   const callEdgeFunction = async (name, body = {}) => {
@@ -411,6 +413,31 @@ export const Portrait = ({ userId: friendUserId }) => {
       .then(({ data }) => { if (data) setExperiences(data) })
   }
 
+  const handleChangeCover = (book) => {
+    setSelectedBook(null)
+    setBookPopoverRect(null)
+    setCoverSearchBook(book)
+  }
+
+  const handleCoverSelected = async ({ imageUrl }) => {
+    if (!coverSearchBook || !profile?.id || !imageUrl) return
+    try {
+      await supabase
+        .from('books')
+        .update({ cover_url: imageUrl })
+        .eq('id', coverSearchBook.id)
+        .eq('user_id', profile.id)
+
+      // Update local state
+      setBooks(prev => prev.map(b =>
+        b.id === coverSearchBook.id ? { ...b, cover_url: imageUrl } : b
+      ))
+    } catch (err) {
+      console.error('Error updating cover:', err)
+    }
+    setCoverSearchBook(null)
+  }
+
   const handleViewReview = (reviewId) => {
     setSelectedBook(null)
     setBookPopoverRect(null)
@@ -476,6 +503,8 @@ export const Portrait = ({ userId: friendUserId }) => {
           anchorRect={bookPopoverRect}
           onClose={() => { setSelectedBook(null); setBookPopoverRect(null) }}
           onViewReview={handleViewReview}
+          isOwner={isOwner}
+          onChangeCover={isOwner ? handleChangeCover : undefined}
         />
       )}
 
@@ -546,6 +575,13 @@ export const Portrait = ({ userId: friendUserId }) => {
             isOpen={showPlaybillScan}
             onClose={() => setShowPlaybillScan(false)}
             onExperiencesAdded={handleExperiencesAdded}
+          />
+          <CoverSearchModal
+            isOpen={!!coverSearchBook}
+            onClose={() => setCoverSearchBook(null)}
+            onSelect={handleCoverSelected}
+            initialQuery={[coverSearchBook?.title, coverSearchBook?.author].filter(Boolean).join(' ') || ''}
+            mediaType="book"
           />
         </>
       )}

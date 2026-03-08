@@ -1,12 +1,7 @@
 import { useState } from 'react'
 import { QuillMenu } from './QuillMenu'
 import { TrackPreviewButton } from './TrackPreviewButton'
-
-const LISTENING_MODE_LABELS = {
-  immersion: 'Deep listener',
-  explorer: 'Explorer',
-  balanced: 'Balanced ear',
-}
+import { LISTENING_MODE_LABELS } from './portraitConstants'
 
 /**
  * Music section — top 3 artists, top 3 tracks, top 3 genres, mood,

@@ -84,6 +84,29 @@ export const CreationSection = ({ creations, isOwner, onToggleVisibility, onAddC
         ].filter(Boolean)} />
       )}
 
+      {/* Section header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '18px' }}>{'\u270d\ufe0f'}</span>
+          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#2C2C2C' }}>Creation</h3>
+        </div>
+        {onViewArchive && (
+          <button
+            onClick={onViewArchive}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '13px',
+              color: '#4A7BA7',
+              padding: 0,
+            }}
+          >
+            See all
+          </button>
+        )}
+      </div>
+
       {/* Latest creation */}
           {/* Owner actions — absolute overlay */}
           {isOwner && (
@@ -173,7 +196,7 @@ export const CreationSection = ({ creations, isOwner, onToggleVisibility, onAddC
             </h3>
           )}
 
-          {/* Content */}
+          {/* Content — text */}
           {latestCreation.type === 'text' && latestCreation.text_content && (
             <p style={{
               margin: 0,
@@ -188,26 +211,39 @@ export const CreationSection = ({ creations, isOwner, onToggleVisibility, onAddC
             </p>
           )}
 
-          {/* View archive link */}
-          {(archivedVisibleCount > 0 || (isOwner && safeCreations.length > 1)) && onViewArchive && (
-            <button
-              onClick={onViewArchive}
+          {/* Content — image (capped preview, click to see all) */}
+          {latestCreation.type === 'image' && latestCreation.image_url && (
+            <div
+              onClick={() => onViewArchive && onViewArchive()}
               style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: '13px',
-                color: '#4A7BA7',
-                padding: 0,
-                marginTop: '14px',
-                display: 'block',
+                maxHeight: '160px',
+                overflow: 'hidden',
+                borderRadius: '8px',
+                cursor: onViewArchive ? 'pointer' : 'default',
+                position: 'relative',
               }}
             >
-              {isOwner
-                ? 'View archive'
-                : `View ${archivedVisibleCount} more`
-              }
-            </button>
+              <img
+                src={latestCreation.image_url}
+                alt={latestCreation.title || 'Creation'}
+                style={{
+                  width: '100%',
+                  display: 'block',
+                  objectFit: 'cover',
+                  objectPosition: 'top',
+                }}
+              />
+              {/* Fade-out overlay at bottom */}
+              <div style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                height: '40px',
+                background: 'linear-gradient(transparent, rgba(255,254,250,0.9))',
+                pointerEvents: 'none',
+              }} />
+            </div>
           )}
     </>
   )

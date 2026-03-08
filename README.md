@@ -5,20 +5,18 @@ A private social app where friends share what's currently occupying their minds 
 ## Features
 
 ### The Salon
-The home page and intellectual heart of the app. Two elements:
-- **The Parlor**: A new philosophical essay every week, presented in a book-reader layout with adjustable text size and text-to-speech audio playback. Users can share their reflections in a collapsible "Vos réflexions" thread with real-time updates
-- **The Commonplace Book**: A shared notebook accessible via a floating typewriter icon. Friends write and read entries together, with a badge showing unread count. Opens as a full-screen overlay
+The home page and intellectual heart of the app:
+- **The Parlor**: A new philosophical essay every week, presented in a book-reader layout with adjustable text size and audio playback. Users can share their reflections in a collapsible "Vos réflexions" thread with real-time updates
 
 Content auto-rotates every Monday. Each entry covers a philosophical movement with historical context, key arguments, critiques, and a closing question for discussion.
 
 ### My Corner
 A tabbed hub for personal content:
-- **Card**: Your current interest card with 7 categories (Reading, Listening, Watching, Looking Forward To, Performing Arts and Exhibits, Obsessing Over, My latest AI prompt). Supports voice dictation via the microphone button and iTunes music search for the Listening category
-- **History**: Private timeline of all your past cards, a personal diary of your evolving interests
-- **Reviews**: Rate and review movies, books, podcasts, shows, albums, performing arts, exhibitions, and more on a 0-10 scale. Recommend reviews to specific friends. Paragraph-level comments on review text
-- **La Liste**: A curated list of recommendations from friends. See what friends have flagged for you across all media types
+- **Card**: Your current interest card with 7 categories (Reading, Listening, Watching, Looking Forward To, Performing Arts and Exhibits, Obsessing Over, My latest AI prompt). Supports voice dictation via the microphone button and music search for the Listening category
+- **Reviews**: Rate and review movies, books, articles, podcasts, shows, albums, performing arts, exhibitions, and more on a 0-10 scale. Recommend reviews to specific friends. Paragraph-level comments on review text
+- **La Liste**: Your personal discovery list — everything you want to read, watch, listen to, and experience. Track items with cover art, mark as done, and toggle visibility
 - **Wishlist**: Create a wishlist of items you'd love to receive. Friends can anonymously claim items to avoid duplicate gifts
-- **Profile**: Edit your display name, bio, and avatar
+- **Portrait**: An auto-generated cultural profile built from your Spotify listening data, reading library, cultural experiences, and original creations. Connect Spotify, import from Goodreads, scan bookshelves, and add experiences manually
 
 ### Marginalia
 Leave private notes on friends' cards. Flip a card over to see and write annotations, like scribbling in the margins of a book.
@@ -32,8 +30,8 @@ Leave private notes on friends' cards. Flip a card over to see and write annotat
 - **Location & Price**: Add venue details and cost information
 
 ### Social
-- **Friends**: Search by username, send and accept friend requests
-- **Friend Cards**: View friends' current cards, reviews, wishlists, and profiles
+- **Friends**: Search by name, email, or username. Send and accept friend requests
+- **Friend Cards**: View friends' current cards, reviews, La Liste, wishlists, portraits, and profiles
 - **Notifications**: Real-time activity feed (friend requests, activity interest, review recommendations, wishlist claims, card notes). Bell icon with unread count
 - **Newsletter**: Weekly digest preview of friend activity
 - **Friend Search**: Quick search from the nav bar
@@ -175,10 +173,11 @@ ALTER TABLE activity_interests ENABLE ROW LEVEL SECURITY;
    cp .env.example .env
    ```
 
-2. Edit `.env` and add your Supabase credentials:
+2. Edit `.env` and add your credentials (see `.env.example` for the full list):
    ```
    VITE_SUPABASE_URL=https://your-project.supabase.co
    VITE_SUPABASE_ANON_KEY=your-anon-key-here
+   RESEND_API_KEY=your-resend-api-key
    ```
 
 ### 5. Install Dependencies
@@ -201,18 +200,21 @@ The app should now be running at `http://localhost:5173`
 1. **Sign Up**: Create an account with email, password, display name, and username
 2. **Visit The Salon**: Read this week's philosophical essay and share your reflections
 3. **Create Your Card**: Go to My Corner and fill in your current interests across 7 categories
-4. **Find Friends**: Search by username and send friend requests
-5. **Explore**: View friends' cards, add reviews, plan activities, and write in the Commonplace Book
+4. **Find Friends**: Search by name, email, or username and send friend requests
+5. **Explore**: View friends' cards, add reviews, and plan activities together
 
 ## Project Structure
 
 ```
 src/
 ├── components/
-│   ├── salon/            # Salon components (ParlorText, ParlorResponses, CommonplaceBook, etc.)
+│   ├── salon/            # Salon components (ParlorText, ParlorResponses, CalligraphyTitle, etc.)
 │   ├── marginalia/       # Card annotation system
-│   ├── music/            # iTunes search integration
+│   ├── music/            # Music search integration (Deezer API)
 │   ├── review-comments/  # Paragraph-level review comments
+│   ├── portrait/         # Portrait feature (music, reading, experiences, creations)
+│   ├── friends/          # Friend deck and pending requests
+│   ├── cover-search/     # Cover art search modal
 │   ├── icons/            # SVG icon components
 │   ├── CardDisplay.jsx   # Card view mode with flip animation
 │   ├── CardEdit.jsx      # Card edit form
@@ -220,6 +222,7 @@ src/
 │   ├── ReviewsDisplay.jsx # Shared reviews component
 │   ├── WishlistDisplay.jsx # Shared wishlist component
 │   ├── ProfileDisplay.jsx  # Shared profile display
+│   ├── ProfileEditModal.jsx # Profile editing overlay
 │   ├── Navigation.jsx    # Top nav with search, notifications, newsletter
 │   └── NotificationBell.jsx # Real-time notification indicator
 ├── contexts/
@@ -235,17 +238,18 @@ src/
 │   ├── useSpeechRecognition.js # Web Speech API wrapper
 │   └── newsletterUtils.js # Newsletter generation
 ├── pages/
-│   ├── Salon.jsx          # Weekly philosophy + Commonplace Book
-│   ├── MyCorner.jsx       # Tabbed hub (Card, History, Reviews, La Liste, Wishlist, Profile)
+│   ├── Salon.jsx          # Weekly philosophy + Parlor
+│   ├── MyCorner.jsx       # Tabbed hub (Card, Reviews, La Liste, Wishlist, Portrait)
 │   ├── MyCard.jsx         # Current card with voice dictation
-│   ├── LaListe.jsx        # Friend recommendations
+│   ├── LaListe.jsx        # Personal discovery list
 │   ├── Reviews.jsx        # Reviews with filters
 │   ├── ToDo.jsx           # Activity board
 │   ├── Friends.jsx        # Friends list + requests
-│   ├── FriendCard.jsx     # Friend card + reviews view
+│   ├── Portrait.jsx       # Cultural portrait (Spotify, books, experiences, creations)
+│   ├── FriendCard.jsx     # Friend card + reviews + portrait view
 │   ├── Notifications.jsx  # Activity feed
 │   ├── Newsletter.jsx     # Weekly digest
-│   ├── Account.jsx        # Account settings
+│   ├── AccountSettings.jsx # Account settings
 │   └── Help.jsx           # App guide
 ├── App.jsx                # Routes with lazy loading
 ├── main.jsx               # Entry point
@@ -257,17 +261,22 @@ src/
 ### Colors
 - Background: `#F5F1EB` (warm cream)
 - Card/Content boxes: `#FFFEFA` (off-white)
+- Primary accent: `#622722` (Deep Mahogany) — buttons, active states, input focus
+- Primary hover: `#4E1F1B`
 - Text: `#2C2C2C` (near-black)
 - Muted text: `#666`, `#777`, `#999`
 - Links: `#4A7BA7`
+- Error: `#C75D5D`
 
 ### Typography
 - Headers: Caveat (handwritten) via `className="handwritten"`
+- Display/Titles: Cinzel Decorative (used in Salon calligraphy, friend cards)
 - Body: Source Serif 4 (serif)
 
 ### Review Tags
 - Movie: 🎬 `#E8D0D0` (dusty rose)
 - Book: 📖 `#E8DCC8` (warm gold)
+- Article: 📰
 - Podcast: 🎧 `#D0E0D0` (sage green)
 - Show: 📺 `#D0D8E8` (soft blue)
 - Album: 💿 `#E0D8E8` (lavender)
@@ -352,9 +361,11 @@ Parent element MUST have `position: 'relative'`.
 | Content gap | `16px` or `24px` |
 
 ### Animations (defined in index.css)
-- `bookFloat` - gentle floating for decorative images
-- `reviewSway1/2/3` - subtle swaying for cards
+- `bookFloat`, `vinylFloat`, `tvFloat`, `brainFloat`, `calendarFloat`, `robotFloat` - floating decorative icons
+- `gentleSway1-6` - subtle swaying for post-it cards
+- `reviewSway1/2/3` - subtle swaying for review cards
 - `gavelSway` - gavel icon specific
+- `fantomOrbit` - empty state ghost animation
 
 ### Code Architecture Principle
 
@@ -370,7 +381,8 @@ Views that exist in both My Corner and Friend view use shared components:
 |------|------------------|-----------|-------------|
 | Reviews | `ReviewsDisplay.jsx` | Reviews.jsx | FriendCard.jsx |
 | Wishlist | `WishlistDisplay.jsx` | Wishlist.jsx | FriendWishlist.jsx |
-| Profile | `ProfileDisplay.jsx` | (edit form) | FriendProfile.jsx |
+| Portrait | `PortraitDisplay.jsx` | Portrait.jsx | FriendCard.jsx |
+| Profile | `ProfileDisplay.jsx` | (edit modal) | FriendProfile.jsx |
 
 **Rules for shared components:**
 1. **My Corner is the benchmark** - shared component styling matches My Corner
@@ -384,7 +396,7 @@ Views that exist in both My Corner and Friend view use shared components:
 - Users can only see:
   - Their own data (profile, cards, history, reviews, activities, wishlist)
   - Current cards, reviews, and wishlists of accepted friends
-  - Salon content (parlor responses, commonplace entries) from all users
+  - Salon content (parlor responses) from all users
   - Activities posted by anyone in their friend network
   - Friend requests they're involved in
 - Passwords are hashed by Supabase Auth
@@ -409,7 +421,10 @@ Views that exist in both My Corner and Friend view use shared components:
 
 Make sure to run all SQL migrations in your production Supabase project before deploying, including:
 - Core tables (profiles, cards, entries, friendships)
-- New feature tables (reviews, activities, activity_interests)
+- Feature tables (reviews, activities, activity_interests, wishlist_items, discovery_items, notifications)
+- Salon tables (salon_weeks, parlor_responses)
+- Marginalia (card_notes)
+- Portrait tables (spotify_tokens, spotify_profiles, books, experiences, creations)
 - All RLS policies and indexes
 
 ## Future Enhancements
@@ -419,7 +434,7 @@ Make sure to run all SQL migrations in your production Supabase project before d
 - Activity calendar view
 - Export personal data
 - LLM-powered recommendations based on review history
-- Additional external service integrations (Goodreads, Spotify)
+- Additional external service integrations
 
 ## License
 

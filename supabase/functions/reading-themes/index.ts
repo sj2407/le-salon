@@ -13,10 +13,20 @@ const SYSTEM_PROMPT =
   'You extract recurring thematic preoccupations from book lists. Return only a JSON array of strings, no preamble.';
 
 interface BookForThemes {
+  id: string;
   title: string;
   author: string | null;
   google_books_description: string | null;
 }
+
+// Warm palette that matches the app's aesthetic
+const THEME_COLORS = [
+  '#C97B63', // terracotta
+  '#7BA78A', // sage
+  '#8B7DAE', // lavender
+  '#CDA74E', // gold
+  '#6B9BC3', // slate blue
+];
 
 function buildUserPrompt(books: BookForThemes[]): string {
   const bookLines = books.map(b => {
@@ -45,24 +55,104 @@ function validateThemes(parsed: unknown): parsed is string[] {
   );
 }
 
-function extractJsonArray(text: string): unknown {
+function extractJson(text: string): unknown {
   // Try direct parse first
   try {
     return JSON.parse(text);
   } catch {
-    // Try to find a JSON array in the response
-    const match = text.match(/\[[\s\S]*?\]/);
-    if (match) {
-      return JSON.parse(match[0]);
+    // Try to find a JSON array or object in the response
+    const arrMatch = text.match(/\[[\s\S]*\]/);
+    if (arrMatch) {
+      try { return JSON.parse(arrMatch[0]); } catch { /* fall through */ }
     }
-    throw new Error('No JSON array found in response');
+    const objMatch = text.match(/\{[\s\S]*\}/);
+    if (objMatch) {
+      try { return JSON.parse(objMatch[0]); } catch { /* fall through */ }
+    }
+    throw new Error('No JSON found in response');
   }
+}
+
+const GRAPH_SYSTEM_PROMPT =
+  'You map books to thematic preoccupations. Return only valid JSON, no preamble.';
+
+function buildGraphPrompt(
+  books: BookForThemes[],
+  themes: string[]
+): string {
+  const bookLines = books.map((b, i) =>
+    `${i}: "${b.title}"${b.author ? ` by ${b.author}` : ''}`
+  );
+
+  return `Books:\n${bookLines.join('\n')}
+
+Themes: ${JSON.stringify(themes)}
+
+For each book, list which themes it connects to (1-3 themes per book). Every theme must have at least 1 book.
+
+Return JSON: {"mapping": {"0": ["theme1", "theme2"], "1": ["theme2"], ...}}
+Keys are book indices (as strings), values are arrays of theme strings from the list above.`;
+}
+
+interface GraphMapping {
+  mapping: Record<string, string[]>;
+}
+
+function validateGraphMapping(parsed: unknown, bookCount: number, themes: string[]): parsed is GraphMapping {
+  if (!parsed || typeof parsed !== 'object') return false;
+  const obj = parsed as Record<string, unknown>;
+  if (!obj.mapping || typeof obj.mapping !== 'object') return false;
+  const mapping = obj.mapping as Record<string, unknown>;
+  // At least half the books should be mapped
+  if (Object.keys(mapping).length < Math.min(2, bookCount)) return false;
+  const themeSet = new Set(themes);
+  for (const [key, val] of Object.entries(mapping)) {
+    if (isNaN(Number(key)) || Number(key) >= bookCount) return false;
+    if (!Array.isArray(val)) return false;
+    for (const t of val) {
+      if (typeof t !== 'string' || !themeSet.has(t)) return false;
+    }
+  }
+  return true;
+}
+
+function buildReadingGraph(
+  books: BookForThemes[],
+  themes: string[],
+  mapping: Record<string, string[]>
+): { themes: { id: string; label: string; color: string }[]; edges: { book_id: string; theme_id: string }[] } {
+  // Create theme nodes with stable IDs and colors
+  const themeNodes = themes.map((label, i) => ({
+    id: `theme-${i}`,
+    label,
+    color: THEME_COLORS[i % THEME_COLORS.length],
+  }));
+
+  const themeLabelToId: Record<string, string> = {};
+  themeNodes.forEach(t => { themeLabelToId[t.label] = t.id; });
+
+  // Build edges from mapping
+  const edges: { book_id: string; theme_id: string }[] = [];
+  for (const [indexStr, themeLabels] of Object.entries(mapping)) {
+    const bookIndex = Number(indexStr);
+    const book = books[bookIndex];
+    if (!book) continue;
+    for (const label of themeLabels) {
+      const themeId = themeLabelToId[label];
+      if (themeId) {
+        edges.push({ book_id: book.id, theme_id: themeId });
+      }
+    }
+  }
+
+  return { themes: themeNodes, edges };
 }
 
 async function callAnthropic(
   apiKey: string,
   systemPrompt: string,
-  userPrompt: string
+  userPrompt: string,
+  maxTokens = 100
 ): Promise<string> {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -73,7 +163,7 @@ async function callAnthropic(
     },
     body: JSON.stringify({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 100,
+      max_tokens: maxTokens,
       system: systemPrompt,
       messages: [{ role: 'user', content: userPrompt }],
     }),
@@ -129,7 +219,7 @@ Deno.serve(async (req: Request) => {
     // Fetch primary-signal books: read + (rating >= 8 OR has a review)
     const { data: booksRaw } = await supabaseUser
       .from('books')
-      .select('title, author, google_books_description, rating, review_id')
+      .select('id, title, author, google_books_description, rating, review_id')
       .eq('user_id', user_id)
       .eq('status', 'read');
 
@@ -140,6 +230,7 @@ Deno.serve(async (req: Request) => {
         return (rating != null && rating >= 8) || b.review_id != null;
       })
       .map((b: Record<string, unknown>) => ({
+        id: b.id as string,
         title: b.title as string,
         author: b.author as string | null,
         google_books_description: b.google_books_description as string | null,
@@ -160,18 +251,21 @@ Deno.serve(async (req: Request) => {
     // Check if we should regenerate: only at threshold crossings (every 3rd book) or first time
     const { data: profile } = await supabaseUser
       .from('profiles')
-      .select('reading_themes, reading_themes_at')
+      .select('reading_themes, reading_themes_at, reading_graph')
       .eq('id', user_id)
       .single();
 
     const hasExistingThemes = profile?.reading_themes_at != null;
+    const hasExistingGraph = profile?.reading_graph?.themes?.length > 0;
 
-    // Regenerate if: first time, OR count is a multiple of 3
-    if (hasExistingThemes && primaryBooks.length % 3 !== 0) {
+    // Regenerate if: first time, OR count is a multiple of 3, OR themes exist but graph is missing
+    const needsGraphOnly = hasExistingThemes && !hasExistingGraph && profile?.reading_themes?.length > 0;
+    if (hasExistingThemes && !needsGraphOnly && primaryBooks.length % 3 !== 0) {
       return new Response(
         JSON.stringify({
           success: true,
           themes: profile?.reading_themes || null,
+          reading_graph: profile?.reading_graph || null,
           message: `Themes current — next regeneration at ${primaryBooks.length + (3 - (primaryBooks.length % 3))} primary-signal books`,
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -195,52 +289,90 @@ Deno.serve(async (req: Request) => {
 
     const userPrompt = buildUserPrompt(primaryBooks);
 
-    // First attempt
-    let rawResponse = await callAnthropic(cachedAnthropicKey, SYSTEM_PROMPT, userPrompt);
-    let parsed: unknown;
+    // Skip theme generation if we only need the graph
     let themes: string[] | null = null;
+    if (!needsGraphOnly) {
+      // First attempt
+      let rawResponse = await callAnthropic(cachedAnthropicKey, SYSTEM_PROMPT, userPrompt);
+      let parsed: unknown;
 
-    try {
-      parsed = extractJsonArray(rawResponse);
-      if (validateThemes(parsed)) {
-        themes = parsed;
-      }
-    } catch {
-      // Will retry below
-    }
-
-    // Retry once on failure
-    if (!themes) {
       try {
-        rawResponse = await callAnthropic(cachedAnthropicKey, SYSTEM_PROMPT, userPrompt);
-        parsed = extractJsonArray(rawResponse);
+        parsed = extractJson(rawResponse);
         if (validateThemes(parsed)) {
           themes = parsed;
         }
       } catch {
-        // Keep previous themes
+        // Will retry below
+      }
+
+      // Retry once on failure
+      if (!themes) {
+        try {
+          rawResponse = await callAnthropic(cachedAnthropicKey, SYSTEM_PROMPT, userPrompt);
+          parsed = extractJson(rawResponse);
+          if (validateThemes(parsed)) {
+            themes = parsed;
+          }
+        } catch {
+          // Keep previous themes
+        }
       }
     }
 
-    // If both attempts failed, keep previous themes
-    if (!themes) {
+    // If generating graph only (themes already exist), use existing themes
+    const finalThemes = themes || (needsGraphOnly ? profile?.reading_themes : null);
+    if (!finalThemes) {
       return new Response(
         JSON.stringify({
           success: true,
           themes: profile?.reading_themes || null,
+          reading_graph: profile?.reading_graph || null,
           note: 'Theme generation produced invalid output; kept previous themes',
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Update profiles with new themes
+    // --- Generate reading graph (book→theme mapping) ---
+    let readingGraph = null;
+    try {
+      const graphPrompt = buildGraphPrompt(primaryBooks, finalThemes);
+      let graphRaw = await callAnthropic(
+        cachedAnthropicKey, GRAPH_SYSTEM_PROMPT, graphPrompt, 300
+      );
+      let graphParsed = extractJson(graphRaw);
+
+      if (!validateGraphMapping(graphParsed, primaryBooks.length, finalThemes)) {
+        // Retry once
+        graphRaw = await callAnthropic(
+          cachedAnthropicKey, GRAPH_SYSTEM_PROMPT, graphPrompt, 300
+        );
+        graphParsed = extractJson(graphRaw);
+      }
+
+      if (validateGraphMapping(graphParsed, primaryBooks.length, finalThemes)) {
+        readingGraph = buildReadingGraph(
+          primaryBooks, finalThemes, (graphParsed as GraphMapping).mapping
+        );
+      }
+    } catch (err) {
+      console.warn('Graph generation failed:', (err as Error).message);
+    }
+
+    // Update profiles with themes and graph
+    const updatePayload: Record<string, unknown> = {
+      reading_themes_at: new Date().toISOString(),
+    };
+    if (themes) {
+      updatePayload.reading_themes = themes;
+    }
+    if (readingGraph) {
+      updatePayload.reading_graph = readingGraph;
+    }
+
     const { error: updateError } = await supabaseAdmin
       .from('profiles')
-      .update({
-        reading_themes: themes,
-        reading_themes_at: new Date().toISOString(),
-      })
+      .update(updatePayload)
       .eq('id', user_id);
 
     if (updateError) {
@@ -248,7 +380,11 @@ Deno.serve(async (req: Request) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, themes }),
+      JSON.stringify({
+        success: true,
+        themes: finalThemes,
+        reading_graph: readingGraph,
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (err) {
