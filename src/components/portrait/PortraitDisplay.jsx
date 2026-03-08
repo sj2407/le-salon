@@ -96,6 +96,7 @@ export const PortraitDisplay = ({
   // Connect / import callbacks (owner view)
   onConnectSpotify,
   onDisconnectSpotify,
+  spotifyConnecting,
   onAddBook,
   onImportGoodreads,
   onScanBookshelf,
@@ -201,6 +202,7 @@ export const PortraitDisplay = ({
             isOwner={isOwner}
             onConnectSpotify={onConnectSpotify}
             onDisconnectSpotify={onDisconnectSpotify}
+            connecting={spotifyConnecting}
             error={spotifyError}
           />
         )

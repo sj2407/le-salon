@@ -7,12 +7,48 @@ import { LISTENING_MODE_LABELS } from './portraitConstants'
  * Music section — top 3 artists, top 3 tracks, top 3 genres, mood,
  * listening mode, cultural geography. Quill edit button for disconnect.
  */
-export const MusicSection = ({ spotifyProfile, onSeeAll, isOwner, onConnectSpotify, onDisconnectSpotify, error }) => {
+export const MusicSection = ({ spotifyProfile, onSeeAll, isOwner, onConnectSpotify, onDisconnectSpotify, connecting, error }) => {
   const [hoveredArtist, setHoveredArtist] = useState(null)
 
   // Empty state
   if (!spotifyProfile || !spotifyProfile.is_active) {
     if (!isOwner) return null
+
+    // Connecting state — show animated indicator
+    if (connecting) {
+      return (
+        <>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+            <span style={{ fontSize: '18px' }}>{'\ud83c\udfb5'}</span>
+            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#2C2C2C' }}>Music</h3>
+          </div>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '12px',
+            padding: '24px 0',
+          }}>
+            <div style={{
+              width: '36px',
+              height: '36px',
+              border: '3px solid #E8DCC8',
+              borderTopColor: '#5B8C5A',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite',
+            }} />
+            <p style={{ margin: 0, fontSize: '14px', color: '#666', fontStyle: 'italic' }}>
+              Connecting to Spotify...
+            </p>
+            <p style={{ margin: 0, fontSize: '12px', color: '#999' }}>
+              Analyzing your listening history
+            </p>
+          </div>
+          <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+        </>
+      )
+    }
+
     return (
       <>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
@@ -257,10 +293,10 @@ export const MusicSection = ({ spotifyProfile, onSeeAll, isOwner, onConnectSpoti
         </div>
       )}
 
-      {/* Cultural geography */}
+      {/* Cultural geography — top 3 */}
       {cultural_geography && cultural_geography.length > 0 && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-          {cultural_geography.map((g, i) => (
+          {cultural_geography.slice(0, 3).map((g, i) => (
             <span key={i} style={{
               display: 'inline-block',
               padding: '3px 10px',

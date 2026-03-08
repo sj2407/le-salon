@@ -493,6 +493,7 @@ export const Portrait = ({ userId: friendUserId }) => {
           onReadingSeeAll={handleReadingSeeAll}
           onConnectSpotify={isOwner ? handleConnectSpotify : undefined}
           onDisconnectSpotify={isOwner ? handleDisconnectSpotify : undefined}
+          spotifyConnecting={spotifyConnecting}
           spotifyError={spotifyError}
           onAddBook={isOwner ? () => setShowAddBook(true) : undefined}
           onImportGoodreads={isOwner ? () => setShowGoodreadsImport(true) : undefined}
