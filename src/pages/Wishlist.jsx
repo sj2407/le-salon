@@ -210,23 +210,17 @@ export const Wishlist = () => {
             <Plus size={18} weight="duotone" color="#622722" />
           </button>
         )}
-        renderItemStatus={(item) => (
-          <span style={{ fontSize: '13px' }}>
-            {item.claimed_by ? (
-              <span style={{
-                color: '#4CAF50',
-                fontWeight: 600,
-                background: 'rgba(76, 175, 80, 0.1)',
-                padding: '2px 8px',
-                borderRadius: '10px'
-              }}>
-                Claimed ✓
-              </span>
-            ) : (
-              <span style={{ color: '#999' }}>Available</span>
-            )}
+        renderItemStatus={(item) => item.claimed_by ? (
+          <span style={{
+            fontSize: '12px',
+            color: '#4CAF50',
+            fontStyle: 'italic',
+            marginTop: '4px',
+            display: 'inline-block'
+          }}>
+            ✓ claimed
           </span>
-        )}
+        ) : null}
         onEdit={openEditModal}
         onDelete={handleDelete}
       />

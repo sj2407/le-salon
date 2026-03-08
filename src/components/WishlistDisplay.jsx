@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { EmptyStateFantom } from './EmptyStateFantom'
-import { CoverThumbnail } from './cover-search/CoverThumbnail'
 import { typeToMediaType } from '../lib/coverSearchApis'
-import { StaggeredList, StaggerItem } from './StaggeredList'
+import { TAG_ICONS } from '../lib/reviewConstants'
+
+const ROTATIONS = [-1.5, 1.2, -0.8, 2, -1.8, 0.5, -1, 1.6, -0.3]
 
 /**
- * Shared wishlist display component
+ * Shared wishlist display component — scrapbook card grid
  * Used by both My Corner (Wishlist.jsx) and Friend View (FriendWishlist.jsx)
  *
  * Actions (edit/delete) via onEdit/onDelete show a ... overflow menu.
@@ -23,6 +24,7 @@ export const WishlistDisplay = ({
   renderHeaderActions
 }) => {
   const [openMenuId, setOpenMenuId] = useState(null)
+  const [failedImages, setFailedImages] = useState(new Set())
   const menuRef = useRef(null)
 
   // Close menu on click outside or Escape
@@ -71,148 +73,187 @@ export const WishlistDisplay = ({
       {items.length === 0 ? (
         <EmptyStateFantom />
       ) : (
-        <StaggeredList style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {items.map((item, index) => (
-            <StaggerItem key={item.id}>
-            <div
-              style={{
-                background: '#FFFEFA',
-                border: 'none',
-                borderRadius: '2px',
-                padding: '16px',
-                boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)',
-                transform: `rotate(${index % 2 === 0 ? '-0.3' : '0.3'}deg)`,
-                animation: `reviewSway${(index % 3) + 1} ${5 + index % 2}s ease-in-out infinite`,
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                position: 'relative',
-                zIndex: openMenuId === item.id ? 5 : 1
-              }}
-            >
-              {item.image_url && (
-                <div style={{ marginRight: '12px', flexShrink: 0 }}>
-                  <CoverThumbnail imageUrl={item.image_url} tag={typeToMediaType(item.type) || 'other'} />
-                </div>
-              )}
-              <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                  {item.type && (
-                    <span style={{
-                      fontSize: '12px',
-                      color: '#666',
-                      background: '#F5F1EB',
-                      padding: '2px 8px',
-                      borderRadius: '10px',
-                      fontWeight: 500
-                    }}>
-                      {item.type}
-                    </span>
-                  )}
-                  {renderItemStatus && renderItemStatus(item)}
-                </div>
-                {item.link ? (
-                  <a
-                    href={item.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
+        <div className="wishlist-grid">
+          {items.map((item, index) => {
+            const hasImage = item.image_url && !failedImages.has(item.id)
+            const mediaType = typeToMediaType(item.type)
+            const emoji = TAG_ICONS[mediaType] || null
+            const rotation = ROTATIONS[index % ROTATIONS.length]
+            const handleCardClick = () => {
+              if (item.link) window.open(item.link, '_blank', 'noopener,noreferrer')
+            }
+
+            return (
+              <div
+                key={item.id}
+                className="wishlist-card"
+                style={{
+                  '--rot': `${rotation}deg`,
+                  zIndex: openMenuId === item.id ? 15 : 1,
+                  cursor: item.link ? 'pointer' : 'default'
+                }}
+                onClick={item.link ? handleCardClick : undefined}
+              >
+                {/* Cover image — always square */}
+                {hasImage && (
+                  <img
+                    src={item.image_url}
+                    alt=""
+                    onError={() => setFailedImages(prev => new Set(prev).add(item.id))}
                     style={{
-                      fontSize: '14px',
-                      fontStyle: 'italic',
-                      fontWeight: 400,
-                      color: '#4A7BA7',
-                      textDecoration: 'underline'
+                      width: '100%',
+                      aspectRatio: '1',
+                      objectFit: 'cover',
+                      display: 'block',
+                      borderRadius: '2px 2px 0 0'
+                    }}
+                  />
+                )}
+
+                {/* Placeholder for items without cover image */}
+                {!hasImage && (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    aspectRatio: '1',
+                    padding: '12px',
+                    background: '#F9F5EE'
+                  }}>
+                    {emoji && (
+                      <span style={{
+                        fontSize: '38px',
+                        filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
+                      }}>
+                        {emoji}
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {/* Card info */}
+                <div style={{ padding: '8px 10px 10px' }}>
+                  <div
+                    className="handwritten"
+                    style={{
+                      fontSize: '15px',
+                      fontWeight: 600,
+                      lineHeight: 1.2,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
                     }}
                   >
                     {item.name}
-                  </a>
-                ) : (
-                  <div style={{ fontSize: '14px', fontStyle: 'italic', fontWeight: 400 }}>{item.name}</div>
+                  </div>
+
+                  {/* Status — only rendered when claimed */}
+                  {renderItemStatus && renderItemStatus(item)}
+                </div>
+
+                {/* Friend view actions (claim/unclaim) */}
+                {renderItemActions && (
+                  <div
+                    style={{
+                      padding: '0 11px 10px',
+                      display: 'flex',
+                      justifyContent: 'flex-end'
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {renderItemActions(item)}
+                  </div>
+                )}
+
+                {/* Overflow menu — top right, revealed on hover */}
+                {hasOverflowMenu && (
+                  <div
+                    ref={openMenuId === item.id ? menuRef : null}
+                    className="wishlist-menu-dots"
+                    style={openMenuId === item.id ? { opacity: 1 } : undefined}
+                  >
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setOpenMenuId(openMenuId === item.id ? null : item.id)
+                      }}
+                      style={{
+                        width: '24px',
+                        height: '24px',
+                        borderRadius: '50%',
+                        border: 'none',
+                        background: 'radial-gradient(circle at 35% 30%, #fff, #f5f1eb 60%, #e8e2d8)',
+                        color: '#888',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 3px 6px rgba(0,0,0,0.25), 0 6px 14px rgba(0,0,0,0.15), inset 0 1px 2px rgba(255,255,255,0.6)',
+                        padding: 0
+                      }}
+                      aria-label="Actions"
+                    >
+                      ⋯
+                    </button>
+                    {openMenuId === item.id && (
+                      <div onClick={(e) => e.stopPropagation()} style={{
+                        position: 'absolute',
+                        top: '100%',
+                        right: 0,
+                        marginTop: '4px',
+                        background: '#FFFEFA',
+                        borderRadius: '4px',
+                        boxShadow: '0 2px 12px rgba(0, 0, 0, 0.12)',
+                        padding: '4px 0',
+                        minWidth: '100px',
+                        zIndex: 10
+                      }}>
+                        {onEdit && (
+                          <button
+                            onClick={() => { onEdit(item); setOpenMenuId(null) }}
+                            style={{
+                              display: 'block',
+                              width: '100%',
+                              background: 'none',
+                              border: 'none',
+                              padding: '8px 16px',
+                              fontSize: '14px',
+                              color: '#2C2C2C',
+                              cursor: 'pointer',
+                              textAlign: 'left'
+                            }}
+                          >
+                            Edit
+                          </button>
+                        )}
+                        {onDelete && (
+                          <button
+                            onClick={() => { onDelete(item.id); setOpenMenuId(null) }}
+                            style={{
+                              display: 'block',
+                              width: '100%',
+                              background: 'none',
+                              border: 'none',
+                              padding: '8px 16px',
+                              fontSize: '14px',
+                              color: '#C75D5D',
+                              cursor: 'pointer',
+                              textAlign: 'left'
+                            }}
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
-
-              {/* Overflow menu for edit/delete */}
-              {hasOverflowMenu && (
-                <div ref={openMenuId === item.id ? menuRef : null} style={{ marginLeft: '16px', position: 'relative', flexShrink: 0 }}>
-                  <button
-                    onClick={() => setOpenMenuId(openMenuId === item.id ? null : item.id)}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      padding: '2px 6px',
-                      fontSize: '16px',
-                      color: '#A89F91',
-                      lineHeight: 1,
-                      letterSpacing: '1px'
-                    }}
-                    aria-label="Actions"
-                  >
-                    &middot;&middot;&middot;
-                  </button>
-                  {openMenuId === item.id && (
-                    <div style={{
-                      position: 'absolute',
-                      top: '100%',
-                      right: 0,
-                      background: '#FFFEFA',
-                      borderRadius: '4px',
-                      boxShadow: '0 2px 12px rgba(0, 0, 0, 0.12)',
-                      padding: '4px 0',
-                      minWidth: '100px',
-                      zIndex: 10
-                    }}>
-                      {onEdit && (
-                        <button
-                          onClick={() => { onEdit(item); setOpenMenuId(null) }}
-                          style={{
-                            display: 'block',
-                            width: '100%',
-                            background: 'none',
-                            border: 'none',
-                            padding: '8px 16px',
-                            fontSize: '14px',
-                            color: '#2C2C2C',
-                            cursor: 'pointer',
-                            textAlign: 'left'
-                          }}
-                        >
-                          Edit
-                        </button>
-                      )}
-                      {onDelete && (
-                        <button
-                          onClick={() => { onDelete(item.id); setOpenMenuId(null) }}
-                          style={{
-                            display: 'block',
-                            width: '100%',
-                            background: 'none',
-                            border: 'none',
-                            padding: '8px 16px',
-                            fontSize: '14px',
-                            color: '#C75D5D',
-                            cursor: 'pointer',
-                            textAlign: 'left'
-                          }}
-                        >
-                          Delete
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Friend view actions (claim/unclaim) */}
-              {renderItemActions && (
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginLeft: '16px' }}>
-                  {renderItemActions(item)}
-                </div>
-              )}
-            </div>
-            </StaggerItem>
-          ))}
-        </StaggeredList>
+            )
+          })}
+        </div>
       )}
     </div>
   )
