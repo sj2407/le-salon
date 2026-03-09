@@ -80,8 +80,7 @@ export const CreationSection = ({ creations, isOwner, onAddCreationText, onAddCr
 
       {/* Section header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-        <span style={{ fontSize: '18px' }}>{'\u270d\ufe0f'}</span>
-        <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#2C2C2C' }}>Creation</h3>
+        <h3 className="handwritten" style={{ margin: 0, fontSize: '24px', color: '#2C2C2C' }}>Creation</h3>
       </div>
 
       {/* Latest creation */}

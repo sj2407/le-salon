@@ -22,6 +22,7 @@ export const PlaybillScanModal = ({ isOpen, onClose, onExperiencesAdded }) => {
   const [error, setError] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
   const fileRef = useRef(null)
+  const imageFileRef = useRef(null) // store the raw File for upload
 
   const reset = () => {
     setScanning(false)
@@ -30,11 +31,11 @@ export const PlaybillScanModal = ({ isOpen, onClose, onExperiencesAdded }) => {
     setSaving(false)
     setError(null)
     setImagePreview(null)
+    imageFileRef.current = null
     if (fileRef.current) fileRef.current.value = ''
   }
 
   const handleClose = () => {
-    if (scanning) return
     reset()
     onClose()
   }
@@ -51,6 +52,7 @@ export const PlaybillScanModal = ({ isOpen, onClose, onExperiencesAdded }) => {
     setError(null)
     setDetectedExperiences(null)
     setImagePreview(URL.createObjectURL(file))
+    imageFileRef.current = file
     setScanning(true)
 
     try {
@@ -63,23 +65,14 @@ export const PlaybillScanModal = ({ isOpen, onClose, onExperiencesAdded }) => {
       }
       const imageBase64 = btoa(binary)
 
-      const { data: session } = await supabase.auth.getSession()
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/playbill-scan`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session.session.access_token}`,
-          },
-          body: JSON.stringify({ image_base64: imageBase64 }),
-        }
-      )
+      const { data, error: invokeError } = await supabase.functions.invoke('vision-scan', {
+        body: { image_base64: imageBase64, mode: 'playbill' },
+      })
 
-      const data = await res.json()
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Scan failed')
+      if (invokeError) {
+        let msg = invokeError.message
+        try { const ctx = await invokeError.context?.json(); if (ctx?.error) msg = ctx.error } catch {}
+        throw new Error(msg || 'Scan failed')
       }
 
       if (data.experiences && data.experiences.length > 0) {
@@ -112,6 +105,20 @@ export const PlaybillScanModal = ({ isOpen, onClose, onExperiencesAdded }) => {
     setSaving(true)
 
     try {
+      // Upload playbill image to storage
+      let imageUrl = null
+      if (imageFileRef.current) {
+        const ext = imageFileRef.current.name.split('.').pop() || 'jpg'
+        const path = `playbills/${profile.id}/${Date.now()}.${ext}`
+        const { error: uploadErr } = await supabase.storage
+          .from('covers')
+          .upload(path, imageFileRef.current, { upsert: true })
+        if (!uploadErr) {
+          const { data: { publicUrl } } = supabase.storage.from('covers').getPublicUrl(path)
+          imageUrl = publicUrl
+        }
+      }
+
       const rows = toAdd.map(exp => ({
         user_id: profile.id,
         name: exp.name,
@@ -119,6 +126,7 @@ export const PlaybillScanModal = ({ isOpen, onClose, onExperiencesAdded }) => {
         date: exp.date || null,
         city: exp.city || null,
         source: 'playbill_scan',
+        image_url: imageUrl,
       }))
 
       const { error } = await supabase.from('experiences').insert(rows)
@@ -202,15 +210,15 @@ export const PlaybillScanModal = ({ isOpen, onClose, onExperiencesAdded }) => {
               Found <strong>{detectedExperiences.length}</strong> event{detectedExperiences.length !== 1 ? 's' : ''}. Uncheck any you don't want to add.
             </p>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '300px', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '300px', overflowY: 'auto' }}>
               {detectedExperiences.map((exp, i) => (
                 <label
                   key={i}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '10px',
-                    padding: '8px 10px',
+                    gap: '8px',
+                    padding: '6px 8px',
                     borderRadius: '8px',
                     background: selectedItems[i] ? '#F5F1EB' : 'transparent',
                     cursor: 'pointer',
@@ -221,13 +229,27 @@ export const PlaybillScanModal = ({ isOpen, onClose, onExperiencesAdded }) => {
                     type="checkbox"
                     checked={!!selectedItems[i]}
                     onChange={() => toggleItem(i)}
-                    style={{ accentColor: '#2C2C2C' }}
+                    style={{ accentColor: '#2C2C2C', width: '16px', height: '16px', flexShrink: 0 }}
                   />
-                  <span style={{ fontSize: '18px', flexShrink: 0 }}>
-                    {getCategoryIcon(exp.category)}
-                  </span>
+                  {imagePreview ? (
+                    <img
+                      src={imagePreview}
+                      alt=""
+                      style={{
+                        width: '36px',
+                        height: '52px',
+                        objectFit: 'cover',
+                        borderRadius: '3px',
+                        flexShrink: 0,
+                      }}
+                    />
+                  ) : (
+                    <span style={{ fontSize: '18px', flexShrink: 0, lineHeight: 1 }}>
+                      {getCategoryIcon(exp.category)}
+                    </span>
+                  )}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '14px', color: '#2C2C2C', fontWeight: 500 }}>{exp.name}</div>
+                    <div style={{ fontSize: '14px', color: '#2C2C2C', fontWeight: 500, lineHeight: 1.3 }}>{exp.name}</div>
                     {(exp.city || exp.date) && (
                       <div style={{ fontSize: '12px', color: '#999' }}>
                         {[exp.city, exp.date].filter(Boolean).join(' \u00b7 ')}

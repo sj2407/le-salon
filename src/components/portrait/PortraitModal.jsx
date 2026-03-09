@@ -35,9 +35,7 @@ export const PortraitModal = ({ isOpen, onClose, title, children, maxWidth = '48
     }
   }, [isOpen])
 
-  const handleBackdropClick = (e) => {
-    if (e.target === backdropRef.current) onClose()
-  }
+  // No click-outside-to-close — user must use × or Cancel to dismiss
 
   // Check reduced motion
   const prefersReduced = typeof window !== 'undefined'
@@ -60,7 +58,7 @@ export const PortraitModal = ({ isOpen, onClose, title, children, maxWidth = '48
       {isOpen && (
         <motion.div
           ref={backdropRef}
-          onClick={handleBackdropClick}
+          onClick={undefined}
           variants={backdropVariants}
           initial="initial"
           animate="animate"

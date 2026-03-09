@@ -1,13 +1,4 @@
-import { EXPERIENCE_CATEGORIES } from './mockData'
 import { QuillMenu } from './QuillMenu'
-
-/**
- * Get the emoji icon for an experience category.
- */
-const getCategoryIcon = (category) => {
-  const found = EXPERIENCE_CATEGORIES.find(c => c.value === category)
-  return found ? found.icon : '\u2728'
-}
 
 /**
  * Format a date string to a short readable format (e.g., "Jan 15").
@@ -57,8 +48,7 @@ export const ExperiencesSection = ({ experiences, isOwner, onExperienceClick, on
     return (
       <>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-          <span style={{ fontSize: '18px' }}>{'\ud83c\udfad'}</span>
-          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#2C2C2C' }}>Experiences</h3>
+          <h3 className="handwritten" style={{ margin: 0, fontSize: '24px', color: '#2C2C2C' }}>Experiences</h3>
         </div>
         <p style={{ margin: '0 0 14px 0', fontSize: '14px', color: '#999', fontStyle: 'italic' }}>
           Log a concert, exhibition, or trip that shaped you.
@@ -101,61 +91,33 @@ export const ExperiencesSection = ({ experiences, isOwner, onExperienceClick, on
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
-        <span style={{ fontSize: '18px' }}>{'\ud83c\udfad'}</span>
-        <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#2C2C2C' }}>Experiences</h3>
+        <h3 className="handwritten" style={{ margin: 0, fontSize: '24px', color: '#2C2C2C' }}>Experiences</h3>
       </div>
 
-      {/* 3-column grid */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
-        gap: '10px',
-      }}>
-        {sorted.map(exp => (
-          <div
-            key={exp.id}
-            onClick={() => onExperienceClick && onExperienceClick(exp)}
-            style={{
-              background: '#FFFEFA',
-              borderRadius: '10px',
-              padding: '14px 12px',
-              boxShadow: '2px 3px 8px rgba(0,0,0,0.1)',
-              cursor: onExperienceClick ? 'pointer' : 'default',
-              transition: 'transform 0.15s, box-shadow 0.15s',
-              minHeight: '80px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '4px',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)'
-              e.currentTarget.style.boxShadow = '2px 4px 12px rgba(0,0,0,0.14)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)'
-              e.currentTarget.style.boxShadow = '2px 3px 8px rgba(0,0,0,0.1)'
-            }}
-          >
-            <span style={{ fontSize: '20px', lineHeight: 1 }}>
-              {getCategoryIcon(exp.category)}
-            </span>
-            <span style={{
-              fontSize: '13px',
-              fontWeight: 600,
-              color: '#2C2C2C',
-              lineHeight: 1.3,
-              overflow: 'hidden',
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-            }}>
-              {exp.name}
-            </span>
-            <span style={{ fontSize: '11px', color: '#999' }}>
-              {[exp.city, formatShortDate(exp.date)].filter(Boolean).join(' \u00b7 ')}
-            </span>
-          </div>
-        ))}
+      {/* Bullet list */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+        {sorted.map(exp => {
+          const detail = [exp.city, formatShortDate(exp.date)].filter(Boolean).join(' \u00b7 ')
+          return (
+            <div
+              key={exp.id}
+              onClick={() => onExperienceClick && onExperienceClick(exp)}
+              style={{
+                fontSize: '14px',
+                color: '#2C2C2C',
+                lineHeight: 1.5,
+                cursor: onExperienceClick ? 'pointer' : 'default',
+              }}
+            >
+              <span style={{ fontWeight: 500 }}>{exp.name}</span>
+              {detail && (
+                <span style={{ color: '#999', fontSize: '12px', marginLeft: '6px' }}>
+                  {detail}
+                </span>
+              )}
+            </div>
+          )
+        })}
       </div>
     </>
   )

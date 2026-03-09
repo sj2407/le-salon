@@ -104,8 +104,8 @@ export const BookshelfScanModal = ({ isOpen, onClose, onBooksAdded }) => {
       }
       const imageBase64 = btoa(binary)
 
-      const { data, error: invokeError } = await supabase.functions.invoke('bookshelf-scan', {
-        body: { image_base64: imageBase64 },
+      const { data, error: invokeError } = await supabase.functions.invoke('vision-scan', {
+        body: { image_base64: imageBase64, mode: 'bookshelf' },
       })
 
       if (invokeError) {

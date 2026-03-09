@@ -55,12 +55,7 @@ export const ProfileEditModal = ({ onClose }) => {
     return () => window.removeEventListener('keydown', handleEscape)
   }, [onClose, isDirty])
 
-  // Backdrop click — close if clean
-  const handleBackdropClick = (e) => {
-    if (e.target === backdropRef.current && !isDirty) {
-      onClose()
-    }
-  }
+  // No click-outside-to-close — user must use Cancel or Save
 
   // Photo upload
   const handlePhotoChange = (e) => {
@@ -211,7 +206,7 @@ export const ProfileEditModal = ({ onClose }) => {
         paddingTop: '20px',
         paddingBottom: '20px'
       }}
-      onClick={handleBackdropClick}
+      onClick={undefined}
     >
       <Motion.div
         initial={{ opacity: 0, scale: 0.95, y: 20 }}

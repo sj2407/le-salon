@@ -156,11 +156,7 @@ export const DictationModal = ({ isOpen, onClose, onAcceptEntries, mode = 'card'
     setParsedEntries(prev => prev.map((e, i) => i === index ? { ...e, content: newContent } : e))
   }
 
-  const handleBackdropClick = (e) => {
-    if (e.target === backdropRef.current && phase !== 'parsing') {
-      handleClose()
-    }
-  }
+  // No click-outside-to-close — user must use Cancel or Done
 
   const toggleLang = () => {
     const newLang = lang === 'en-US' ? 'fr-FR' : 'en-US'
@@ -178,7 +174,7 @@ export const DictationModal = ({ isOpen, onClose, onAcceptEntries, mode = 'card'
       {isOpen && (
         <Motion.div
           ref={backdropRef}
-          onClick={handleBackdropClick}
+          onClick={undefined}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}

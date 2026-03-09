@@ -57,8 +57,7 @@ export const ReadingSection = ({ books, readingThemes, onBookClick, onThemeClick
     return (
       <>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-          <span style={{ fontSize: '18px' }}>{'\ud83d\udcd6'}</span>
-          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#2C2C2C' }}>Reading</h3>
+          <h3 className="handwritten" style={{ margin: 0, fontSize: '24px', color: '#2C2C2C' }}>Reading</h3>
         </div>
         <p style={{ margin: '0 0 14px 0', fontSize: '14px', color: '#999', fontStyle: 'italic' }}>
           Add books to shape your reading identity.
@@ -233,8 +232,7 @@ export const ReadingSection = ({ books, readingThemes, onBookClick, onThemeClick
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '18px' }}>{'\ud83d\udcd6'}</span>
-          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#2C2C2C' }}>Reading</h3>
+          <h3 className="handwritten" style={{ margin: 0, fontSize: '24px', color: '#2C2C2C' }}>Reading</h3>
         </div>
         {onSeeAll && !(readingThemes && readingThemes.length > 0) && (
           <button

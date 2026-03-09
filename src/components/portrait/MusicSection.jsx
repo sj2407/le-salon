@@ -19,8 +19,7 @@ export const MusicSection = ({ spotifyProfile, onSeeAll, isOwner, onConnectSpoti
       return (
         <>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-            <span style={{ fontSize: '18px' }}>{'\ud83c\udfb5'}</span>
-            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#2C2C2C' }}>Music</h3>
+            <h3 className="handwritten" style={{ margin: 0, fontSize: '24px', color: '#2C2C2C' }}>Music</h3>
           </div>
           <div style={{
             display: 'flex',
@@ -52,8 +51,7 @@ export const MusicSection = ({ spotifyProfile, onSeeAll, isOwner, onConnectSpoti
     return (
       <>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-          <span style={{ fontSize: '18px' }}>{'\ud83c\udfb5'}</span>
-          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#2C2C2C' }}>Music</h3>
+          <h3 className="handwritten" style={{ margin: 0, fontSize: '24px', color: '#2C2C2C' }}>Music</h3>
         </div>
         <p style={{ margin: '0 0 14px 0', fontSize: '14px', color: '#999', fontStyle: 'italic' }}>
           Connect Spotify to discover your musical identity.
@@ -111,26 +109,8 @@ export const MusicSection = ({ spotifyProfile, onSeeAll, isOwner, onConnectSpoti
       )}
 
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '18px' }}>{'\ud83c\udfb5'}</span>
-          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#2C2C2C' }}>Music</h3>
-        </div>
-        {onSeeAll && (
-          <button
-            onClick={onSeeAll}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '13px',
-              color: '#4A7BA7',
-              padding: 0,
-            }}
-          >
-            See all
-          </button>
-        )}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+        <h3 className="handwritten" style={{ margin: 0, fontSize: '24px', color: '#2C2C2C' }}>Music</h3>
       </div>
 
       {/* Top 3 genres */}
@@ -309,6 +289,26 @@ export const MusicSection = ({ spotifyProfile, onSeeAll, isOwner, onConnectSpoti
               {g.region}
             </span>
           ))}
+        </div>
+      )}
+
+      {/* See all link at bottom */}
+      {onSeeAll && (
+        <div style={{ marginTop: '10px' }}>
+          <button
+            onClick={onSeeAll}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '12px',
+              color: '#4A7BA7',
+              padding: '4px 2px',
+              fontStyle: 'italic',
+            }}
+          >
+            see all
+          </button>
         </div>
       )}
     </>

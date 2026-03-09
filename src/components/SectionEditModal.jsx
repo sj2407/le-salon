@@ -150,12 +150,7 @@ export const SectionEditModal = ({ category, entries, onSave, onClose }) => {
     titleText = `What I'm ${category.toLowerCase()}`
   }
 
-  // Handle backdrop click - only close if clicking directly on backdrop AND form is clean
-  const handleBackdropClick = (e) => {
-    if (e.target === backdropRef.current && !isDirty) {
-      onClose()
-    }
-  }
+  // No click-outside-to-close — user must use Cancel or Save
 
   return createPortal(
     <div
@@ -172,7 +167,7 @@ export const SectionEditModal = ({ category, entries, onSave, onClose }) => {
         justifyContent: 'center',
         zIndex: 9999
       }}
-      onClick={handleBackdropClick}
+      onClick={undefined}
     >
       <div
         style={{
