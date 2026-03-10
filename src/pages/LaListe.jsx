@@ -379,39 +379,23 @@ export const LaListe = () => {
 
   return (
     <div style={{ maxWidth: '720px', position: 'relative', display: 'flex', flexDirection: 'column', minHeight: 'calc(100dvh - 160px)' }}>
-      {/* Split background — Burnt Terra fading into cream */}
-      <div style={{
-        position: 'absolute',
-        top: '20px',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        width: '100vw',
-        height: '55%',
-        background: 'linear-gradient(180deg, #622722 0%, #622722 60%, rgba(98, 39, 34, 0) 100%)',
-        zIndex: 0,
-        pointerEvents: 'none',
-        borderRadius: '12px 12px 0 0',
-      }} />
-
-      <h1 className="handwritten" style={{ fontSize: '42px', marginBottom: '0', marginTop: '8px', marginLeft: '10px', position: 'relative', zIndex: 1, transform: 'translateY(16px)', color: '#FFFEFA' }}>
+      <h1 className="handwritten" style={{ fontSize: '42px', marginBottom: '0', marginTop: '8px', marginLeft: '10px', transform: 'translateY(16px)', color: '#2C2C2C' }}>
         La Liste
       </h1>
       <p style={{
         fontFamily: "'Source Serif 4', Georgia, serif",
         fontStyle: 'italic',
         fontSize: '13px',
-        color: 'rgba(255, 254, 250, 0.7)',
+        color: '#999',
         marginTop: '20px',
         marginBottom: '12px',
         marginLeft: '10px',
-        position: 'relative',
-        zIndex: 1,
       }}>
         Everything I want to read, watch, listen to, and experience
       </p>
 
       {/* Toolbar: filter + sort left, + and mic right */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', position: 'relative', zIndex: 1 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <FilterDropdown
             value={filterTag}
@@ -428,7 +412,7 @@ export const LaListe = () => {
               border: 'none',
               cursor: 'pointer',
               fontSize: '12px',
-              color: 'rgba(255, 254, 250, 0.6)',
+              color: '#999',
               padding: '4px 0',
               whiteSpace: 'nowrap'
             }}
@@ -449,7 +433,7 @@ export const LaListe = () => {
               alignItems: 'center'
             }}
           >
-            <Plus size={18} weight="duotone" color="#FFFEFA" />
+            <Plus size={18} weight="duotone" color="#622722" />
           </button>
           {isSpeechSupported && (
             <button
@@ -464,7 +448,7 @@ export const LaListe = () => {
                 alignItems: 'center'
               }}
             >
-              <Microphone size={14} weight="duotone" color="#FFFEFA" />
+              <Microphone size={14} weight="duotone" color="#622722" />
             </button>
           )}
         </div>
