@@ -44,7 +44,7 @@ export function jsonpFetch(url, callbackParam = 'callback') {
 async function searchOpenLibrary(query) {
   const encoded = encodeURIComponent(query)
   const res = await fetch(
-    `https://openlibrary.org/search.json?q=${encoded}&limit=15&fields=key,title,author_name,cover_i,first_publish_year,edition_count`
+    `https://openlibrary.org/search.json?title=${encoded}&language=eng&limit=15&fields=key,title,author_name,cover_i,first_publish_year,edition_count`
   )
   const data = await res.json()
 
@@ -93,9 +93,9 @@ function enhanceGoogleBooksUrl(url) {
  */
 async function searchGoogleBooks(query) {
   try {
-    const encoded = encodeURIComponent(query)
+    const encoded = encodeURIComponent(`intitle:${query}`)
     const res = await fetch(
-      `https://www.googleapis.com/books/v1/volumes?q=${encoded}&maxResults=12`
+      `https://www.googleapis.com/books/v1/volumes?q=${encoded}&langRestrict=en&maxResults=12`
     )
     if (!res.ok) return []
     const data = await res.json()
