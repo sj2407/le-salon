@@ -208,7 +208,7 @@ export const AddCreationModal = ({ isOpen, onClose, onCreated, onUpdated, initia
               padding: '10px 12px',
               border: '1px solid rgba(0,0,0,0.1)',
               borderRadius: '8px',
-              fontSize: '14px',
+              fontSize: '16px',
               background: '#FFFEFA',
               outline: 'none',
             }}
@@ -225,7 +225,7 @@ export const AddCreationModal = ({ isOpen, onClose, onCreated, onUpdated, initia
                 padding: '12px',
                 border: '1px solid rgba(0,0,0,0.1)',
                 borderRadius: '8px',
-                fontSize: '14px',
+                fontSize: '16px',
                 fontFamily: 'Source Serif 4, Georgia, serif',
                 lineHeight: 1.65,
                 background: '#FFFEFA',
@@ -253,7 +253,7 @@ export const AddCreationModal = ({ isOpen, onClose, onCreated, onUpdated, initia
               padding: '10px 12px',
               border: '1px solid rgba(0,0,0,0.1)',
               borderRadius: '8px',
-              fontSize: '14px',
+              fontSize: '16px',
               background: '#FFFEFA',
               outline: 'none',
             }}

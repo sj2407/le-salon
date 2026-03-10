@@ -26,15 +26,7 @@ export const NoteEntry = ({ note, isOwner, onEdit, onDelete }) => {
         <div ref={menuRef} style={{ position: 'absolute', top: 0, right: 0, zIndex: 5 }}>
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              padding: '2px 6px',
-              fontSize: '14px',
-              color: '#999',
-              lineHeight: 1
-            }}
+            className="cover-menu-btn"
           >
             &middot;&middot;&middot;
           </button>

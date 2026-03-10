@@ -127,7 +127,7 @@ export const ReviewNotesSection = ({
                 width: '100%',
                 minHeight: '80px',
                 padding: '10px',
-                fontSize: '14px',
+                fontSize: '16px',
                 lineHeight: 1.6,
                 fontFamily: isQuote ? "'Source Serif 4', Georgia, serif" : 'inherit',
                 fontStyle: isQuote ? 'italic' : 'normal',

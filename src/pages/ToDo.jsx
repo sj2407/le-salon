@@ -5,7 +5,10 @@ import { supabase } from '../lib/supabase'
 import { Link } from 'react-router-dom'
 import { EmptyStateFantom } from '../components/EmptyStateFantom'
 import { FilterDropdown } from '../components/FilterDropdown'
-import { scrollLock } from '../lib/scrollLock'
+import { ActivityCard } from '../components/ActivityCard'
+import { CoverSearchModal } from '../components/cover-search/CoverSearchModal'
+import { useScrollLock } from '../hooks/useScrollLock'
+import { useEscapeClose } from '../hooks/useEscapeClose'
 import { Plus } from '@phosphor-icons/react'
 
 // Parse date_text into date_parsed
@@ -90,6 +93,8 @@ export const ToDo = () => {
   const [cityDropdownOpen, setCityDropdownOpen] = useState(false)
   const [location, setLocation] = useState('')
   const [price, setPrice] = useState('')
+  const [imageUrl, setImageUrl] = useState('')
+  const [showCoverSearch, setShowCoverSearch] = useState(false)
   const [error, setError] = useState('')
 
   // Track initial form values to detect dirty state
@@ -107,24 +112,12 @@ export const ToDo = () => {
     if (!initialFormRef.current) return false
     const init = initialFormRef.current
     return description !== init.description || dateText !== init.dateText ||
-      city !== init.city || location !== init.location || price !== init.price
+      city !== init.city || location !== init.location || price !== init.price ||
+      imageUrl !== init.imageUrl
   }
 
-  // Lock body scroll while modal is active (prevents iOS keyboard viewport shift)
-  useEffect(() => {
-    if (showModal) scrollLock.enable()
-    else scrollLock.disable()
-    return () => scrollLock.disable()
-  }, [showModal])
-
-  // Escape key handler for modal - only close if form is clean
-  useEffect(() => {
-    const handleEscape = (e) => {
-      if (e.key === 'Escape' && showModal && !isFormDirty()) setShowModal(false)
-    }
-    window.addEventListener('keydown', handleEscape)
-    return () => window.removeEventListener('keydown', handleEscape)
-  }, [showModal, description, dateText, city, location, price])
+  useScrollLock(showModal)
+  useEscapeClose(showModal, () => setShowModal(false), isFormDirty)
 
   const autoArchiveActivities = async () => {
     try {
@@ -205,7 +198,7 @@ export const ToDo = () => {
 
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, display_name, username')
+        .select('id, display_name, username, profile_photo_url')
         .in('id', userIds)
 
       if (profilesError) throw profilesError
@@ -219,7 +212,7 @@ export const ToDo = () => {
       setInterests(interestsByActivity)
       setProfiles(profilesMap)
     } catch (_err) {
-      // silently handled
+      toast.error('Failed to load activities')
     } finally {
       setLoading(false)
     }
@@ -232,8 +225,9 @@ export const ToDo = () => {
     setCity('')
     setLocation('')
     setPrice('')
+    setImageUrl('')
     setError('')
-    initialFormRef.current = { description: '', dateText: '', city: '', location: '', price: '' }
+    initialFormRef.current = { description: '', dateText: '', city: '', location: '', price: '', imageUrl: '' }
     setShowModal(true)
   }
 
@@ -244,13 +238,15 @@ export const ToDo = () => {
     setCity(activity.city || '')
     setLocation(activity.location || '')
     setPrice(activity.price || '')
+    setImageUrl(activity.image_url || '')
     setError('')
     initialFormRef.current = {
       description: activity.description,
       dateText: activity.date_text || '',
       city: activity.city || '',
       location: activity.location || '',
-      price: activity.price || ''
+      price: activity.price || '',
+      imageUrl: activity.image_url || ''
     }
     setShowModal(true)
   }
@@ -273,6 +269,7 @@ export const ToDo = () => {
             city: city.trim() || null,
             location: location.trim() || null,
             price: price.trim() || null,
+            image_url: imageUrl || null,
             updated_at: new Date().toISOString()
           })
           .eq('id', editingActivity.id)
@@ -289,7 +286,8 @@ export const ToDo = () => {
             date_parsed: dateParsed,
             city: city.trim() || null,
             location: location.trim() || null,
-            price: price.trim() || null
+            price: price.trim() || null,
+            image_url: imageUrl || null
           })
 
         if (error) throw error
@@ -371,13 +369,10 @@ export const ToDo = () => {
     }
   }
 
-  const getInterestedInitials = (activityId) => {
+  const getInterestedUsers = (activityId) => {
     const activityInterests = interests[activityId] || []
     return activityInterests
-      .map((interest) => {
-        const user = profiles[interest.user_id]
-        return user ? user.username.substring(0, 3) : ''
-      })
+      .map((interest) => profiles[interest.user_id])
       .filter(Boolean)
   }
 
@@ -405,7 +400,7 @@ export const ToDo = () => {
     : activities.filter(activity => activity.city === cityFilter)
 
   return (
-    <div className="container" style={{ maxWidth: '900px', position: 'relative' }}>
+    <div className="container" style={{ maxWidth: '720px', position: 'relative' }}>
       {/* Collage dancing people - only when activities exist */}
       {activities.length > 0 && (
         <img
@@ -467,101 +462,21 @@ export const ToDo = () => {
           </div>
         )
       ) : (
-        <div className="activity-board-note" style={{ position: 'relative' }}>
-
-          <div style={{ overflowX: 'auto' }}>
-            <table className="activity-table">
-              <thead>
-                <tr>
-                  <th>Friend</th>
-                  <th>Activity</th>
-                  <th>Date</th>
-                  <th>City</th>
-                  <th>Location</th>
-                  <th>Price</th>
-                  <th>Interested</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredActivities.map((activity) => {
-                  const poster = profiles[activity.user_id]
-                  const interestedInitials = getInterestedInitials(activity.id)
-                  const userIsInterested = isUserInterested(activity.id)
-
-                  return (
-                    <tr key={activity.id}>
-                      <td>
-                        <Link to={`/friend/${activity.user_id}`} style={{ color: '#4A7BA7', textDecoration: 'underline' }}>
-                          {poster?.display_name || 'Unknown'}
-                        </Link>
-                      </td>
-                      <td style={{ fontStyle: 'italic' }}>{activity.description}</td>
-                      <td>{activity.date_text || '—'}</td>
-                      <td>{activity.city || '—'}</td>
-                      <td>{activity.location || '—'}</td>
-                      <td>{activity.price || '—'}</td>
-                      <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                          {interestedInitials.length > 0 && (
-                            <span style={{ color: '#777', fontSize: '12px' }}>
-                              {interestedInitials.join(' ')}
-                            </span>
-                          )}
-                          <button
-                            onClick={() => toggleInterest(activity.id)}
-                            style={{
-                              padding: '3px 8px',
-                              fontSize: '12px',
-                              background: userIsInterested ? '#D0E0D0' : '#FFFEFA',
-                              border: '1px solid #C0C0C0',
-                              borderRadius: '10px',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            {userIsInterested ? '✓' : '+'}
-                          </button>
-                          {activity.user_id === profile.id && (
-                            <>
-                              <button
-                                onClick={() => openEditModal(activity)}
-                                style={{
-                                  background: 'none',
-                                  border: 'none',
-                                  cursor: 'pointer',
-                                  padding: '2px',
-                                  fontSize: '14px',
-                                  opacity: 0.5
-                                }}
-                                onMouseEnter={(e) => e.target.style.opacity = '1'}
-                                onMouseLeave={(e) => e.target.style.opacity = '0.5'}
-                              >
-                                <img src="/images/quill-ready.png" alt="Edit" style={{ width: '29px', height: '29px', objectFit: 'contain' }} />
-                              </button>
-                              <button
-                                onClick={() => handleDelete(activity.id)}
-                                style={{
-                                  background: 'none',
-                                  border: 'none',
-                                  cursor: 'pointer',
-                                  padding: '2px',
-                                  opacity: 0.6,
-                                  display: 'flex'
-                                }}
-                                onMouseEnter={(e) => e.target.style.opacity = '1'}
-                                onMouseLeave={(e) => e.target.style.opacity = '0.6'}
-                              >
-                                <img src="/images/eraser.jpeg" alt="Delete" style={{ width: '18px', height: '18px', objectFit: 'contain', transform: 'rotate(60deg)' }} />
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {filteredActivities.map((activity) => (
+            <ActivityCard
+              key={activity.id}
+              activity={activity}
+              poster={profiles[activity.user_id]}
+              interestedUsers={getInterestedUsers(activity.id)}
+              isUserInterested={isUserInterested(activity.id)}
+              isOwner={activity.user_id === profile.id}
+              onToggleInterest={toggleInterest}
+              onEdit={openEditModal}
+              onDelete={handleDelete}
+              isPast={false}
+            />
+          ))}
         </div>
       )}
 
@@ -607,6 +522,52 @@ export const ToDo = () => {
             </h2>
 
             <form onSubmit={handleSave}>
+              {/* Image section */}
+              <div className="form-group">
+                <label className="form-label">Image</label>
+                {imageUrl ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <img
+                      src={imageUrl}
+                      alt=""
+                      style={{ width: '80px', height: '80px', borderRadius: '4px', objectFit: 'cover' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setImageUrl('')}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        fontSize: '13px',
+                        color: '#C75D5D',
+                        textDecoration: 'underline',
+                        padding: 0
+                      }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowCoverSearch(true)}
+                    style={{
+                      padding: '6px 14px',
+                      fontSize: '13px',
+                      fontFamily: "'Source Serif 4', Georgia, serif",
+                      background: '#FFFEFA',
+                      color: '#622722',
+                      border: '1px solid #D4C9B8',
+                      borderRadius: '3px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Add image
+                  </button>
+                )}
+              </div>
+
               <div className="form-group">
                 <label className="form-label">Description *</label>
                 <input
@@ -733,6 +694,18 @@ export const ToDo = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Cover search modal for image upload */}
+      {showCoverSearch && (
+        <CoverSearchModal
+          isOpen={showCoverSearch}
+          onClose={() => setShowCoverSearch(false)}
+          onSelect={(result) => {
+            setImageUrl(result.imageUrl)
+            setShowCoverSearch(false)
+          }}
+        />
       )}
     </div>
   )

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion as Motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
@@ -9,7 +9,8 @@ import { TagAutocomplete } from '../components/TagAutocomplete'
 import { EmptyStateFantom } from '../components/EmptyStateFantom'
 import { FilterDropdown } from '../components/FilterDropdown'
 import { DictationModal } from '../components/DictationModal'
-import { scrollLock } from '../lib/scrollLock'
+import { useScrollLock } from '../hooks/useScrollLock'
+import { useOutsideClick } from '../hooks/useOutsideClick'
 import { isSpeechSupported } from '../lib/useSpeechRecognition'
 import { CoverSearchModal } from '../components/cover-search/CoverSearchModal'
 import { Microphone, Plus } from '@phosphor-icons/react'
@@ -90,31 +91,8 @@ export const LaListe = () => {
     }
   }, [profile])
 
-  // Close menu on click outside or Escape
-  useEffect(() => {
-    if (openMenuId === null) return
-    const handleClick = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        setOpenMenuId(null)
-      }
-    }
-    const handleEscape = (e) => {
-      if (e.key === 'Escape') setOpenMenuId(null)
-    }
-    document.addEventListener('mousedown', handleClick)
-    document.addEventListener('keydown', handleEscape)
-    return () => {
-      document.removeEventListener('mousedown', handleClick)
-      document.removeEventListener('keydown', handleEscape)
-    }
-  }, [openMenuId])
-
-  // Lock body scroll while any form is active (prevents iOS keyboard viewport shift)
-  useEffect(() => {
-    if (showAddForm || editingId) scrollLock.enable()
-    else scrollLock.disable()
-    return () => scrollLock.disable()
-  }, [showAddForm, editingId])
+  useOutsideClick(menuRef, () => setOpenMenuId(null), openMenuId !== null)
+  useScrollLock(showAddForm || !!editingId)
 
   const fetchItems = async () => {
     try {
@@ -127,7 +105,7 @@ export const LaListe = () => {
       if (error) throw error
       setItems(data || [])
     } catch (_err) {
-      // silently handled
+      toast.error('Failed to load items')
     } finally {
       setLoading(false)
     }
@@ -163,7 +141,7 @@ export const LaListe = () => {
         .in('review_id', reviewIds)
       setRecsWithNotes(new Set((notesData || []).map(n => n.review_id)))
     } catch (_err) {
-      // silently handled
+      toast.error('Failed to load recommendations')
     }
   }
 
@@ -351,27 +329,39 @@ export const LaListe = () => {
     await fetchItems()
   }
 
+  const { filteredPending, filteredDone, hasPendingItems } = useMemo(() => {
+    const sortFn = (list) => sortBy === 'oldest' ? [...list].reverse() : list
+    const pending = items.filter(i => !i.is_done)
+    const done = items.filter(i => i.is_done)
+    return {
+      filteredPending: sortFn(filterTag === 'all' ? pending : pending.filter(i => i.tag === filterTag)),
+      filteredDone: filterTag === 'all' ? done : done.filter(i => i.tag === filterTag),
+      hasPendingItems: pending.length > 0
+    }
+  }, [items, filterTag, sortBy])
+
+  // Remount carousel on filter/sort — filter centers, sort goes to first card
+  const [carouselKey, setCarouselKey] = useState(0)
+  const [carouselStartIndex, setCarouselStartIndex] = useState(undefined) // undefined = middle
+  const prevFilterTag = useRef(filterTag)
+  const prevSortBy = useRef(sortBy)
+  useEffect(() => {
+    const filterChanged = filterTag !== prevFilterTag.current
+    const sortChanged = sortBy !== prevSortBy.current
+    prevFilterTag.current = filterTag
+    prevSortBy.current = sortBy
+    if (filterChanged) {
+      setCarouselStartIndex(undefined) // middle
+      setCarouselKey(k => k + 1)
+    } else if (sortChanged) {
+      setCarouselStartIndex(0) // first card
+      setCarouselKey(k => k + 1)
+    }
+  }, [filterTag, sortBy])
+
   if (loading) {
     return <div className="loading">Loading...</div>
   }
-
-  const sortItems = (list) => {
-    if (sortBy === 'oldest') {
-      return [...list].reverse()
-    }
-    return list // already sorted by created_at desc from DB
-  }
-
-  const pendingItems = items.filter(i => !i.is_done)
-  const doneItems = items.filter(i => i.is_done)
-  const filteredPending = sortItems(
-    filterTag === 'all'
-      ? pendingItems
-      : pendingItems.filter(i => i.tag === filterTag)
-  )
-  const filteredDone = filterTag === 'all'
-    ? doneItems
-    : doneItems.filter(i => i.tag === filterTag)
 
   // Compute active title from carousel
   const activeItem = filteredPending[activeCarouselIndex]
@@ -754,12 +744,14 @@ export const LaListe = () => {
         <EmptyStateFantom />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, position: 'relative', zIndex: 1 }}>
-          {filteredPending.length === 0 && pendingItems.length > 0 ? (
+          {filteredPending.length === 0 && hasPendingItems ? (
             <div style={{ textAlign: 'center', padding: '20px', fontStyle: 'italic', color: 'rgba(255, 254, 250, 0.7)' }}>
               No {TAG_LABELS[filterTag] || filterTag} items yet.
             </div>
           ) : filteredPending.length > 0 && (
             <CoverflowCarousel
+              key={carouselKey}
+              initialIndex={carouselStartIndex}
               items={filteredPending.map(i => ({
                 id: i.id,
                 imageUrl: i.image_url,
@@ -903,16 +895,8 @@ export const LaListe = () => {
                       <div ref={openMenuId === item.id ? menuRef : null} style={{ position: 'relative', flexShrink: 0 }}>
                         <button
                           onClick={() => setOpenMenuId(openMenuId === item.id ? null : item.id)}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            cursor: 'pointer',
-                            padding: '2px 6px',
-                            fontSize: '16px',
-                            color: '#A89F91',
-                            lineHeight: 1,
-                            letterSpacing: '1px'
-                          }}
+                          className="cover-menu-btn"
+                          style={{ color: '#000' }}
                           aria-label="Actions"
                         >
                           &middot;&middot;&middot;

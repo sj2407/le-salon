@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { EmptyStateFantom } from './EmptyStateFantom'
 import { typeToMediaType } from '../lib/coverSearchApis'
 import { TAG_ICONS } from '../lib/reviewConstants'
+import { useOutsideClick } from '../hooks/useOutsideClick'
 
-const ROTATIONS = [-1.5, 1.2, -0.8, 2, -1.8, 0.5, -1, 1.6, -0.3]
+const ROTATIONS = [-2.5, 1.8, -2.2, 3, -2.8, 2.4, -1.8, 2.6, -3]
 
 /**
  * Shared wishlist display component — scrapbook card grid
@@ -27,24 +28,7 @@ export const WishlistDisplay = ({
   const [failedImages, setFailedImages] = useState(new Set())
   const menuRef = useRef(null)
 
-  // Close menu on click outside or Escape
-  useEffect(() => {
-    if (openMenuId === null) return
-    const handleClick = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        setOpenMenuId(null)
-      }
-    }
-    const handleEscape = (e) => {
-      if (e.key === 'Escape') setOpenMenuId(null)
-    }
-    document.addEventListener('mousedown', handleClick)
-    document.addEventListener('keydown', handleEscape)
-    return () => {
-      document.removeEventListener('mousedown', handleClick)
-      document.removeEventListener('keydown', handleEscape)
-    }
-  }, [openMenuId])
+  useOutsideClick(menuRef, () => setOpenMenuId(null), openMenuId !== null)
 
   const hasOverflowMenu = onEdit || onDelete
 
@@ -177,25 +161,10 @@ export const WishlistDisplay = ({
                         e.stopPropagation()
                         setOpenMenuId(openMenuId === item.id ? null : item.id)
                       }}
-                      style={{
-                        width: '24px',
-                        height: '24px',
-                        borderRadius: '50%',
-                        border: 'none',
-                        background: 'radial-gradient(circle at 35% 30%, #fff, #f5f1eb 60%, #e8e2d8)',
-                        color: '#888',
-                        fontSize: '12px',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        boxShadow: '0 3px 6px rgba(0,0,0,0.25), 0 6px 14px rgba(0,0,0,0.15), inset 0 1px 2px rgba(255,255,255,0.6)',
-                        padding: 0
-                      }}
+                      className="cover-menu-btn"
                       aria-label="Actions"
                     >
-                      ⋯
+                      &middot;&middot;&middot;
                     </button>
                     {openMenuId === item.id && (
                       <div onClick={(e) => e.stopPropagation()} style={{

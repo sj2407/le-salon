@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { TAG_ICONS, TAG_OPTIONS, TAG_LABELS } from '../lib/reviewConstants'
 import { EmptyStateFantom } from './EmptyStateFantom'
 import { FilterDropdown } from './FilterDropdown'
+import { useOutsideClick } from '../hooks/useOutsideClick'
 
 const ITEMS_PER_ROW = 3
 
@@ -77,24 +78,7 @@ export const ReviewsDisplay = ({
   if (openReview) lastOpenReviewRef.current = openReview
   const displayedReview = openReview || lastOpenReviewRef.current
 
-  // Close overflow menu on outside click / Escape
-  useEffect(() => {
-    if (openMenuId === null) return
-    const handleClick = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        setOpenMenuId(null)
-      }
-    }
-    const handleEscape = (e) => {
-      if (e.key === 'Escape') setOpenMenuId(null)
-    }
-    document.addEventListener('mousedown', handleClick)
-    document.addEventListener('keydown', handleEscape)
-    return () => {
-      document.removeEventListener('mousedown', handleClick)
-      document.removeEventListener('keydown', handleEscape)
-    }
-  }, [openMenuId])
+  useOutsideClick(menuRef, () => setOpenMenuId(null), openMenuId !== null)
 
   // Scroll-triggered reveal via IntersectionObserver
   useEffect(() => {

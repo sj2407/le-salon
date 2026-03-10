@@ -49,7 +49,7 @@ export const ExpandedReviewText = ({
                 fontSize: inReader ? '15px' : '14px',
                 lineHeight: inReader ? 1.8 : 1.6,
                 color: '#2C2C2C',
-                fontStyle: inReader ? 'normal' : 'italic',
+                fontStyle: 'italic',
                 whiteSpace: 'pre-wrap',
                 cursor: 'pointer',
                 paddingLeft: '10px',

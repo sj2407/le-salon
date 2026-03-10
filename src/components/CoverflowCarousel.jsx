@@ -40,8 +40,8 @@ const getCardWidth = () => {
  * 3D coverflow carousel — absolute-positioned, overlapping cards.
  * Center card faces forward, sides fan out behind it.
  */
-export const CoverflowCarousel = ({ items, onToggleDone, onEdit, onDelete, onTogglePrivate, onActiveChange }) => {
-  const [activeIndex, setActiveIndex] = useState(() => Math.floor(items.length / 2))
+export const CoverflowCarousel = ({ items, onToggleDone, onEdit, onDelete, onTogglePrivate, onActiveChange, initialIndex }) => {
+  const [activeIndex, setActiveIndex] = useState(() => initialIndex != null ? initialIndex : Math.floor(items.length / 2))
   const [openMenuId, setOpenMenuId] = useState(null)
   const [cardW, setCardW] = useState(getCardWidth)
   const [brokenImages, setBrokenImages] = useState(new Set())
@@ -362,24 +362,10 @@ export const CoverflowCarousel = ({ items, onToggleDone, onEdit, onDelete, onTog
                     e.stopPropagation()
                     setOpenMenuId(openMenuId === item.id ? null : item.id)
                   }}
-                  style={{
-                    background: 'rgba(255, 254, 250, 0.8)',
-                    border: 'none',
-                    borderRadius: '50%',
-                    width: '20px',
-                    height: '20px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '11px',
-                    color: '#666',
-                    backdropFilter: 'blur(4px)',
-                    padding: 0,
-                  }}
+                  className="cover-menu-btn"
                   aria-label="Actions"
                 >
-                  ⋯
+                  &middot;&middot;&middot;
                 </button>
                 {openMenuId === item.id && (
                   <div style={{
