@@ -132,8 +132,8 @@ test.describe('Aspirational Onboarding — Empty User', () => {
 
     await page.screenshot({ path: `${SCREENSHOT_DIR}/empty-02-reviews-before-fade.png`, fullPage: true })
 
-    // Wait for auto-fade (6s preview + 2s transition + buffer)
-    await page.waitForTimeout(9000)
+    // Wait for auto-fade (5s preview + 2s transition + buffer)
+    await page.waitForTimeout(8000)
 
     // Overlay should be gone
     await expect(overlayText).not.toBeVisible()

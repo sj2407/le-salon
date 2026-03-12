@@ -324,6 +324,7 @@ export const Portrait = ({ userId: friendUserId }) => {
   const handleScanPlaybill = () => setShowPlaybillScan(true)
   const handleMusicSeeAll = () => setShowMusicModal(true)
   const handleReadingSeeAll = () => setShowReadingModal(true)
+  const handleExperiencesSeeAll = () => { if (experiences.length > 0) setSelectedExperience(experiences[0]) }
 
   const handlePortraitImageClick = (img) => {
     if (img.type === 'artist') setShowMusicModal(true)
@@ -494,6 +495,7 @@ export const Portrait = ({ userId: friendUserId }) => {
           onExperienceClick={handleExperienceClick}
           onMusicSeeAll={handleMusicSeeAll}
           onReadingSeeAll={handleReadingSeeAll}
+          onExperiencesSeeAll={handleExperiencesSeeAll}
           onConnectSpotify={isOwner ? handleConnectSpotify : undefined}
           onDisconnectSpotify={isOwner ? handleDisconnectSpotify : undefined}
           spotifyConnecting={spotifyConnecting}

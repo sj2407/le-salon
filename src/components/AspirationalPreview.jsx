@@ -87,9 +87,9 @@ export const AspirationalPreview = ({ tab, isEmpty, children }) => {
 const InlineMessage = ({ tab, onSkip }) => (
   <span style={{
     fontFamily: "'Caveat', cursive",
-    fontSize: '14px',
-    color: '#999',
-    fontWeight: 400,
+    fontSize: '15px',
+    color: '#777',
+    fontWeight: 600,
     lineHeight: 1.2,
     marginLeft: '8px',
     whiteSpace: 'nowrap',
@@ -103,9 +103,9 @@ const InlineMessage = ({ tab, onSkip }) => (
         border: 'none',
         cursor: 'pointer',
         fontFamily: "'Caveat', cursive",
-        fontSize: '14px',
-        color: '#bbb',
-        fontWeight: 400,
+        fontSize: '15px',
+        color: '#999',
+        fontWeight: 600,
         textDecoration: 'underline',
         textUnderlineOffset: '2px',
         padding: '0 0 0 6px',
@@ -213,10 +213,12 @@ const PortraitShowcase = ({ data, onSkip }) => {
     <div style={{ maxWidth: '720px', padding: '0 20px' }}>
       <h1 className="handwritten" style={{ fontSize: '42px', marginBottom: '0', marginTop: '8px', marginLeft: '10px', position: 'relative', zIndex: 1, transform: 'translateY(16px)' }}>
         Portrait
-        <InlineMessage tab="portrait" onSkip={onSkip} />
       </h1>
+      <div style={{ marginLeft: '10px', marginTop: '8px' }}>
+        <InlineMessage tab="portrait" onSkip={onSkip} />
+      </div>
 
-      <div style={{ marginTop: '28px' }}>
+      <div style={{ marginTop: '20px' }}>
         <PortraitDisplay
           spotifyProfile={data.spotify_profile || null}
           books={data.books || []}

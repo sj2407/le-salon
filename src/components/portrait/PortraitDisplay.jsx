@@ -94,6 +94,7 @@ export const PortraitDisplay = ({
   onExperienceClick,
   onMusicSeeAll,
   onReadingSeeAll,
+  onExperiencesSeeAll,
   // Connect / import callbacks (owner view)
   onConnectSpotify,
   onDisconnectSpotify,
@@ -198,6 +199,7 @@ export const PortraitDisplay = ({
       case 'music': return onMusicSeeAll
       case 'reading': return onReadingSeeAll
       case 'creation': return onViewCreationArchive
+      case 'experiences': return onExperiencesSeeAll
       default: return null
     }
   }
