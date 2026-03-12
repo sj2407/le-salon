@@ -15,6 +15,7 @@ import { scrollLock } from '../lib/scrollLock'
 import { TAG_TO_MEDIA_TYPE } from '../lib/coverSearchApis'
 import { Microphone, Plus } from '@phosphor-icons/react'
 import { ReviewNotesSection } from '../components/review-notes/ReviewNotesSection'
+import { AspirationalPreview } from '../components/AspirationalPreview'
 
 export const Reviews = () => {
   const { profile } = useAuth()
@@ -76,7 +77,8 @@ export const Reviews = () => {
 
       for (const review of bookReviews) {
         const betterUrl = coverMap[review.id]
-        if (betterUrl && betterUrl !== review.image_url) {
+        // Never overwrite a manually-set cover; never overwrite with null
+        if (betterUrl && betterUrl !== review.image_url && !review.cover_manual) {
           await supabase
             .from('reviews')
             .update({ image_url: betterUrl })
@@ -376,16 +378,21 @@ export const Reviews = () => {
       let reviewId = editingReview?.id
 
       if (editingReview) {
-        const { error } = await supabase
-          .from('reviews')
-          .update({
+        const updateFields = {
             title,
             tag,
             rating: parsedRating,
             review_text: reviewText.trim() || null,
             image_url: imageUrl || null,
             updated_at: new Date().toISOString()
-          })
+          }
+        // If user changed the cover, mark it as manual
+        if (imageUrl && imageUrl !== (editingReview.image_url || '')) {
+          updateFields.cover_manual = true
+        }
+        const { error } = await supabase
+          .from('reviews')
+          .update(updateFields)
           .eq('id', editingReview.id)
 
         if (error) throw error
@@ -398,7 +405,8 @@ export const Reviews = () => {
             tag,
             rating: parsedRating,
             review_text: reviewText.trim() || null,
-            image_url: imageUrl || null
+            image_url: imageUrl || null,
+            cover_manual: !!imageUrl
           })
           .select()
           .single()
@@ -579,7 +587,7 @@ export const Reviews = () => {
   }
 
   return (
-    <>
+    <AspirationalPreview tab="reviews" isEmpty={reviews.length === 0}>
       <ReviewsDisplay
         reviews={reviews}
         title="My Reviews"
@@ -946,6 +954,6 @@ export const Reviews = () => {
           </div>
         </div>
       )}
-    </>
+    </AspirationalPreview>
   )
 }

@@ -16,6 +16,7 @@ import { GoodreadsImportModal } from '../components/portrait/GoodreadsImportModa
 import { BookshelfScanModal } from '../components/portrait/BookshelfScanModal'
 import { PlaybillScanModal } from '../components/portrait/PlaybillScanModal'
 import { CoverSearchModal } from '../components/cover-search/CoverSearchModal'
+import { AspirationalPreview } from '../components/AspirationalPreview'
 
 /**
  * Portrait tab page — fetches live data, manages all interactions.
@@ -432,7 +433,7 @@ export const Portrait = ({ userId: friendUserId }) => {
     try {
       await supabase
         .from('books')
-        .update({ cover_url: imageUrl })
+        .update({ cover_url: imageUrl, cover_manual: true })
         .eq('id', coverSearchBook.id)
         .eq('user_id', profile.id)
 
@@ -465,6 +466,7 @@ export const Portrait = ({ userId: friendUserId }) => {
   }
 
   return (
+    <AspirationalPreview tab="portrait" isEmpty={books.length === 0 && creations.length === 0 && experiences.length === 0 && !spotifyProfile}>
     <div style={{ maxWidth: '720px', padding: '0 20px' }}>
       <h1 className="handwritten" style={{ fontSize: '42px', marginBottom: '0', marginTop: '8px', marginLeft: '10px', position: 'relative', zIndex: 1, transform: 'translateY(16px)' }}>
         Portrait
@@ -475,6 +477,7 @@ export const Portrait = ({ userId: friendUserId }) => {
           spotifyProfile={spotifyProfile}
           books={books}
           readingThemes={readingThemes}
+          readingGraph={readingGraph}
           creations={creations}
           experiences={experiences}
           isOwner={isOwner}
@@ -598,5 +601,6 @@ export const Portrait = ({ userId: friendUserId }) => {
         </>
       )}
     </div>
+    </AspirationalPreview>
   )
 }

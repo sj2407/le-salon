@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import { QuillMenu } from './QuillMenu'
+import { ReadingGraphCompact } from './ReadingGraphCompact'
 
 /**
  * Book cover placeholder — warm gold background with title text.
@@ -44,7 +45,7 @@ const BookCoverPlaceholder = ({ title, size = 'small' }) => {
 /**
  * Reading section — currently reading, mini book covers, theme tags.
  */
-export const ReadingSection = ({ books, readingThemes, onBookClick, onThemeClick, onSeeAll, isOwner, onAddBook, onImportGoodreads, onScanBookshelf }) => {
+export const ReadingSection = ({ books, readingThemes, readingGraph, onBookClick, onThemeClick, onSeeAll, isOwner, onAddBook, onImportGoodreads, onScanBookshelf }) => {
   const [hoveredBook, setHoveredBook] = useState(null)
   const [hoveredChip, setHoveredChip] = useState(null) // { type: 'author'|'genre', value: string, rect: DOMRect }
   const scrollRef = useRef(null)
@@ -234,21 +235,6 @@ export const ReadingSection = ({ books, readingThemes, onBookClick, onThemeClick
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <h3 className="handwritten" style={{ margin: 0, fontSize: '24px', color: '#2C2C2C' }}>Reading</h3>
         </div>
-        {onSeeAll && !(readingThemes && readingThemes.length > 0) && (
-          <button
-            onClick={onSeeAll}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '13px',
-              color: '#4A7BA7',
-              padding: 0,
-            }}
-          >
-            See all
-          </button>
-        )}
       </div>
 
       {/* Currently reading */}
@@ -436,8 +422,8 @@ export const ReadingSection = ({ books, readingThemes, onBookClick, onThemeClick
         </div>
       )}
 
-      {/* Theme tags — show max 3, link to knowledge graph for more */}
-      {readingThemes && readingThemes.length > 0 && (
+      {/* Compact reading graph with label */}
+      {readingGraph?.edges?.length > 0 && safeBooks.length >= 3 && (
         <div style={{ marginTop: '14px' }}>
           <p style={{
             margin: '0 0 8px 0',
@@ -449,51 +435,15 @@ export const ReadingSection = ({ books, readingThemes, onBookClick, onThemeClick
           }}>
             Recurring themes
           </p>
-          <div style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '8px',
-            alignItems: 'center',
-          }}>
-          {readingThemes.slice(0, 3).map((theme, i) => (
-            <span
-              key={i}
-              onClick={() => onSeeAll && onSeeAll()}
-              style={{
-                display: 'inline-block',
-                padding: '4px 10px',
-                borderRadius: '20px',
-                background: '#E8DCC8',
-                fontSize: '12px',
-                color: '#2C2C2C',
-                cursor: onSeeAll ? 'pointer' : 'default',
-                transition: 'opacity 0.15s',
-              }}
-              onMouseEnter={(e) => { if (onSeeAll) e.currentTarget.style.opacity = '0.75' }}
-              onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
-            >
-              {theme}
-            </span>
-          ))}
-          {onSeeAll && (
-            <button
-              onClick={onSeeAll}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: '12px',
-                color: '#4A7BA7',
-                padding: '4px 2px',
-                fontStyle: 'italic',
-              }}
-            >
-              see more connections
-            </button>
-          )}
-          </div>
+          <ReadingGraphCompact
+            books={safeBooks}
+            readingGraph={readingGraph}
+            onClick={onSeeAll}
+          />
         </div>
       )}
+
+
     </>
   )
 }

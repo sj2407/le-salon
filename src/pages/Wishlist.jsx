@@ -8,6 +8,7 @@ import { CoverThumbnail } from '../components/cover-search/CoverThumbnail'
 import { typeToMediaType, fetchBestBookCover } from '../lib/coverSearchApis'
 import { scrollLock } from '../lib/scrollLock'
 import { Plus } from '@phosphor-icons/react'
+import { AspirationalPreview } from '../components/AspirationalPreview'
 
 export const Wishlist = () => {
   const { profile } = useAuth()
@@ -40,7 +41,7 @@ export const Wishlist = () => {
 
     const needsUpgrade = (url) => !url || url.includes('openlibrary.org')
     const bookItems = items.filter(item =>
-      typeToMediaType(item.type) === 'book' && needsUpgrade(item.image_url)
+      typeToMediaType(item.type) === 'book' && needsUpgrade(item.image_url) && !item.cover_manual
     )
     if (bookItems.length === 0) return
 
@@ -130,15 +131,20 @@ export const Wishlist = () => {
       const trimmedLink = link.trim() || null
 
       if (editingItem) {
-        const { error } = await supabase
-          .from('wishlist_items')
-          .update({
+        const updateFields = {
             name,
             type: type.trim() || null,
             link: trimmedLink,
             image_url: imageUrl || null,
             updated_at: new Date().toISOString()
-          })
+          }
+        // If user changed the cover, mark it as manual
+        if (imageUrl && imageUrl !== (editingItem.image_url || '')) {
+          updateFields.cover_manual = true
+        }
+        const { error } = await supabase
+          .from('wishlist_items')
+          .update(updateFields)
           .eq('id', editingItem.id)
 
         if (error) throw error
@@ -150,7 +156,8 @@ export const Wishlist = () => {
             name,
             type: type.trim() || null,
             link: trimmedLink,
-            image_url: imageUrl || null
+            image_url: imageUrl || null,
+            cover_manual: !!imageUrl
           })
 
         if (error) throw error
@@ -191,7 +198,7 @@ export const Wishlist = () => {
   }
 
   return (
-    <>
+    <AspirationalPreview tab="wishlist" isEmpty={items.length === 0}>
       <WishlistDisplay
         items={items}
         title="My Wishlist"
@@ -362,6 +369,6 @@ export const Wishlist = () => {
           </div>
         </div>
       )}
-    </>
+    </AspirationalPreview>
   )
 }

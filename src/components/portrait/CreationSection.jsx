@@ -148,25 +148,6 @@ export const CreationSection = ({ creations, isOwner, onAddCreationText, onAddCr
             </div>
           )}
 
-          {/* "See all" at bottom */}
-          {onViewArchive && visibleCreations.length > 1 && (
-            <div style={{ marginTop: '10px' }}>
-              <button
-                onClick={onViewArchive}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: '12px',
-                  color: '#4A7BA7',
-                  padding: '4px 2px',
-                  fontStyle: 'italic',
-                }}
-              >
-                see all creations
-              </button>
-            </div>
-          )}
     </>
   )
 }

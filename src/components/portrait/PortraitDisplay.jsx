@@ -75,6 +75,7 @@ export const PortraitDisplay = ({
   spotifyProfile,
   books,
   readingThemes,
+  readingGraph,
   creations,
   experiences,
   isOwner,
@@ -191,6 +192,16 @@ export const PortraitDisplay = ({
     }
   }, [canMove, handleMove])
 
+  // Map section key → "see all" handler
+  const getSeeAllHandler = (key) => {
+    switch (key) {
+      case 'music': return onMusicSeeAll
+      case 'reading': return onReadingSeeAll
+      case 'creation': return onViewCreationArchive
+      default: return null
+    }
+  }
+
   // Render just the section component — no overlays, no wrapper
   const renderSectionContent = (key) => {
     switch (key) {
@@ -211,6 +222,7 @@ export const PortraitDisplay = ({
           <ReadingSection
             books={books}
             readingThemes={readingThemes}
+            readingGraph={readingGraph}
             onBookClick={onBookClick}
             onThemeClick={onThemeClick}
             onSeeAll={onReadingSeeAll}
@@ -322,7 +334,30 @@ export const PortraitDisplay = ({
           )}
         </div>
 
-        {/* Eye icon to hide */}
+        {/* "see all" link — bottom-left, same level as eye icon */}
+        {getSeeAllHandler(key) && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); getSeeAllHandler(key)() }}
+            style={{
+              position: 'absolute',
+              bottom: '8px',
+              left: '16px',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '13px',
+              color: '#4A7BA7',
+              padding: 0,
+              fontStyle: 'italic',
+              zIndex: 15,
+            }}
+          >
+            see all
+          </button>
+        )}
+
+        {/* Eye icon to hide — bottom-right */}
         {onToggleHidden && (
           <button
             type="button"
@@ -441,7 +476,28 @@ export const PortraitDisplay = ({
             {visibleSections.map(key => {
               const wrapperProps = getSectionWrapperProps(key, false)
               return (
-                <div key={key} className={wrapperProps.className} style={wrapperProps.style}>
+                <div key={key} className={wrapperProps.className} style={{ ...wrapperProps.style, position: 'relative' }}>
+                  {getSeeAllHandler(key) && (
+                    <button
+                      type="button"
+                      onClick={() => getSeeAllHandler(key)()}
+                      style={{
+                        position: 'absolute',
+                        bottom: '8px',
+                        left: '16px',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        fontSize: '13px',
+                        color: '#4A7BA7',
+                        padding: 0,
+                        fontStyle: 'italic',
+                        zIndex: 15,
+                      }}
+                    >
+                      see all
+                    </button>
+                  )}
                   {renderSectionContent(key)}
                 </div>
               )

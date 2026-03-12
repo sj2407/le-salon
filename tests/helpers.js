@@ -36,6 +36,11 @@ export async function waitForModalClose(page, timeout = 5000) {
  * Navigate to a tab in MyCorner (Card, Reviews, La Liste, Wishlist)
  */
 export async function navigateToTab(page, tabName) {
+  // Ensure we're on My Corner first (login lands on The Salon)
+  if (!page.url().includes('/my-corner')) {
+    await page.goto('/my-corner')
+    await page.waitForTimeout(500)
+  }
   await page.click(`button:has-text("${tabName}")`)
   // Wait for tab content to render
   await page.waitForTimeout(500)

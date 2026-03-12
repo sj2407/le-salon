@@ -292,25 +292,6 @@ export const MusicSection = ({ spotifyProfile, onSeeAll, isOwner, onConnectSpoti
         </div>
       )}
 
-      {/* See all link at bottom */}
-      {onSeeAll && (
-        <div style={{ marginTop: '10px' }}>
-          <button
-            onClick={onSeeAll}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '12px',
-              color: '#4A7BA7',
-              padding: '4px 2px',
-              fontStyle: 'italic',
-            }}
-          >
-            see all
-          </button>
-        </div>
-      )}
     </>
   )
 }

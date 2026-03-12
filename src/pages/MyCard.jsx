@@ -7,6 +7,7 @@ import { CardEdit } from '../components/CardEdit'
 import { SectionEditModal } from '../components/SectionEditModal'
 import { DictationModal } from '../components/DictationModal'
 import { isSpeechSupported } from '../lib/useSpeechRecognition'
+import { AspirationalPreview } from '../components/AspirationalPreview'
 
 export const MyCard = () => {
   const { profile } = useAuth()
@@ -373,51 +374,53 @@ export const MyCard = () => {
 
   return (
     <div className="container">
-      {isEditing ? (
-        <CardEdit
-          entries={editEntries}
-          displayName={profile.display_name}
-          onSave={handleEditSave}
-          onCancel={handleEditCancel}
-        />
-      ) : (
-        <>
-          <CardDisplay
-            card={card}
-            entries={entries}
+      <AspirationalPreview tab="card" isEmpty={entries.length === 0 && !isEditing}>
+        {isEditing ? (
+          <CardEdit
+            entries={editEntries}
             displayName={profile.display_name}
-            photoUrl={profile.profile_photo_url}
-            photoPosition={profile.profile_photo_position}
-            bio={profile.bio}
-            isEditable={true}
-            onEdit={() => setIsEditing(true)}
-            onDictate={() => setShowDictation(true)}
-            showDictateButton={isSpeechSupported}
-            onSectionEdit={(category) => setEditingSection(category)}
-            hiddenSections={card?.hidden_sections || []}
-            onToggleHidden={handleToggleHidden}
-            sectionOrder={card?.section_order || []}
-            onSectionOrderChange={handleSectionOrderChange}
-            notes={notes}
-            currentUserId={profile.id}
-            onMarkNotesRead={handleMarkNotesRead}
-            onReplyToNote={handleReplyToNote}
+            onSave={handleEditSave}
+            onCancel={handleEditCancel}
           />
-          {editingSection && (
-            <SectionEditModal
-              category={editingSection}
+        ) : (
+          <>
+            <CardDisplay
+              card={card}
               entries={entries}
-              onSave={handleSectionSave}
-              onClose={() => setEditingSection(null)}
+              displayName={profile.display_name}
+              photoUrl={profile.profile_photo_url}
+              photoPosition={profile.profile_photo_position}
+              bio={profile.bio}
+              isEditable={true}
+              onEdit={() => setIsEditing(true)}
+              onDictate={() => setShowDictation(true)}
+              showDictateButton={isSpeechSupported}
+              onSectionEdit={(category) => setEditingSection(category)}
+              hiddenSections={card?.hidden_sections || []}
+              onToggleHidden={handleToggleHidden}
+              sectionOrder={card?.section_order || []}
+              onSectionOrderChange={handleSectionOrderChange}
+              notes={notes}
+              currentUserId={profile.id}
+              onMarkNotesRead={handleMarkNotesRead}
+              onReplyToNote={handleReplyToNote}
             />
-          )}
-          <DictationModal
-            isOpen={showDictation}
-            onClose={() => setShowDictation(false)}
-            onAcceptEntries={handleDictationAccepted}
-          />
-        </>
-      )}
+            {editingSection && (
+              <SectionEditModal
+                category={editingSection}
+                entries={entries}
+                onSave={handleSectionSave}
+                onClose={() => setEditingSection(null)}
+              />
+            )}
+            <DictationModal
+              isOpen={showDictation}
+              onClose={() => setShowDictation(false)}
+              onAcceptEntries={handleDictationAccepted}
+            />
+          </>
+        )}
+      </AspirationalPreview>
     </div>
   )
 }
