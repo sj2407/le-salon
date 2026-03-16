@@ -17,13 +17,19 @@ import { Microphone, Plus } from '@phosphor-icons/react'
 import { ReviewNotesSection } from '../components/review-notes/ReviewNotesSection'
 import { AspirationalPreview } from '../components/AspirationalPreview'
 
+// Module-level caches — survive unmount, instant render on return
+let _reviewsCache = null
+let _friendsCache = null
+let _commentsCache = null
+let _notesCache = null
+
 export const Reviews = () => {
   const { profile } = useAuth()
   const toast = useToast()
   const [searchParams, setSearchParams] = useSearchParams()
-  const [reviews, setReviews] = useState([])
-  const [friends, setFriends] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [reviews, setReviews] = useState(_reviewsCache || [])
+  const [friends, setFriends] = useState(_friendsCache || [])
+  const [loading, setLoading] = useState(!_reviewsCache)
   const [showModal, setShowModal] = useState(false)
   const [editingReview, setEditingReview] = useState(null)
   const [showDictation, setShowDictation] = useState(false)
@@ -36,10 +42,15 @@ export const Reviews = () => {
   const [recommendToFriends, setRecommendToFriends] = useState([])
   const [friendQuery, setFriendQuery] = useState('')
   const [error, setError] = useState('')
-  const [reviewComments, setReviewComments] = useState([])
-  const [reviewNotes, setReviewNotes] = useState([])
+  const [reviewComments, setReviewComments] = useState(_commentsCache || [])
+  const [reviewNotes, setReviewNotes] = useState(_notesCache || [])
   const [imageUrl, setImageUrl] = useState('')
   const [showCoverSearch, setShowCoverSearch] = useState(false)
+  const [modalNotes, setModalNotes] = useState([])
+  const [modalNoteContent, setModalNoteContent] = useState('')
+  const [modalNoteIsQuote, setModalNoteIsQuote] = useState(false)
+  const [modalNotePageRef, setModalNotePageRef] = useState('')
+  const [showModalNoteForm, setShowModalNoteForm] = useState(false)
 
   // Track initial form values to detect dirty state
   const initialFormRef = useRef(null)
@@ -87,7 +98,18 @@ export const Reviews = () => {
         }
       }
 
-      if (updated > 0) fetchReviews()
+      if (updated > 0) {
+        // Silent refresh — update state without spinner flash
+        const { data } = await supabase
+          .from('reviews')
+          .select('*')
+          .eq('user_id', profile.id)
+          .order('created_at', { ascending: false })
+        if (data) {
+          _reviewsCache = data
+          setReviews(data)
+        }
+      }
     })()
   }, [reviews])
 
@@ -156,7 +178,7 @@ export const Reviews = () => {
 
   const fetchReviews = async () => {
     try {
-      setLoading(true)
+      if (!_reviewsCache) setLoading(true)
       const { data, error } = await supabase
         .from('reviews')
         .select('*')
@@ -164,7 +186,8 @@ export const Reviews = () => {
         .order('created_at', { ascending: false })
 
       if (error) throw error
-      setReviews(data || [])
+      _reviewsCache = data || []
+      setReviews(_reviewsCache)
     } catch (_err) {
       // silently handled
     } finally {
@@ -193,7 +216,8 @@ export const Reviews = () => {
           .in('id', friendIds)
 
         if (profilesError) throw profilesError
-        setFriends(profilesData || [])
+        _friendsCache = profilesData || []
+        setFriends(_friendsCache)
       }
     } catch (_err) {
       // silently handled
@@ -213,10 +237,11 @@ export const Reviews = () => {
         return
       }
       // Flatten the join for easier use
-      setReviewComments((data || []).map(c => ({
+      _commentsCache = (data || []).map(c => ({
         ...c,
         commenter_name: c.from_user?.display_name || 'Friend'
-      })))
+      }))
+      setReviewComments(_commentsCache)
     } catch (_err) {
       setReviewComments([])
     }
@@ -231,7 +256,8 @@ export const Reviews = () => {
         .order('created_at', { ascending: true })
 
       if (error) throw error
-      setReviewNotes(data || [])
+      _notesCache = data || []
+      setReviewNotes(_notesCache)
     } catch (_err) {
       setReviewNotes([])
     }
@@ -324,6 +350,11 @@ export const Reviews = () => {
     setFriendQuery('')
     setError('')
     setImageUrl('')
+    setModalNotes([])
+    setModalNoteContent('')
+    setModalNoteIsQuote(false)
+    setModalNotePageRef('')
+    setShowModalNoteForm(false)
     initialFormRef.current = { title: '', tag: 'other', rating: 7.0, reviewText: '', recommendToFriends: [] }
     setShowModal(true)
   }
@@ -337,6 +368,11 @@ export const Reviews = () => {
     setImageUrl(review.image_url || '')
     setFriendQuery('')
     setError('')
+    setModalNotes([])
+    setModalNoteContent('')
+    setModalNoteIsQuote(false)
+    setModalNotePageRef('')
+    setShowModalNoteForm(false)
 
     try {
       const { data, error } = await supabase
@@ -472,6 +508,19 @@ export const Reviews = () => {
           .from('review_recommendations')
           .delete()
           .eq('review_id', reviewId)
+      }
+
+      // Insert any notes/quotes added in the modal
+      if (reviewId && modalNotes.length > 0) {
+        const noteRows = modalNotes.map(n => ({
+          review_id: reviewId,
+          user_id: profile.id,
+          content: n.content,
+          is_quote: n.is_quote,
+          page_ref: n.page_ref || null
+        }))
+        await supabase.from('review_notes').insert(noteRows)
+        await fetchReviewNotes()
       }
 
       setShowModal(false)
@@ -628,6 +677,7 @@ export const Reviews = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <button
               onClick={openAddModal}
+              title="Add review"
               style={{
                 background: 'none',
                 border: 'none',
@@ -709,7 +759,7 @@ export const Reviews = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="handwritten" style={{ fontSize: '24px', marginBottom: '16px' }}>
-              {editingReview ? 'Edit Review' : 'Add Review'}
+              {editingReview ? 'Edit Review' : 'Add Review & Notes'}
             </h2>
 
             <form onSubmit={handleSave}>
@@ -817,6 +867,134 @@ export const Reviews = () => {
                   placeholder="Share your thoughts..."
                   style={{ minHeight: '120px' }}
                 />
+              </div>
+
+              {/* Notes & Quotes section */}
+              <div className="form-group">
+                <label className="form-label">Notes & Quotes (optional)</label>
+
+                {/* Existing note drafts */}
+                {modalNotes.map((note, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: '8px',
+                      marginBottom: '8px',
+                      padding: '8px 10px',
+                      background: '#F5F0EB',
+                      borderRadius: '4px',
+                      borderLeft: note.is_quote ? '3px solid #622722' : 'none'
+                    }}
+                  >
+                    <div style={{ flex: 1, fontSize: '13px', lineHeight: 1.5, fontFamily: note.is_quote ? "'Source Serif 4', Georgia, serif" : 'inherit', fontStyle: note.is_quote ? 'italic' : 'normal' }}>
+                      {note.is_quote && <span style={{ color: '#622722', marginRight: '4px' }}>"</span>}
+                      {note.content}
+                      {note.is_quote && <span style={{ color: '#622722', marginLeft: '4px' }}>"</span>}
+                      {note.page_ref && <span style={{ color: '#999', fontSize: '11px', marginLeft: '6px' }}>— {note.page_ref}</span>}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setModalNotes(modalNotes.filter((_, i) => i !== idx))}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: '14px', lineHeight: 1, color: '#999', flexShrink: 0 }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+
+                {/* Add note form */}
+                {showModalNoteForm ? (
+                  <div>
+                    <textarea
+                      value={modalNoteContent}
+                      onChange={(e) => setModalNoteContent(e.target.value)}
+                      placeholder={modalNoteIsQuote ? 'Enter the passage...' : 'Write a note...'}
+                      maxLength={2000}
+                      autoFocus
+                      style={{
+                        width: '100%',
+                        minHeight: '60px',
+                        padding: '8px 10px',
+                        fontSize: '14px',
+                        lineHeight: 1.5,
+                        fontFamily: modalNoteIsQuote ? "'Source Serif 4', Georgia, serif" : 'inherit',
+                        fontStyle: modalNoteIsQuote ? 'italic' : 'normal',
+                        border: '1px solid #D9CBAD',
+                        borderRadius: '4px',
+                        background: '#FFFEFA',
+                        resize: 'vertical',
+                        outline: 'none',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '6px', flexWrap: 'wrap' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: '#555', cursor: 'pointer' }}>
+                        <input type="checkbox" checked={modalNoteIsQuote} onChange={(e) => setModalNoteIsQuote(e.target.checked)} style={{ accentColor: '#622722' }} />
+                        Quote
+                      </label>
+                      <input
+                        type="text"
+                        value={modalNotePageRef}
+                        onChange={(e) => setModalNotePageRef(e.target.value)}
+                        placeholder="p. 42..."
+                        maxLength={50}
+                        style={{ width: '80px', padding: '3px 6px', fontSize: '11px', border: '1px solid #D9CBAD', borderRadius: '3px', background: '#FFFEFA', outline: 'none' }}
+                      />
+                      <div style={{ marginLeft: 'auto', display: 'flex', gap: '6px' }}>
+                        <button
+                          type="button"
+                          onClick={() => { setShowModalNoteForm(false); setModalNoteContent(''); setModalNoteIsQuote(false); setModalNotePageRef('') }}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: '#777', padding: '3px 6px' }}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          disabled={!modalNoteContent.trim()}
+                          onClick={() => {
+                            setModalNotes([...modalNotes, { content: modalNoteContent.trim(), is_quote: modalNoteIsQuote, page_ref: modalNotePageRef.trim() }])
+                            setModalNoteContent('')
+                            setModalNoteIsQuote(false)
+                            setModalNotePageRef('')
+                            setShowModalNoteForm(false)
+                          }}
+                          style={{
+                            background: modalNoteContent.trim() ? '#622722' : '#CCC',
+                            color: '#FFF',
+                            border: 'none',
+                            cursor: modalNoteContent.trim() ? 'pointer' : 'default',
+                            fontSize: '12px',
+                            padding: '3px 10px',
+                            borderRadius: '3px'
+                          }}
+                        >
+                          Add
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowModalNoteForm(true)}
+                    style={{
+                      background: 'none',
+                      border: '1px dashed #D9CBAD',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      padding: '8px 12px',
+                      fontSize: '13px',
+                      color: '#999',
+                      fontStyle: 'italic',
+                      width: '100%',
+                      textAlign: 'left'
+                    }}
+                  >
+                    + Add a note or quote...
+                  </button>
+                )}
               </div>
 
               {friends.length > 0 && (
