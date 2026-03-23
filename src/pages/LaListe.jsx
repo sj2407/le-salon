@@ -52,14 +52,18 @@ const fetchOgImage = async (url) => {
   }
 }
 
+// Module-level caches — survive unmount, instant render on return
+let _listeItemsCache = null
+let _listeRecsCache = null
+
 export const LaListe = () => {
   const { profile } = useAuth()
   const toast = useToast()
   const navigate = useNavigate()
-  const [items, setItems] = useState([])
-  const [recommendations, setRecommendations] = useState([])
+  const [items, setItems] = useState(_listeItemsCache || [])
+  const [recommendations, setRecommendations] = useState(_listeRecsCache || [])
   const [recsWithNotes, setRecsWithNotes] = useState(new Set())
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(!_listeItemsCache)
   const [filterTag, setFilterTag] = useState('all')
   const [showAddForm, setShowAddForm] = useState(false)
   const [showDone, setShowDone] = useState(false)
@@ -97,6 +101,7 @@ export const LaListe = () => {
 
   const fetchItems = async () => {
     try {
+      if (!_listeItemsCache) setLoading(true)
       const { data, error } = await supabase
         .from('discovery_items')
         .select('*')
@@ -104,7 +109,8 @@ export const LaListe = () => {
         .order('created_at', { ascending: false })
 
       if (error) throw error
-      setItems(data || [])
+      _listeItemsCache = data || []
+      setItems(_listeItemsCache)
     } catch (_err) {
       toast.error('Failed to load items')
     } finally {
@@ -133,7 +139,8 @@ export const LaListe = () => {
         .order('created_at', { ascending: false })
 
       if (reviewsError) throw reviewsError
-      setRecommendations(reviewsData || [])
+      _listeRecsCache = reviewsData || []
+      setRecommendations(_listeRecsCache)
 
       // Check which recommended reviews have notes
       const { data: notesData } = await supabase
@@ -306,9 +313,12 @@ export const LaListe = () => {
   const handleWriteReview = (item) => {
     const params = new URLSearchParams({
       tab: 'reviews',
-      prefill_title: item.title,
+      prefill_title: getDisplayTitle(item.title),
       prefill_tag: item.tag
     })
+    if (item.image_url) params.set('prefill_image', item.image_url)
+    const itemUrl = extractUrl(item.title)
+    if (itemUrl) params.set('prefill_url', itemUrl)
     navigate(`/my-corner?${params.toString()}`)
   }
 

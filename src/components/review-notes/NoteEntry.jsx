@@ -20,7 +20,7 @@ export const NoteEntry = ({ note, isOwner, onEdit, onDelete }) => {
   }, [menuOpen])
 
   return (
-    <div style={{ marginBottom: '20px', position: 'relative' }}>
+    <div style={{ paddingBottom: '20px', position: 'relative' }}>
       {/* Overflow menu (owner only) */}
       {isOwner && (
         <div ref={menuRef} style={{ position: 'absolute', top: 0, right: 0, zIndex: 5 }}>
@@ -89,9 +89,9 @@ export const NoteEntry = ({ note, isOwner, onEdit, onDelete }) => {
           margin: '0 0 4px',
           whiteSpace: 'pre-wrap'
         }}>
-          <span style={{ fontFamily: 'Georgia, serif', fontSize: '24px', color: '#D9CBAD', marginRight: '2px' }}>&ldquo;</span>
+          <span style={{ fontFamily: 'Georgia, serif', fontSize: '24px', lineHeight: 0, color: '#D9CBAD', marginRight: '2px' }}>&ldquo;</span>
           {note.content}
-          <span style={{ fontFamily: 'Georgia, serif', fontSize: '24px', color: '#D9CBAD', marginLeft: '2px' }}>&rdquo;</span>
+          <span style={{ fontFamily: 'Georgia, serif', fontSize: '24px', lineHeight: 0, color: '#D9CBAD', marginLeft: '2px' }}>&rdquo;</span>
           {note.page_ref && (
             <span style={{ fontSize: '13px', color: '#999', fontStyle: 'normal', marginLeft: '8px' }}>
               (p. {note.page_ref})

@@ -132,21 +132,26 @@ export const Reviews = () => {
   useEffect(() => {
     const prefillTitle = searchParams.get('prefill_title')
     const prefillTag = searchParams.get('prefill_tag')
+    const prefillImage = searchParams.get('prefill_image')
+    const prefillUrl = searchParams.get('prefill_url')
     if (prefillTitle) {
+      const fullTitle = prefillUrl ? `${prefillTitle} ${prefillUrl}` : prefillTitle
       setEditingReview(null)
-      setTitle(prefillTitle)
+      setTitle(fullTitle)
       setTag(prefillTag || 'other')
       setRating(7.0)
       setReviewText('')
       setRecommendToFriends([])
       setFriendQuery('')
       setError('')
-      setImageUrl('')
-      initialFormRef.current = { title: prefillTitle, tag: prefillTag || 'other', rating: 7.0, reviewText: '', recommendToFriends: [] }
+      setImageUrl(prefillImage || '')
+      initialFormRef.current = { title: fullTitle, tag: prefillTag || 'other', rating: 7.0, reviewText: '', recommendToFriends: [] }
       setShowModal(true)
       // Clear prefill params from URL
       searchParams.delete('prefill_title')
       searchParams.delete('prefill_tag')
+      searchParams.delete('prefill_image')
+      searchParams.delete('prefill_url')
       setSearchParams(searchParams, { replace: true })
     }
   }, [searchParams])
@@ -357,6 +362,117 @@ export const Reviews = () => {
     setShowModalNoteForm(false)
     initialFormRef.current = { title: '', tag: 'other', rating: 7.0, reviewText: '', recommendToFriends: [] }
     setShowModal(true)
+  }
+
+  // State for reader-edit cover search
+  const [readerEditCoverUrl, setReaderEditCoverUrl] = useState(undefined)
+  const [readerCoverSearchQuery, setReaderCoverSearchQuery] = useState('')
+  const [readerCoverSearchTag, setReaderCoverSearchTag] = useState('other')
+  const [showReaderCoverSearch, setShowReaderCoverSearch] = useState(false)
+
+  const openEditInReader = async (review, enterEditMode) => {
+    // Fetch existing recommendations
+    let recs = []
+    try {
+      const { data, error } = await supabase
+        .from('review_recommendations')
+        .select('recommended_to_user_id')
+        .eq('review_id', review.id)
+
+      if (!error && data) recs = data.map(r => r.recommended_to_user_id)
+    } catch (_err) {
+      // silent
+    }
+
+    setReaderEditCoverUrl(undefined)
+    enterEditMode(review, recs)
+  }
+
+  const handleReaderSaveEdit = async (reviewId, formData) => {
+    const parsedRating = parseFloat(formData.rating)
+    if (isNaN(parsedRating) || parsedRating < 0 || parsedRating > 10) {
+      toast.error('Rating must be between 0 and 10')
+      throw new Error('Invalid rating')
+    }
+
+    const review = reviews.find(r => r.id === reviewId)
+    if (!review) return
+
+    try {
+      const updateFields = {
+        title: formData.title,
+        tag: formData.tag,
+        rating: parsedRating,
+        review_text: formData.reviewText.trim() || null,
+        image_url: formData.imageUrl || null,
+        updated_at: new Date().toISOString()
+      }
+      if (formData.imageUrl && formData.imageUrl !== (review.image_url || '')) {
+        updateFields.cover_manual = true
+      }
+
+      const { error } = await supabase
+        .from('reviews')
+        .update(updateFields)
+        .eq('id', reviewId)
+
+      if (error) throw error
+
+      // Handle recommendations
+      if (formData.recommendToFriends.length > 0) {
+        const { data: existingRecs } = await supabase
+          .from('review_recommendations')
+          .select('recommended_to_user_id')
+          .eq('review_id', reviewId)
+
+        const existingFriendIds = existingRecs?.map(r => r.recommended_to_user_id) || []
+        const newFriendIds = formData.recommendToFriends.filter(id => !existingFriendIds.includes(id))
+
+        await supabase
+          .from('review_recommendations')
+          .delete()
+          .eq('review_id', reviewId)
+
+        const recommendations = formData.recommendToFriends.map(friendId => ({
+          review_id: reviewId,
+          recommended_to_user_id: friendId
+        }))
+
+        await supabase
+          .from('review_recommendations')
+          .insert(recommendations)
+
+        for (const friendId of newFriendIds) {
+          await supabase
+            .from('notifications')
+            .insert({
+              user_id: friendId,
+              type: 'recommendation',
+              actor_id: profile.id,
+              reference_id: reviewId,
+              reference_name: formData.title,
+              message: `${profile.display_name} recommended ${formData.title}`
+            })
+        }
+      } else {
+        await supabase
+          .from('review_recommendations')
+          .delete()
+          .eq('review_id', reviewId)
+      }
+
+      fetchReviews()
+      toast.success('Review updated')
+    } catch (err) {
+      toast.error('Failed to save review')
+      throw err
+    }
+  }
+
+  const handleOpenCoverSearchFromReader = (title, tag) => {
+    setReaderCoverSearchQuery(title)
+    setReaderCoverSearchTag(tag)
+    setShowReaderCoverSearch(true)
   }
 
   const openEditModal = async (review) => {
@@ -708,7 +824,11 @@ export const Reviews = () => {
             )}
           </div>
         )}
-        onEdit={openEditModal}
+        onEdit={(review, enterEditMode) => openEditInReader(review, enterEditMode)}
+        onSaveEdit={handleReaderSaveEdit}
+        onOpenCoverSearch={handleOpenCoverSearchFromReader}
+        editCoverUrl={readerEditCoverUrl}
+        friends={friends}
         onDelete={(reviewId) => handleDelete(reviewId)}
       />
 
@@ -725,6 +845,14 @@ export const Reviews = () => {
         onSelect={({ imageUrl: url }) => setImageUrl(url)}
         initialQuery={title}
         mediaType={TAG_TO_MEDIA_TYPE[tag]}
+      />
+
+      <CoverSearchModal
+        isOpen={showReaderCoverSearch}
+        onClose={() => setShowReaderCoverSearch(false)}
+        onSelect={({ imageUrl: url }) => { setReaderEditCoverUrl(url); setShowReaderCoverSearch(false) }}
+        initialQuery={readerCoverSearchQuery}
+        mediaType={TAG_TO_MEDIA_TYPE[readerCoverSearchTag]}
       />
 
       {/* Add/Edit Modal */}

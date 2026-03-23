@@ -1,8 +1,10 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { TAG_ICONS, TAG_OPTIONS, TAG_LABELS } from '../lib/reviewConstants'
+import { TAG_TO_MEDIA_TYPE } from '../lib/coverSearchApis'
 import { EmptyStateFantom } from './EmptyStateFantom'
 import { FilterDropdown } from './FilterDropdown'
+import { TagAutocomplete } from './TagAutocomplete'
 import { useOutsideClick } from '../hooks/useOutsideClick'
 
 const ITEMS_PER_ROW = 3
@@ -46,6 +48,10 @@ export const ReviewsDisplay = ({
   emptyFilteredMessage,
   onEdit,
   onDelete,
+  onSaveEdit,
+  onOpenCoverSearch,
+  editCoverUrl,
+  friends,
   renderHeaderActions,
   renderExpandedText,
   initialReviewId,
@@ -60,6 +66,19 @@ export const ReviewsDisplay = ({
   const readerScrollRef = useRef(null)
   const shelfRef = useRef(null)
   const lastOpenReviewRef = useRef(null)
+
+  // Edit mode state
+  const [editMode, setEditMode] = useState(false)
+  const [editTitle, setEditTitle] = useState('')
+  const [editTag, setEditTag] = useState('other')
+  const [editRating, setEditRating] = useState(7.0)
+  const [editReviewText, setEditReviewText] = useState('')
+  const [editImageUrl, setEditImageUrl] = useState('')
+  const [editRecommendToFriends, setEditRecommendToFriends] = useState([])
+  const [editFriendQuery, setEditFriendQuery] = useState('')
+  const [editSaving, setEditSaving] = useState(false)
+  const editInitialRef = useRef(null)
+  const editTextareaRef = useRef(null)
 
   const filteredReviews = filterTag === 'all'
     ? reviews
@@ -109,15 +128,21 @@ export const ReviewsDisplay = ({
     return () => document.body.classList.remove('reader-open')
   }, [openReviewId])
 
-  // Escape closes reader
+  // Escape closes reader (or exits edit mode with dirty check)
   useEffect(() => {
     if (openReviewId === null) return
     const handleEscape = (e) => {
-      if (e.key === 'Escape') setOpenReviewId(null)
+      if (e.key === 'Escape') {
+        if (editMode) {
+          cancelEditMode()
+        } else {
+          setOpenReviewId(null)
+        }
+      }
     }
     window.addEventListener('keydown', handleEscape)
     return () => window.removeEventListener('keydown', handleEscape)
-  }, [openReviewId])
+  }, [openReviewId, editMode, editTitle, editTag, editRating, editReviewText, editImageUrl, editRecommendToFriends])
 
   // Reset reader scroll position on open
   useEffect(() => {
@@ -133,8 +158,83 @@ export const ReviewsDisplay = ({
   }
 
   const closeReader = () => {
+    setEditMode(false)
     setOpenReviewId(null)
   }
+
+  // Enter edit mode for a review (called from ... menu)
+  const enterEditMode = useCallback((review, initialRecs) => {
+    setEditTitle(review.title)
+    setEditTag(review.tag)
+    setEditRating(review.rating)
+    setEditReviewText(review.review_text || '')
+    setEditImageUrl(review.image_url || '')
+    setEditRecommendToFriends(initialRecs || [])
+    setEditFriendQuery('')
+    setEditSaving(false)
+    editInitialRef.current = {
+      title: review.title,
+      tag: review.tag,
+      rating: parseFloat(review.rating),
+      reviewText: review.review_text || '',
+      imageUrl: review.image_url || '',
+      recommendToFriends: [...(initialRecs || [])]
+    }
+    setOpenReviewId(review.id)
+    setEditMode(true)
+  }, [])
+
+  const isEditDirty = () => {
+    if (!editInitialRef.current) return false
+    const init = editInitialRef.current
+    return editTitle !== init.title || editTag !== init.tag ||
+      parseFloat(editRating) !== init.rating ||
+      editReviewText !== init.reviewText ||
+      editImageUrl !== init.imageUrl ||
+      JSON.stringify(editRecommendToFriends) !== JSON.stringify(init.recommendToFriends)
+  }
+
+  const cancelEditMode = () => {
+    if (isEditDirty() && !confirm('Discard unsaved changes?')) return
+    setEditMode(false)
+    setOpenReviewId(null)
+  }
+
+  const handleEditSave = async () => {
+    if (!displayedReview || !onSaveEdit) return
+    setEditSaving(true)
+    try {
+      await onSaveEdit(displayedReview.id, {
+        title: editTitle,
+        tag: editTag,
+        rating: parseFloat(editRating),
+        reviewText: editReviewText,
+        imageUrl: editImageUrl,
+        recommendToFriends: editRecommendToFriends
+      })
+      setEditMode(false)
+    } catch (_err) {
+      // error handled by parent
+    } finally {
+      setEditSaving(false)
+    }
+  }
+
+  // Sync cover URL from parent (CoverSearchModal lives in Reviews.jsx)
+  useEffect(() => {
+    if (editMode && editCoverUrl !== undefined && editCoverUrl !== null) {
+      setEditImageUrl(editCoverUrl)
+    }
+  }, [editCoverUrl])
+
+  // Auto-resize textarea
+  useEffect(() => {
+    if (editMode && editTextareaRef.current) {
+      const ta = editTextareaRef.current
+      ta.style.height = 'auto'
+      ta.style.height = ta.scrollHeight + 'px'
+    }
+  }, [editMode, editReviewText])
 
   // Render reader body content
   const renderReaderBody = () => {
@@ -216,7 +316,7 @@ export const ReviewsDisplay = ({
                           {openMenuId === review.id && (
                             <div className="cover-menu-dropdown">
                               {onEdit && (
-                                <button onClick={() => { onEdit(review); setOpenMenuId(null) }}>
+                                <button onClick={() => { onEdit(review, enterEditMode); setOpenMenuId(null) }}>
                                   Edit
                                 </button>
                               )}
@@ -278,43 +378,253 @@ export const ReviewsDisplay = ({
         <div className={`review-reader${openReviewId !== null ? ' open' : ''}`}>
           <div
             className="reader-accent"
-            style={{ background: displayedReview ? (ACCENT_COLORS[displayedReview.tag] || ACCENT_COLORS.other) : '#622722' }}
+            style={{ background: displayedReview ? (ACCENT_COLORS[editMode ? editTag : displayedReview?.tag] || ACCENT_COLORS.other) : '#622722' }}
           />
-          <div className="reader-topbar">
-            <button className="reader-back" onClick={closeReader}>
-              <span className="reader-back-arrow">&larr;</span> back
-            </button>
+          <div className="reader-topbar" style={editMode ? { justifyContent: 'space-between' } : undefined}>
+            {editMode ? (
+              <>
+                <button className="reader-back" onClick={cancelEditMode}>
+                  Cancel
+                </button>
+                <button
+                  className="reader-back"
+                  onClick={handleEditSave}
+                  disabled={editSaving || !editTitle.trim()}
+                  style={{ color: '#622722', fontWeight: 600, fontStyle: 'normal', opacity: editSaving || !editTitle.trim() ? 0.5 : 1 }}
+                >
+                  {editSaving ? 'Saving...' : 'Save'}
+                </button>
+              </>
+            ) : (
+              <button className="reader-back" onClick={closeReader}>
+                <span className="reader-back-arrow">&larr;</span> back
+              </button>
+            )}
           </div>
           <div className="reader-scroll" ref={readerScrollRef}>
             {displayedReview && (
               <>
                 <div className="reader-header">
-                  <div className="reader-cover">
-                    {displayedReview.image_url ? (
-                      <img src={displayedReview.image_url} alt={displayedReview.title} />
+                  {/* Cover */}
+                  <div className="reader-cover" style={{ position: 'relative' }}>
+                    {editMode ? (
+                      <>
+                        {editImageUrl ? (
+                          <img src={editImageUrl} alt={editTitle} />
+                        ) : (
+                          <div
+                            className="reader-cover-fallback"
+                            style={{ background: FALLBACK_GRADIENTS[editTag] || FALLBACK_GRADIENTS.other }}
+                          >
+                            {editTitle}
+                          </div>
+                        )}
+                        <div style={{ position: 'absolute', bottom: '-24px', left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: '8px' }}>
+                          {TAG_TO_MEDIA_TYPE[editTag] && onOpenCoverSearch && (
+                            <button
+                              type="button"
+                              onClick={() => onOpenCoverSearch(editTitle, editTag)}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', color: '#4A7BA7', padding: 0 }}
+                            >
+                              {editImageUrl ? 'Change' : 'Search'}
+                            </button>
+                          )}
+                          {editImageUrl && (
+                            <button
+                              type="button"
+                              onClick={() => setEditImageUrl('')}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', color: '#999', padding: 0 }}
+                            >
+                              Remove
+                            </button>
+                          )}
+                        </div>
+                      </>
                     ) : (
-                      <div
-                        className="reader-cover-fallback"
-                        style={{ background: FALLBACK_GRADIENTS[displayedReview.tag] || FALLBACK_GRADIENTS.other }}
-                      >
-                        {displayedReview.title}
-                      </div>
+                      displayedReview.image_url ? (
+                        <img src={displayedReview.image_url} alt={displayedReview.title} />
+                      ) : (
+                        <div
+                          className="reader-cover-fallback"
+                          style={{ background: FALLBACK_GRADIENTS[displayedReview.tag] || FALLBACK_GRADIENTS.other }}
+                        >
+                          {displayedReview.title}
+                        </div>
+                      )
                     )}
                   </div>
+
+                  {/* Info */}
                   <div className="reader-info">
-                    <div className="reader-title">{displayedReview.title}</div>
-                    <div className="reader-meta">
-                      {TAG_ICONS[displayedReview.tag]} {TAG_LABELS[displayedReview.tag] || displayedReview.tag}
-                    </div>
-                    <div className="reader-rating">
-                      {displayedReview.rating}<span className="reader-rating-label">/10</span>
-                    </div>
+                    {editMode ? (
+                      <>
+                        <input
+                          type="text"
+                          value={editTitle}
+                          onChange={(e) => setEditTitle(e.target.value)}
+                          maxLength={200}
+                          className="reader-edit-title"
+                          placeholder="Title"
+                        />
+                        <div style={{ marginBottom: '10px' }}>
+                          <TagAutocomplete
+                            value={editTag}
+                            onChange={setEditTag}
+                            style={{ maxWidth: '180px' }}
+                          />
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <input
+                            type="number"
+                            min="0"
+                            max="10"
+                            step="0.1"
+                            value={editRating}
+                            onChange={(e) => setEditRating(e.target.value)}
+                            className="reader-edit-rating"
+                          />
+                          <span className="reader-rating-label">/10</span>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="reader-title">{displayedReview.title}</div>
+                        <div className="reader-meta">
+                          {TAG_ICONS[displayedReview.tag]} {TAG_LABELS[displayedReview.tag] || displayedReview.tag}
+                        </div>
+                        <div className="reader-rating">
+                          {displayedReview.rating}<span className="reader-rating-label">/10</span>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
                 <div className="reader-divider" />
-                <div className="reader-body">
-                  {renderReaderBody()}
-                </div>
+
+                {/* Body: edit textarea or read-only text */}
+                {editMode ? (
+                  <div className="reader-body">
+                    <textarea
+                      ref={editTextareaRef}
+                      value={editReviewText}
+                      onChange={(e) => setEditReviewText(e.target.value)}
+                      maxLength={5000}
+                      placeholder="Share your thoughts..."
+                      className="reader-edit-textarea"
+                    />
+
+                    {/* Who would love this? */}
+                    {friends && friends.length > 0 && (
+                      <div style={{ marginTop: '32px' }}>
+                        <label style={{ fontSize: '14px', color: '#777', fontStyle: 'italic', display: 'block', marginBottom: '8px' }}>
+                          Who would love this?
+                        </label>
+
+                        {editRecommendToFriends.length > 0 && (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '8px' }}>
+                            {editRecommendToFriends.map(friendId => {
+                              const friend = friends.find(f => f.id === friendId)
+                              if (!friend) return null
+                              return (
+                                <span
+                                  key={friendId}
+                                  style={{
+                                    background: '#F5F0EB',
+                                    borderRadius: '12px',
+                                    padding: '4px 10px',
+                                    fontSize: '13px',
+                                    fontFamily: 'Source Serif 4, Georgia, serif',
+                                    fontStyle: 'italic',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '6px'
+                                  }}
+                                >
+                                  {friend.display_name}
+                                  <button
+                                    type="button"
+                                    onClick={() => setEditRecommendToFriends(editRecommendToFriends.filter(id => id !== friendId))}
+                                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: '14px', lineHeight: 1, color: '#999' }}
+                                  >
+                                    &times;
+                                  </button>
+                                </span>
+                              )
+                            })}
+                          </div>
+                        )}
+
+                        <div style={{ position: 'relative' }}>
+                          <input
+                            type="text"
+                            value={editFriendQuery}
+                            onChange={(e) => setEditFriendQuery(e.target.value)}
+                            placeholder="Type a friend's name..."
+                            autoComplete="off"
+                            style={{
+                              width: '100%',
+                              padding: '8px 10px',
+                              border: '1px solid #D9CBAD',
+                              borderRadius: '3px',
+                              background: '#FFFEFA',
+                              fontFamily: 'Source Serif 4, Georgia, serif',
+                              fontSize: '15px',
+                              fontStyle: 'italic',
+                              boxSizing: 'border-box'
+                            }}
+                          />
+                          {editFriendQuery.trim() && (() => {
+                            const filtered = friends.filter(f =>
+                              !editRecommendToFriends.includes(f.id) &&
+                              f.display_name.toLowerCase().includes(editFriendQuery.toLowerCase())
+                            )
+                            if (filtered.length === 0) return null
+                            return (
+                              <div style={{
+                                position: 'absolute',
+                                top: '100%',
+                                left: 0,
+                                right: 0,
+                                background: '#FFFEFA',
+                                borderRadius: '0 0 3px 3px',
+                                boxShadow: '2px 3px 12px rgba(0,0,0,0.15)',
+                                maxHeight: '150px',
+                                overflowY: 'auto',
+                                zIndex: 10
+                              }}>
+                                {filtered.map(friend => (
+                                  <div
+                                    key={friend.id}
+                                    onClick={() => {
+                                      setEditRecommendToFriends([...editRecommendToFriends, friend.id])
+                                      setEditFriendQuery('')
+                                    }}
+                                    style={{
+                                      padding: '8px 10px',
+                                      cursor: 'pointer',
+                                      fontFamily: 'Source Serif 4, Georgia, serif',
+                                      fontSize: '15px',
+                                      fontStyle: 'italic',
+                                      transition: 'background 0.15s'
+                                    }}
+                                    onMouseEnter={(e) => e.currentTarget.style.background = '#F5F0EB'}
+                                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                                  >
+                                    {friend.display_name}
+                                  </div>
+                                ))}
+                              </div>
+                            )
+                          })()}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="reader-body">
+                    {renderReaderBody()}
+                  </div>
+                )}
                 {renderNotesSection && renderNotesSection(displayedReview)}
               </>
             )}
