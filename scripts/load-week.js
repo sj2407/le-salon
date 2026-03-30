@@ -80,14 +80,14 @@ async function loadWeek(filePath, weekOf, periodStart, periodEnd) {
   // Pre-generate TTS audio
   console.log('\nGenerating TTS audio...')
   try {
-    const anonKey = process.env.VITE_SUPABASE_ANON_KEY
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
     const res = await fetch(
       `${process.env.VITE_SUPABASE_URL}/functions/v1/tts`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${anonKey}`
+          'Authorization': `Bearer ${serviceKey}`
         },
         body: JSON.stringify({ salon_week_id: weekId })
       }
