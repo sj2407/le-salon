@@ -92,12 +92,56 @@ export const HistoricalTimeline = ({ weeks, activeWeekId, onWeekSelect }) => {
   const yearSpan = maxYear - minYear || 1
   const padding = 12
 
-  // Use actual container width for positioning
-  const usableWidth = Math.max(containerWidth - padding * 2, 100)
+  // Use the actual rendered width (which may be wider than viewport on mobile)
+  const renderedWidth = containerWidth > 0 ? Math.max(containerWidth, laneData.length * 80) : containerWidth
+  const usableWidth = Math.max(renderedWidth - padding * 2, 100)
 
-  const yearToX = (year) => {
-    return padding + ((year - minYear) / yearSpan) * usableWidth
-  }
+  // Log-compressed year-to-pixel mapping with minimum spacing
+  // Collects all boundary years, compresses gaps logarithmically, guarantees min spacing
+  const yearToX = useMemo(() => {
+    const anchors = new Set()
+    anchors.add(minYear)
+    anchors.add(maxYear)
+    laneData.forEach(w => {
+      anchors.add(w.period_start_year)
+      anchors.add(w.period_end_year)
+    })
+    const sorted = [...anchors].sort((a, b) => a - b)
+
+    // Compress each gap: log(gap + 1) with a minimum
+    const MIN_GAP_WEIGHT = 0.5
+    const gaps = []
+    for (let i = 1; i < sorted.length; i++) {
+      const rawGap = sorted[i] - sorted[i - 1]
+      gaps.push(Math.max(Math.log(rawGap + 1), MIN_GAP_WEIGHT))
+    }
+    const totalWeight = gaps.reduce((s, g) => s + g, 0) || 1
+
+    // Build a lookup: year → x position
+    const yearMap = new Map()
+    yearMap.set(sorted[0], padding)
+    let cumulative = 0
+    for (let i = 1; i < sorted.length; i++) {
+      cumulative += gaps[i - 1]
+      yearMap.set(sorted[i], padding + (cumulative / totalWeight) * usableWidth)
+    }
+
+    // Return interpolation function for any year (including axis ticks)
+    return (year) => {
+      if (yearMap.has(year)) return yearMap.get(year)
+      // Interpolate between nearest anchors
+      let lo = sorted[0], hi = sorted[sorted.length - 1]
+      for (const a of sorted) {
+        if (a <= year) lo = a
+        if (a >= year && hi === sorted[sorted.length - 1]) hi = a
+      }
+      if (lo === hi) return yearMap.get(lo)
+      const loX = yearMap.get(lo)
+      const hiX = yearMap.get(hi)
+      const frac = (year - lo) / (hi - lo)
+      return loX + frac * (hiX - loX)
+    }
+  }, [laneData, minYear, maxYear, padding, usableWidth])
 
   // Auto-scroll to center active bar (only when scrollable)
   useEffect(() => {
@@ -176,13 +220,15 @@ export const HistoricalTimeline = ({ weeks, activeWeekId, onWeekSelect }) => {
         ))}
 
         {/* Period bars */}
-        {containerWidth > 0 && laneData.map(week => {
+        {containerWidth > 0 && laneData.map((week, idx) => {
           const isActive = week.id === activeWeekId
           const x1 = yearToX(week.period_start_year)
           const x2 = yearToX(week.period_end_year)
           const rawWidth = x2 - x1
-          const barWidth = Math.max(rawWidth, MIN_BAR_WIDTH)
-          const barLeft = rawWidth < MIN_BAR_WIDTH ? x1 - (MIN_BAR_WIDTH - rawWidth) / 2 : x1
+
+          const minWidth = isActive ? 72 : MIN_BAR_WIDTH
+          const barWidth = Math.max(rawWidth, minWidth)
+          const barLeft = rawWidth < minWidth ? x1 - (minWidth - rawWidth) / 2 : x1
           const top = week.lane * (LANE_HEIGHT + LANE_GAP)
 
           return (

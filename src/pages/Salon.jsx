@@ -27,6 +27,10 @@ export const Salon = () => {
   const [showCommonplace, setShowCommonplace] = useState(false)
   const [hasNewCommonplaceEntries, setHasNewCommonplaceEntries] = useState(false)
   const [nextWeekTitle, setNextWeekTitle] = useState(null)
+  // Intro video: plays once per browser session, then shows static image
+  const [introPlayed, setIntroPlayed] = useState(() => !!sessionStorage.getItem('salon-intro-played'))
+  const introVideoRef = useRef(null)
+
   const [textSize, setTextSize] = useState(() => {
     try {
       const saved = localStorage.getItem('salon_text_size')
@@ -37,6 +41,20 @@ export const Salon = () => {
   })
   const [audioState, setAudioState] = useState('idle') // idle | loading | playing | paused
   const audioRef = useRef(null)
+
+  // Fallback: manually trigger play if autoplay attribute doesn't fire
+  useEffect(() => {
+    if (introPlayed || !introVideoRef.current) return
+    introVideoRef.current.play().catch(() => {
+      setIntroPlayed(true)
+      sessionStorage.setItem('salon-intro-played', '1')
+    })
+  }, [introPlayed])
+
+  const handleIntroDone = useCallback(() => {
+    setIntroPlayed(true)
+    sessionStorage.setItem('salon-intro-played', '1')
+  }, [])
 
   // Ref to avoid stale closure in realtime callback
   const showCommonplaceRef = useRef(false)
@@ -553,6 +571,58 @@ export const Salon = () => {
         }}>
           The Salon is being prepared for its first gathering...
         </p>
+      </div>
+    )
+  }
+
+  // --- Intro splash screen ---
+
+  if (!introPlayed) {
+    return (
+      <div style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 9999,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundImage: 'url(/images/parchment-video-bg.jpg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}>
+        <video
+          ref={introVideoRef}
+          src="/salon-intro.mp4"
+          autoPlay
+          muted
+          playsInline
+          onEnded={handleIntroDone}
+          style={{
+            maxWidth: '90vw',
+            maxHeight: '60vh',
+            objectFit: 'contain',
+            WebkitMaskImage: 'linear-gradient(to right, transparent, black 12%, black 88%, transparent), linear-gradient(to bottom, transparent, black 12%, black 88%, transparent)',
+            WebkitMaskComposite: 'destination-in',
+            maskImage: 'linear-gradient(to right, transparent, black 12%, black 88%, transparent), linear-gradient(to bottom, transparent, black 12%, black 88%, transparent)',
+            maskComposite: 'intersect',
+          }}
+        />
+        <button
+          onClick={handleIntroDone}
+          style={{
+            position: 'absolute',
+            bottom: '40px',
+            background: 'none',
+            border: 'none',
+            color: 'rgba(98,39,34,0.4)',
+            fontFamily: "'Caveat', cursive",
+            fontSize: '16px',
+            cursor: 'pointer',
+          }}
+        >
+          Skip
+        </button>
       </div>
     )
   }

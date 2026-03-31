@@ -101,6 +101,7 @@ export const AuthProvider = ({ children }) => {
   }
 
   const signOut = async () => {
+    sessionStorage.removeItem('salon-intro-played')
     const { error } = await supabase.auth.signOut()
     if (error) throw error
   }
