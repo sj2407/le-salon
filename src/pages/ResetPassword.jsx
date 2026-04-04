@@ -13,20 +13,31 @@ export const ResetPassword = () => {
   const [showPassword, setShowPassword] = useState(false)
 
   useEffect(() => {
-    // PKCE code exchange is handled globally in AuthContext.
-    // Listen for PASSWORD_RECOVERY event (fires after exchange completes).
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
         setReady(true)
       }
     })
 
-    // Check if session already exists (event may have fired before mount)
+    // Recovery links now arrive as ?token_hash=XXX&type=recovery (bypasses PKCE
+    // code_verifier issue when email opens in Safari but verifier is in WKWebView)
+    const params = new URLSearchParams(window.location.search)
+    const tokenHash = params.get('token_hash')
+    const type = params.get('type')
+
+    if (tokenHash && type) {
+      window.history.replaceState({}, '', window.location.pathname)
+      supabase.auth.verifyOtp({ token_hash: tokenHash, type }).then(({ error: verifyError }) => {
+        if (verifyError) setError('Reset link expired or invalid. Please request a new one.')
+      })
+    }
+
+    // Fallback: check if session already exists
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) setReady(true)
     })
 
-    // Timeout: if no session after 8s, the link is likely invalid/expired
+    // Timeout for any path that doesn't resolve
     const timeout = setTimeout(() => {
       if (!ready) setError('Reset link expired or invalid. Please request a new one.')
     }, 8000)
