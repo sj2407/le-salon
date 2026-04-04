@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
+import { getRedirectUrl } from '../lib/redirectUrl'
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 48 48">
@@ -22,7 +23,7 @@ export const SignIn = () => {
   const [forgotLoading, setForgotLoading] = useState(false)
   const [forgotMessage, setForgotMessage] = useState('')
 
-  const { signIn} = useAuth()
+  const { signIn, signInWithOAuthProvider, signInWithApple } = useAuth()
   const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
@@ -107,7 +108,7 @@ export const SignIn = () => {
               setForgotMessage('')
               setError('')
               const { error: resetError } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-                redirectTo: `${window.location.origin}/reset-password`
+                redirectTo: getRedirectUrl('/reset-password')
               })
               if (resetError?.status === 429 || resetError?.message?.includes('rate limit')) {
                 setForgotMessage('Too many attempts. Please wait a few minutes and try again.')
@@ -150,13 +151,30 @@ export const SignIn = () => {
 
         <button
           type="button"
+          onClick={async () => {
+            setError('')
+            try { await signInWithApple() } catch (err) { setError(err.message) }
+          }}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+            width: '100%', height: '48px', backgroundColor: '#000', color: '#fff',
+            border: 'none', borderRadius: '12px', fontSize: '16px',
+            fontFamily: '-apple-system, SF Pro, system-ui, sans-serif',
+            fontWeight: 500, cursor: 'pointer', marginBottom: '10px',
+          }}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+            <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.32 2.32-1.55 4.3-3.74 4.25z"/>
+          </svg>
+          Sign in with Apple
+        </button>
+
+        <button
+          type="button"
           className="google-btn"
           onClick={async () => {
-            const { error: oauthError } = await supabase.auth.signInWithOAuth({
-              provider: 'google',
-              options: { redirectTo: window.location.origin }
-            })
-            if (oauthError) setError(oauthError.message)
+            setError('')
+            try { await signInWithOAuthProvider('google') } catch (err) { setError(err.message) }
           }}
         >
           <GoogleIcon />

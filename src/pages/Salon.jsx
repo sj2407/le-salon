@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import { supabase } from '../lib/supabase'
@@ -9,10 +10,13 @@ import { HistoricalTimeline } from '../components/salon/HistoricalTimeline'
 import { CalligraphyTitle } from '../components/salon/CalligraphyTitle'
 import { hapticTap } from '../lib/haptics'
 import { Headphones } from '@phosphor-icons/react'
+import { PendingSharesCatchUp } from '../components/PendingSharesCatchUp'
 
 export const Salon = () => {
   const { user } = useAuth()
   const toast = useToast()
+  const location = useLocation()
+  const navigate = useNavigate()
 
   // --- All published weeks (sorted by week_of ASC) + active week ---
   const [allWeeks, setAllWeeks] = useState([])
@@ -27,9 +31,10 @@ export const Salon = () => {
   const [showCommonplace, setShowCommonplace] = useState(false)
   const [hasNewCommonplaceEntries, setHasNewCommonplaceEntries] = useState(false)
   const [nextWeekTitle, setNextWeekTitle] = useState(null)
-  // Intro video: plays once per browser session, then shows static image
-  const [introPlayed, setIntroPlayed] = useState(() => !!sessionStorage.getItem('salon-intro-played'))
-  const introVideoRef = useRef(null)
+  // Intro video is now hoisted to App.jsx — Salon just checks sessionStorage for catch-up gate
+  const introPlayed = !!sessionStorage.getItem('salon-intro-played')
+  // Catch-up page: always checks for pending shares on mount
+  const [catchUpDone, setCatchUpDone] = useState(false)
 
   const [textSize, setTextSize] = useState(() => {
     try {
@@ -42,19 +47,14 @@ export const Salon = () => {
   const [audioState, setAudioState] = useState('idle') // idle | loading | playing | paused
   const audioRef = useRef(null)
 
-  // Fallback: manually trigger play if autoplay attribute doesn't fire
-  useEffect(() => {
-    if (introPlayed || !introVideoRef.current) return
-    introVideoRef.current.play().catch(() => {
-      setIntroPlayed(true)
-      sessionStorage.setItem('salon-intro-played', '1')
-    })
-  }, [introPlayed])
 
-  const handleIntroDone = useCallback(() => {
-    setIntroPlayed(true)
-    sessionStorage.setItem('salon-intro-played', '1')
-  }, [])
+  // When toast "Review" is tapped while already on Salon, reset catch-up to show new shares
+  useEffect(() => {
+    if (location.state?.reviewShares) {
+      setCatchUpDone(false)
+      navigate(location.pathname, { replace: true, state: {} })
+    }
+  }, [location.state?.reviewShares, navigate, location.pathname])
 
   // Ref to avoid stale closure in realtime callback
   const showCommonplaceRef = useRef(false)
@@ -538,6 +538,7 @@ export const Salon = () => {
     setShowCommonplace(false)
   }
 
+
   // --- Loading state ---
 
   if (loading) {
@@ -575,55 +576,11 @@ export const Salon = () => {
     )
   }
 
-  // --- Intro splash screen ---
+  // --- Catch-up page: review shared items before entering Le Salon ---
 
-  if (!introPlayed) {
+  if (!catchUpDone) {
     return (
-      <div style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 9999,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundImage: 'url(/images/parchment-video-bg.jpg)',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-      }}>
-        <video
-          ref={introVideoRef}
-          src="/salon-intro.mp4"
-          autoPlay
-          muted
-          playsInline
-          onEnded={handleIntroDone}
-          style={{
-            maxWidth: '90vw',
-            maxHeight: '60vh',
-            objectFit: 'contain',
-            WebkitMaskImage: 'linear-gradient(to right, transparent, black 12%, black 88%, transparent), linear-gradient(to bottom, transparent, black 12%, black 88%, transparent)',
-            WebkitMaskComposite: 'destination-in',
-            maskImage: 'linear-gradient(to right, transparent, black 12%, black 88%, transparent), linear-gradient(to bottom, transparent, black 12%, black 88%, transparent)',
-            maskComposite: 'intersect',
-          }}
-        />
-        <button
-          onClick={handleIntroDone}
-          style={{
-            position: 'absolute',
-            bottom: '40px',
-            background: 'none',
-            border: 'none',
-            color: 'rgba(98,39,34,0.4)',
-            fontFamily: "'Caveat', cursive",
-            fontSize: '16px',
-            cursor: 'pointer',
-          }}
-        >
-          Skip
-        </button>
-      </div>
+      <PendingSharesCatchUp onDone={() => setCatchUpDone(true)} />
     )
   }
 
@@ -632,7 +589,7 @@ export const Salon = () => {
   return (
     <>
       <div style={{
-        height: 'calc(100dvh - 62px)',
+        height: '100%',
         display: 'flex',
         flexDirection: 'column',
         maxWidth: '720px',

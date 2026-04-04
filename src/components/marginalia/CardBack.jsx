@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { NoteScrap } from './NoteScrap'
 import { NoteInput } from './NoteInput'
+import { ConfirmModal } from '../ConfirmModal'
 
 export const CardBack = ({
   sectionName,
   notes = [],
   isOwner,
+  isVisible = false,
   currentUserId,
   onFlipBack,
   onMarkRead,
@@ -19,6 +21,7 @@ export const CardBack = ({
   const [isEditing, setIsEditing] = useState(false)
   const [editingNote, setEditingNote] = useState(null)
   const [replyingToNoteId, setReplyingToNoteId] = useState(null)
+  const [confirmState, setConfirmState] = useState(null)
 
   // For owner: show all notes from friends
   // For friend: show only their note (if any)
@@ -39,11 +42,17 @@ export const CardBack = ({
     onFlipBack?.()
   }
 
-  const handleDeleteNote = async () => {
-    if (myNote && window.confirm('Delete this note?')) {
-      await onDeleteNote?.(myNote.id)
-      onFlipBack?.()
-    }
+  const handleDeleteNote = () => {
+    if (!myNote) return
+    setConfirmState({
+      message: 'Delete this note?',
+      confirmText: 'Delete',
+      destructive: true,
+      onConfirm: async () => {
+        await onDeleteNote?.(myNote.id)
+        onFlipBack?.()
+      },
+    })
   }
 
   const handleMarkRead = async () => {
@@ -249,8 +258,18 @@ export const CardBack = ({
         <NoteInput
           onSubmit={handleSubmitNote}
           onCancel={onFlipBack}
+          shouldAutoFocus={isVisible}
         />
       )}
+      <ConfirmModal
+        isOpen={!!confirmState}
+        onClose={() => setConfirmState(null)}
+        onConfirm={async () => { await confirmState?.onConfirm(); setConfirmState(null) }}
+        title="Confirm"
+        message={confirmState?.message || ''}
+        confirmText={confirmState?.confirmText || 'Delete'}
+        destructive={confirmState?.destructive ?? true}
+      />
     </div>
   )
 }

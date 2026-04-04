@@ -4,6 +4,7 @@ import { motion as Motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import { supabase } from '../lib/supabase'
+import { useNativeCamera } from '../hooks/useNativeCamera'
 
 export const ProfileEditModal = ({ onClose }) => {
   const { profile, user, refreshProfile } = useAuth()
@@ -27,6 +28,7 @@ export const ProfileEditModal = ({ onClose }) => {
   const [isDragging, setIsDragging] = useState(false)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
+  const { pickImage } = useNativeCamera()
 
   // Dirty tracking — snapshot initial state
   const [initialSnapshot] = useState(() => JSON.stringify({
@@ -58,20 +60,13 @@ export const ProfileEditModal = ({ onClose }) => {
   // No click-outside-to-close — user must use Cancel or Save
 
   // Photo upload
-  const handlePhotoChange = (e) => {
-    const file = e.target.files[0]
-    if (file) {
-      if (file.size > 10 * 1024 * 1024) {
-        setMessage('Photo must be under 10MB')
-        return
-      }
-      setPhotoFile(file)
-      setPhotoPosition('50% 50%')
-      setMessage('')
-      const reader = new FileReader()
-      reader.onloadend = () => setPhotoUrl(reader.result)
-      reader.readAsDataURL(file)
-    }
+  const handlePhotoChange = async () => {
+    const result = await pickImage({ camera: false })
+    if (!result) return
+    setPhotoFile(result.blob)
+    setPhotoPosition('50% 50%')
+    setMessage('')
+    setPhotoUrl(result.previewUrl)
   }
 
   // Drag-to-reposition
@@ -281,22 +276,16 @@ export const ProfileEditModal = ({ onClose }) => {
           )}
 
           <div style={{ marginTop: '8px' }}>
-            <label htmlFor="profile-photo-upload" style={{
+            <button type="button" onClick={handlePhotoChange} style={{
               padding: '6px 16px',
               background: 'none',
+              border: 'none',
               cursor: 'pointer',
               fontSize: '13px',
               color: '#777',
             }}>
               {photoUrl ? 'Change Photo' : 'Upload Photo'}
-            </label>
-            <input
-              id="profile-photo-upload"
-              type="file"
-              accept="image/*"
-              onChange={handlePhotoChange}
-              style={{ display: 'none' }}
-            />
+            </button>
           </div>
         </div>
 

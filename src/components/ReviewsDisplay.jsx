@@ -6,6 +6,7 @@ import { EmptyStateFantom } from './EmptyStateFantom'
 import { FilterDropdown } from './FilterDropdown'
 import { TagAutocomplete } from './TagAutocomplete'
 import { useOutsideClick } from '../hooks/useOutsideClick'
+import { ConfirmModal } from './ConfirmModal'
 
 const ITEMS_PER_ROW = 3
 
@@ -77,6 +78,7 @@ export const ReviewsDisplay = ({
   const [editRecommendToFriends, setEditRecommendToFriends] = useState([])
   const [editFriendQuery, setEditFriendQuery] = useState('')
   const [editSaving, setEditSaving] = useState(false)
+  const [confirmState, setConfirmState] = useState(null)
   const editInitialRef = useRef(null)
   const editTextareaRef = useRef(null)
 
@@ -195,7 +197,18 @@ export const ReviewsDisplay = ({
   }
 
   const cancelEditMode = () => {
-    if (isEditDirty() && !confirm('Discard unsaved changes?')) return
+    if (isEditDirty()) {
+      setConfirmState({
+        message: 'Discard unsaved changes?',
+        confirmText: 'Discard',
+        destructive: false,
+        onConfirm: async () => {
+          setEditMode(false)
+          setOpenReviewId(null)
+        },
+      })
+      return
+    }
     setEditMode(false)
     setOpenReviewId(null)
   }
@@ -632,6 +645,15 @@ export const ReviewsDisplay = ({
         </div>,
         document.body
       )}
+      <ConfirmModal
+        isOpen={!!confirmState}
+        onClose={() => setConfirmState(null)}
+        onConfirm={async () => { await confirmState?.onConfirm(); setConfirmState(null) }}
+        title="Confirm"
+        message={confirmState?.message || ''}
+        confirmText={confirmState?.confirmText || 'Discard'}
+        destructive={confirmState?.destructive ?? false}
+      />
     </div>
   )
 }

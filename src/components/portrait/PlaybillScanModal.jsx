@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { PortraitModal } from './PortraitModal'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
+import { useNativeCamera } from '../../hooks/useNativeCamera'
 import { EXPERIENCE_CATEGORIES } from './mockData'
 
 const getCategoryIcon = (category) => {
@@ -21,8 +22,8 @@ export const PlaybillScanModal = ({ isOpen, onClose, onExperiencesAdded }) => {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
-  const fileRef = useRef(null)
   const imageFileRef = useRef(null) // store the raw File for upload
+  const { pickImage } = useNativeCamera()
 
   const reset = () => {
     setScanning(false)
@@ -32,7 +33,6 @@ export const PlaybillScanModal = ({ isOpen, onClose, onExperiencesAdded }) => {
     setError(null)
     setImagePreview(null)
     imageFileRef.current = null
-    if (fileRef.current) fileRef.current.value = ''
   }
 
   const handleClose = () => {
@@ -40,30 +40,18 @@ export const PlaybillScanModal = ({ isOpen, onClose, onExperiencesAdded }) => {
     onClose()
   }
 
-  const handleFileSelect = async (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    if (file.size > 10 * 1024 * 1024) {
-      setError('Image must be under 10MB')
-      return
-    }
+  const handleCapture = async () => {
+    const result = await pickImage({ camera: true })
+    if (!result) return
 
     setError(null)
     setDetectedExperiences(null)
-    setImagePreview(URL.createObjectURL(file))
-    imageFileRef.current = file
+    setImagePreview(result.previewUrl)
+    imageFileRef.current = result.blob
     setScanning(true)
 
     try {
-      // Convert to base64
-      const buffer = await file.arrayBuffer()
-      const bytes = new Uint8Array(buffer)
-      let binary = ''
-      for (let i = 0; i < bytes.length; i++) {
-        binary += String.fromCharCode(bytes[i])
-      }
-      const imageBase64 = btoa(binary)
+      const imageBase64 = result.base64
 
       const { data, error: invokeError } = await supabase.functions.invoke('vision-scan', {
         body: { image_base64: imageBase64, mode: 'playbill' },
@@ -154,17 +142,8 @@ export const PlaybillScanModal = ({ isOpen, onClose, onExperiencesAdded }) => {
               Take a photo of a playbill, event ticket, or concert poster. We'll extract the event details.
             </p>
 
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={handleFileSelect}
-              style={{ display: 'none' }}
-            />
-
             <button
-              onClick={() => fileRef.current?.click()}
+              onClick={handleCapture}
               style={{
                 padding: '20px',
                 background: '#FFFEFA',

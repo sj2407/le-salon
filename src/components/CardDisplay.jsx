@@ -454,6 +454,7 @@ export const CardDisplay = ({
             sectionName={categoryName}
             notes={sectionNotes}
             isOwner={!isFriendView}
+            isVisible={isFlipped}
             currentUserId={currentUserId}
             onFlipBack={() => handleFlipSection(categoryName)}
             onMarkRead={onMarkNotesRead}

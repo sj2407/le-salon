@@ -46,12 +46,40 @@ export const ToastContainer = ({ toasts, onRemove }) => {
               boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
               pointerEvents: 'auto',
               cursor: 'pointer',
-              textAlign: 'center',
               width: '100%',
               boxSizing: 'border-box',
+              display: toast.actionLabel ? 'flex' : 'block',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px',
+              textAlign: toast.actionLabel ? 'left' : 'center',
             }}
           >
-            {toast.message}
+            <span style={{ flex: 1 }}>{toast.message}</span>
+            {toast.actionLabel && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  toast.onAction?.()
+                  onRemove(toast.id)
+                }}
+                style={{
+                  background: 'rgba(255,255,255,0.2)',
+                  border: '1px solid rgba(255,255,255,0.4)',
+                  borderRadius: '4px',
+                  color: '#FFFEFA',
+                  fontFamily: "'Caveat', cursive",
+                  fontSize: '16px',
+                  fontWeight: 600,
+                  padding: '4px 12px',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  fontStyle: 'normal',
+                }}
+              >
+                {toast.actionLabel}
+              </button>
+            )}
           </Motion.div>
         ))}
       </AnimatePresence>

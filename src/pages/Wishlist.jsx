@@ -8,13 +8,17 @@ import { CoverThumbnail } from '../components/cover-search/CoverThumbnail'
 import { typeToMediaType, fetchBestBookCover } from '../lib/coverSearchApis'
 import { scrollLock } from '../lib/scrollLock'
 import { Plus } from '@phosphor-icons/react'
+import { ConfirmModal } from '../components/ConfirmModal'
 import { AspirationalPreview } from '../components/AspirationalPreview'
+
+// Module-level cache — survives unmount, instant render on return
+let _wishlistCache = null
 
 export const Wishlist = () => {
   const { profile } = useAuth()
   const toast = useToast()
-  const [items, setItems] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [items, setItems] = useState(_wishlistCache || [])
+  const [loading, setLoading] = useState(!_wishlistCache)
   const [showModal, setShowModal] = useState(false)
   const [editingItem, setEditingItem] = useState(null)
   const [name, setName] = useState('')
@@ -23,6 +27,7 @@ export const Wishlist = () => {
   const [error, setError] = useState('')
   const [imageUrl, setImageUrl] = useState('')
   const [showCoverSearch, setShowCoverSearch] = useState(false)
+  const [confirmState, setConfirmState] = useState(null)
 
   // Track initial form values to detect dirty state
   const initialFormRef = useRef(null)
@@ -46,18 +51,34 @@ export const Wishlist = () => {
     if (bookItems.length === 0) return
 
     ;(async () => {
-      let updated = 0
-      for (const item of bookItems) {
-        const betterUrl = await fetchBestBookCover(item.name)
-        if (betterUrl && betterUrl !== item.image_url) {
-          await supabase
-            .from('wishlist_items')
-            .update({ image_url: betterUrl })
-            .eq('id', item.id)
-          updated++
+      // Fetch all covers in parallel
+      const results = await Promise.all(
+        bookItems.map(async (item) => ({
+          item,
+          betterUrl: await fetchBestBookCover(item.name)
+        }))
+      )
+      const toUpdate = results.filter(({ item, betterUrl }) =>
+        betterUrl && betterUrl !== item.image_url
+      )
+      if (toUpdate.length === 0) return
+      // Parallel DB writes — all at once
+      await Promise.all(toUpdate.map(({ item, betterUrl }) =>
+        supabase.from('wishlist_items')
+          .update({ image_url: betterUrl })
+          .eq('id', item.id)
+      ))
+      // Single state update — all covers appear simultaneously
+      setItems(prev => {
+        let updated = prev
+        for (const { item, betterUrl } of toUpdate) {
+          updated = updated.map(i =>
+            i.id === item.id ? { ...i, image_url: betterUrl } : i
+          )
         }
-      }
-      if (updated > 0) fetchWishlistItems()
+        _wishlistCache = updated
+        return updated
+      })
     })()
   }, [items])
 
@@ -85,7 +106,7 @@ export const Wishlist = () => {
 
   const fetchWishlistItems = async () => {
     try {
-      setLoading(true)
+      if (!_wishlistCache) setLoading(true)
       const { data, error } = await supabase
         .from('wishlist_items')
         .select('*')
@@ -93,7 +114,8 @@ export const Wishlist = () => {
         .order('created_at', { ascending: false })
 
       if (error) throw error
-      setItems(data || [])
+      _wishlistCache = data || []
+      setItems(_wishlistCache)
     } catch (_err) {
       // silently handled
     } finally {
@@ -172,21 +194,24 @@ export const Wishlist = () => {
     }
   }
 
-  const handleDelete = async (itemId) => {
-    if (!confirm('Delete this item from your wishlist?')) return
+  const handleDelete = (itemId) => {
+    setConfirmState({
+      message: 'Delete this item from your wishlist?',
+      onConfirm: async () => {
+        try {
+          const { error } = await supabase
+            .from('wishlist_items')
+            .delete()
+            .eq('id', itemId)
 
-    try {
-      const { error } = await supabase
-        .from('wishlist_items')
-        .delete()
-        .eq('id', itemId)
-
-      if (error) throw error
-      fetchWishlistItems()
-      toast.success('Removed from wishlist')
-    } catch (_err) {
-      toast.error('Failed to delete item')
-    }
+          if (error) throw error
+          fetchWishlistItems()
+          toast.success('Removed from wishlist')
+        } catch (_err) {
+          toast.error('Failed to delete item')
+        }
+      }
+    })
   }
 
   if (loading) {
@@ -369,6 +394,16 @@ export const Wishlist = () => {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={!!confirmState}
+        onClose={() => setConfirmState(null)}
+        onConfirm={async () => { await confirmState?.onConfirm(); setConfirmState(null) }}
+        title="Confirm"
+        message={confirmState?.message || ''}
+        confirmText="Delete"
+        destructive
+      />
     </AspirationalPreview>
   )
 }

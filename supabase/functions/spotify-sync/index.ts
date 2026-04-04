@@ -1,10 +1,17 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { getCorsHeaders } from '../_shared/cors.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+/** Constant-time string comparison to prevent timing attacks on shared secrets. */
+function timingSafeEqual(a: string, b: string): boolean {
+  const enc = new TextEncoder();
+  const aBytes = enc.encode(a);
+  const bBytes = enc.encode(b);
+  if (aBytes.length !== bBytes.length) return false;
+  let diff = 0;
+  for (let i = 0; i < aBytes.length; i++) diff |= aBytes[i] ^ bBytes[i];
+  return diff === 0;
+}
 
 /**
  * Spotify Sync — fetch top artists, top tracks, audio features;
@@ -185,6 +192,7 @@ function classifyMood(valence: number, energy: number): { label: string; line: s
 // ── Main handler ────────────────────────────────────────────────────────
 
 Deno.serve(async (req: Request) => {
+  const corsHeaders = getCorsHeaders(req);
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -203,14 +211,32 @@ Deno.serve(async (req: Request) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    // Determine user_id: from body (cron) or from JWT (client)
+    // Determine user_id: cron (with secret) may pass body user_id; clients use JWT
     let userId: string;
     const body = await req.json().catch(() => ({}));
+    const cronSecret = req.headers.get('x-cron-secret');
 
-    if (body.user_id) {
-      // Cron call — trust the body
+    if (cronSecret) {
+      // Cron path — verify the shared secret before trusting body user_id
+      const { data: secrets } = await supabaseAdmin.rpc('get_secret', {
+        secret_name: 'cron_secret',
+      });
+      const expectedSecret = secrets?.[0]?.secret;
+      if (!expectedSecret || !timingSafeEqual(cronSecret, expectedSecret)) {
+        return new Response(
+          JSON.stringify({ error: 'Forbidden' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      if (!body.user_id) {
+        return new Response(
+          JSON.stringify({ error: 'user_id is required for cron calls' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
       userId = body.user_id;
     } else {
+      // Client path — extract trusted user ID from JWT
       const supabaseUser = createClient(
         Deno.env.get('SUPABASE_URL')!,
         Deno.env.get('SUPABASE_ANON_KEY')!,
@@ -224,6 +250,28 @@ Deno.serve(async (req: Request) => {
         );
       }
       userId = user.id;
+      // Reject if body user_id doesn't match JWT (prevent IDOR)
+      if (body.user_id && body.user_id !== userId) {
+        return new Response(
+          JSON.stringify({ error: 'Forbidden: user_id mismatch' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+    // Rate limit: 10 per 24 hours
+    const { data: allowed } = await supabaseAdmin.rpc('check_rate_limit', {
+      p_user_id: userId,
+      p_function_name: 'spotify-sync',
+      p_max_requests: 10,
+      p_window_minutes: 1440,
+    });
+
+    if (allowed === false) {
+      return new Response(
+        JSON.stringify({ error: 'Rate limit exceeded — max 10 syncs per 24 hours' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Get tokens (service_role bypasses RLS)
@@ -402,7 +450,7 @@ Deno.serve(async (req: Request) => {
   } catch (err) {
     console.error('spotify-sync error:', err);
     return new Response(
-      JSON.stringify({ error: err.message }),
+      JSON.stringify({ error: 'Something went wrong. Please try again.' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

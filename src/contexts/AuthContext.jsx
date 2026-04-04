@@ -1,5 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
+import { Capacitor } from '@capacitor/core'
 import { supabase } from '../lib/supabase'
+import { getRedirectUrl } from '../lib/redirectUrl'
 
 const AuthContext = createContext({})
 
@@ -32,11 +34,12 @@ export const AuthProvider = ({ children }) => {
     })
 
     // Listen for auth changes — skip token refreshes that don't change the user
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       const newUserId = session?.user?.id ?? null
 
-      // Same user (e.g. token refresh on tab switch) — don't update state
-      if (newUserId && newUserId === currentUserIdRef.current) return
+      // Token refresh for same user (e.g. tab switch) — don't update state
+      // Allow SIGNED_IN events through even for same user (needed for PKCE code exchange)
+      if (event === 'TOKEN_REFRESHED' && newUserId === currentUserIdRef.current) return
 
       currentUserIdRef.current = newUserId
       setUser(session?.user ?? null)
@@ -100,8 +103,73 @@ export const AuthProvider = ({ children }) => {
     return data
   }
 
+  const signInWithOAuthProvider = async (provider) => {
+    const redirectUrl = getRedirectUrl()
+
+    if (Capacitor.isNativePlatform()) {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: { redirectTo: redirectUrl, skipBrowserRedirect: true }
+      })
+      if (error) throw error
+      const { Browser } = await import('@capacitor/browser')
+      await Browser.open({ url: data.url })
+    } else {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: { redirectTo: redirectUrl }
+      })
+      if (error) throw error
+    }
+  }
+
+  const signInWithApple = async () => {
+    if (!Capacitor.isNativePlatform()) {
+      // Web fallback: use OAuth redirect
+      return signInWithOAuthProvider('apple')
+    }
+
+    const { SignInWithApple } = await import('@capacitor-community/apple-sign-in')
+    const result = await SignInWithApple.authorize({
+      clientId: 'app.lesalon',
+      redirectURI: '',
+      scopes: 'email name',
+    })
+
+    const { data, error } = await supabase.auth.signInWithIdToken({
+      provider: 'apple',
+      token: result.response.identityToken,
+    })
+    if (error) throw error
+
+    // Apple only provides name on FIRST sign-in — save immediately
+    if (result.response.givenName || result.response.familyName) {
+      const fullName = [result.response.givenName, result.response.familyName]
+        .filter(Boolean).join(' ')
+      await supabase.auth.updateUser({ data: { full_name: fullName } })
+      if (data.user) {
+        await supabase.from('profiles').update({ display_name: fullName }).eq('id', data.user.id)
+      }
+    }
+
+    return data
+  }
+
   const signOut = async () => {
+    // Clean up device push token before signing out (privacy: prevents
+    // the next user on this device from receiving the previous user's pushes)
+    if (Capacitor.isNativePlatform() && user) {
+      try {
+        const { PushNotifications } = await import('@capacitor/push-notifications')
+        // Remove all tokens for this user on this device
+        await supabase.from('device_tokens').delete().eq('user_id', user.id)
+        await PushNotifications.removeAllListeners()
+      } catch {
+        // Non-fatal — don't block logout if cleanup fails
+      }
+    }
     sessionStorage.removeItem('salon-intro-played')
+    sessionStorage.removeItem('salon-biometric-unlocked')
     const { error } = await supabase.auth.signOut()
     if (error) throw error
   }
@@ -118,6 +186,8 @@ export const AuthProvider = ({ children }) => {
     loading,
     signUp,
     signIn,
+    signInWithOAuthProvider,
+    signInWithApple,
     signOut,
     refreshProfile,
   }

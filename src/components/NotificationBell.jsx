@@ -15,11 +15,19 @@ export const NotificationBell = () => {
   const dropdownRef = useRef(null)
 
   useEffect(() => {
-    if (profile) {
-      fetchUnreadCount()
+    if (!profile) return
+    fetchUnreadCount()
 
-      // Subscribe to real-time notifications
-      const channel = supabase
+    let channel
+    let cancelled = false
+
+    const setup = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (cancelled) return
+      if (session?.access_token) {
+        supabase.realtime.setAuth(session.access_token)
+      }
+      channel = supabase
         .channel('notifications-realtime')
         .on(
           'postgres_changes',
@@ -29,15 +37,15 @@ export const NotificationBell = () => {
             table: 'notifications',
             filter: `user_id=eq.${profile.id}`
           },
-          () => {
-            fetchUnreadCount()
-          }
+          () => { fetchUnreadCount() }
         )
         .subscribe()
+    }
+    setup()
 
-      return () => {
-        supabase.removeChannel(channel)
-      }
+    return () => {
+      cancelled = true
+      if (channel) supabase.removeChannel(channel)
     }
   }, [profile])
 
@@ -111,8 +119,15 @@ export const NotificationBell = () => {
       const notificationIds = unread.map(n => n.id)
       await markAllAsRead(notificationIds)
 
-      // Clear badge
+      // Clear badge + iOS app icon badge
       setUnreadCount(0)
+      try {
+        const { Capacitor } = await import('@capacitor/core')
+        if (Capacitor.isNativePlatform()) {
+          const { PushNotifications } = await import('@capacitor/push-notifications')
+          await PushNotifications.removeAllDeliveredNotifications()
+        }
+      } catch { /* non-fatal */ }
       setIsOpen(true)
     } else {
       // Closing dropdown

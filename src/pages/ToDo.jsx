@@ -8,6 +8,7 @@ import { FilterDropdown } from '../components/FilterDropdown'
 import { ActivityCard } from '../components/ActivityCard'
 import { CoverSearchModal } from '../components/cover-search/CoverSearchModal'
 import { useScrollLock } from '../hooks/useScrollLock'
+import { ConfirmModal } from '../components/ConfirmModal'
 import { useEscapeClose } from '../hooks/useEscapeClose'
 import { Plus } from '@phosphor-icons/react'
 
@@ -96,6 +97,7 @@ export const ToDo = () => {
   const [imageUrl, setImageUrl] = useState('')
   const [showCoverSearch, setShowCoverSearch] = useState(false)
   const [error, setError] = useState('')
+  const [confirmState, setConfirmState] = useState(null)
 
   // Track initial form values to detect dirty state
   const initialFormRef = useRef(null)
@@ -302,21 +304,24 @@ export const ToDo = () => {
     }
   }
 
-  const handleDelete = async (activityId) => {
-    if (!confirm('Delete this activity?')) return
+  const handleDelete = (activityId) => {
+    setConfirmState({
+      message: 'Delete this activity?',
+      onConfirm: async () => {
+        try {
+          const { error } = await supabase
+            .from('activities')
+            .delete()
+            .eq('id', activityId)
 
-    try {
-      const { error } = await supabase
-        .from('activities')
-        .delete()
-        .eq('id', activityId)
-
-      if (error) throw error
-      fetchActivities()
-      toast.success('Activity deleted')
-    } catch (_err) {
-      toast.error('Failed to delete activity')
-    }
+          if (error) throw error
+          fetchActivities()
+          toast.success('Activity deleted')
+        } catch (_err) {
+          toast.error('Failed to delete activity')
+        }
+      }
+    })
   }
 
   const toggleInterest = async (activityId) => {
@@ -707,6 +712,16 @@ export const ToDo = () => {
           }}
         />
       )}
+
+      <ConfirmModal
+        isOpen={!!confirmState}
+        onClose={() => setConfirmState(null)}
+        onConfirm={async () => { await confirmState?.onConfirm(); setConfirmState(null) }}
+        title="Confirm"
+        message={confirmState?.message || ''}
+        confirmText="Delete"
+        destructive
+      />
     </div>
   )
 }

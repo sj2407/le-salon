@@ -17,6 +17,10 @@ import { BookshelfScanModal } from '../components/portrait/BookshelfScanModal'
 import { PlaybillScanModal } from '../components/portrait/PlaybillScanModal'
 import { CoverSearchModal } from '../components/cover-search/CoverSearchModal'
 import { AspirationalPreview } from '../components/AspirationalPreview'
+import { ConfirmModal } from '../components/ConfirmModal'
+
+// Module-level cache — survives unmount, instant render on return
+let _portraitCache = null // { userId, spotifyProfile, books, readingThemes, readingGraph, creations, experiences }
 
 /**
  * Portrait tab page — fetches live data, manages all interactions.
@@ -28,14 +32,16 @@ export const Portrait = ({ userId: friendUserId }) => {
   const isOwner = !friendUserId
   const targetUserId = friendUserId || profile?.id
 
+  const _cached = _portraitCache?.userId === targetUserId ? _portraitCache : null
+
   // Data state
-  const [spotifyProfile, setSpotifyProfile] = useState(null)
-  const [books, setBooks] = useState([])
-  const [readingThemes, setReadingThemes] = useState(null)
-  const [readingGraph, setReadingGraph] = useState(null)
-  const [creations, setCreations] = useState([])
-  const [experiences, setExperiences] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [spotifyProfile, setSpotifyProfile] = useState(_cached?.spotifyProfile || null)
+  const [books, setBooks] = useState(_cached?.books || [])
+  const [readingThemes, setReadingThemes] = useState(_cached?.readingThemes || null)
+  const [readingGraph, setReadingGraph] = useState(_cached?.readingGraph || null)
+  const [creations, setCreations] = useState(_cached?.creations || [])
+  const [experiences, setExperiences] = useState(_cached?.experiences || [])
+  const [loading, setLoading] = useState(!_cached)
   const [spotifyConnecting, setSpotifyConnecting] = useState(false)
   const [spotifyError, setSpotifyError] = useState(null)
 
@@ -59,15 +65,15 @@ export const Portrait = ({ userId: friendUserId }) => {
   const [selectedBook, setSelectedBook] = useState(null)
   const [bookPopoverRect, setBookPopoverRect] = useState(null)
   const [coverSearchBook, setCoverSearchBook] = useState(null) // book being cover-searched
+  const [confirmState, setConfirmState] = useState(null)
 
   // --- Helper: call an Edge Function with auth ---
   const callEdgeFunction = async (name, body = {}) => {
-    // Force a session refresh to get a fresh JWT (critical after full-page redirects like Spotify OAuth)
-    let { data: { session } } = await supabase.auth.refreshSession()
+    // Use cached session first, refresh only if missing/expired
+    let { data: { session } } = await supabase.auth.getSession()
     if (!session) {
-      // Fallback: try stored session
-      const stored = await supabase.auth.getSession()
-      session = stored.data?.session
+      const refreshed = await supabase.auth.refreshSession()
+      session = refreshed.data?.session
     }
     if (!session) {
       throw new Error('Not authenticated — please sign in again')
@@ -183,9 +189,10 @@ export const Portrait = ({ userId: friendUserId }) => {
 
   const fetchAllData = async () => {
     try {
-      setLoading(true)
+      const hadCache = _portraitCache?.userId === targetUserId
+      if (!hadCache) setLoading(true)
 
-      const [spotifyResult, booksResult, creationsResult, experiencesResult] = await Promise.all([
+      const [spotifyResult, booksResult, creationsResult, experiencesResult, profileResult] = await Promise.all([
         supabase
           .from('spotify_profiles')
           .select('*')
@@ -207,45 +214,60 @@ export const Portrait = ({ userId: friendUserId }) => {
           .select('*')
           .eq('user_id', targetUserId)
           .order('date', { ascending: false }),
+        supabase
+          .from('profiles')
+          .select('reading_themes, reading_graph')
+          .eq('id', targetUserId)
+          .single(),
       ])
 
-      const fetchedBooks = booksResult.data && !booksResult.error ? booksResult.data : []
-      setSpotifyProfile(spotifyResult.data && !spotifyResult.error ? spotifyResult.data : null)
-      setBooks(fetchedBooks)
-      setCreations(creationsResult.data && !creationsResult.error ? creationsResult.data : [])
-      setExperiences(experiencesResult.data && !experiencesResult.error ? experiencesResult.data : [])
-
-      // Reading themes from profiles table
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('reading_themes, reading_graph')
-        .eq('id', targetUserId)
-        .single()
-      const themes = profileData?.reading_themes || null
-      setReadingThemes(themes)
-      setReadingGraph(profileData?.reading_graph || null)
-
-      // Enrich missing covers/genres (owner only)
-      if (isOwner && fetchedBooks.length >= 1) {
-        if (fetchedBooks.some(b => !b.cover_url || !b.goodreads_genres)) {
-          triggerCoverEnrichment(targetUserId)
-        }
-      }
-
-      // Generate reading themes if user has books — works for owner AND friend view
-      // (populates on first visit so portraits aren't blank)
-      if (fetchedBooks.length >= 1) {
-        triggerReadingThemes(targetUserId)
-      }
-
-      // Auto-generate portrait prose if data exists but prose is missing or stale (owner only)
       const sp = spotifyResult.data && !spotifyResult.error ? spotifyResult.data : null
-      const hasAnyData = sp?.is_active || fetchedBooks.length > 0 ||
-        (experiencesResult.data?.length > 0) || (creationsResult.data?.length > 0)
-      const isPortraitStale = sp?.portrait_generated_at &&
-        (Date.now() - new Date(sp.portrait_generated_at).getTime()) > 30 * 24 * 3600 * 1000
-      if (isOwner && hasAnyData && (!sp?.portrait_text || isPortraitStale)) {
-        triggerPortraitGeneration()
+      const fetchedBooks = booksResult.data && !booksResult.error ? booksResult.data : []
+      const fetchedCreations = creationsResult.data && !creationsResult.error ? creationsResult.data : []
+      const fetchedExperiences = experiencesResult.data && !experiencesResult.error ? experiencesResult.data : []
+      const themes = profileResult.data?.reading_themes || null
+      const graph = profileResult.data?.reading_graph || null
+
+      setSpotifyProfile(sp)
+      setBooks(fetchedBooks)
+      setCreations(fetchedCreations)
+      setExperiences(fetchedExperiences)
+      setReadingThemes(themes)
+      setReadingGraph(graph)
+
+      // Update cache
+      _portraitCache = {
+        userId: targetUserId,
+        spotifyProfile: sp,
+        books: fetchedBooks,
+        readingThemes: themes,
+        readingGraph: graph,
+        creations: fetchedCreations,
+        experiences: fetchedExperiences,
+      }
+
+      // Only trigger edge functions on first load (not cache-hit return visits)
+      if (!hadCache) {
+        // Enrich missing covers/genres (owner only)
+        if (isOwner && fetchedBooks.length >= 1) {
+          if (fetchedBooks.some(b => !b.cover_url || !b.goodreads_genres)) {
+            triggerCoverEnrichment(targetUserId)
+          }
+        }
+
+        // Generate reading themes (owner only — friend view uses saved data from fetchAllData)
+        if (isOwner && fetchedBooks.length >= 1) {
+          triggerReadingThemes(targetUserId)
+        }
+
+        // Auto-generate portrait prose if data exists but prose is missing or stale (owner only)
+        const hasAnyData = sp?.is_active || fetchedBooks.length > 0 ||
+          fetchedExperiences.length > 0 || fetchedCreations.length > 0
+        const isPortraitStale = sp?.portrait_generated_at &&
+          (Date.now() - new Date(sp.portrait_generated_at).getTime()) > 30 * 24 * 3600 * 1000
+        if (isOwner && hasAnyData && (!sp?.portrait_text || isPortraitStale)) {
+          triggerPortraitGeneration()
+        }
       }
     } catch (_err) {
       // Leave empty state — user starts from scratch
@@ -309,9 +331,13 @@ export const Portrait = ({ userId: friendUserId }) => {
     }
   }
 
-  const handleDeleteCreation = async (creationId) => {
-    if (!confirm('Delete this creation?')) return
-    await deleteCreation(creationId)
+  const handleDeleteCreation = (creationId) => {
+    setConfirmState({
+      message: 'Delete this creation?',
+      onConfirm: async () => {
+        await deleteCreation(creationId)
+      }
+    })
   }
 
   // --- Modal open callbacks ---
@@ -602,6 +628,16 @@ export const Portrait = ({ userId: friendUserId }) => {
           />
         </>
       )}
+
+      <ConfirmModal
+        isOpen={!!confirmState}
+        onClose={() => setConfirmState(null)}
+        onConfirm={async () => { await confirmState?.onConfirm(); setConfirmState(null) }}
+        title="Confirm"
+        message={confirmState?.message || ''}
+        confirmText="Delete"
+        destructive
+      />
     </div>
     </AspirationalPreview>
   )

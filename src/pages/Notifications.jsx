@@ -106,7 +106,27 @@ export const Notifications = () => {
     }
   }
 
-  const handleNotificationClick = (notification) => {
+  const handleNotificationClick = async (notification) => {
+    // Mark as read if unread
+    if (!notification.read) {
+      await supabase
+        .from('notifications')
+        .update({ read: true })
+        .eq('id', notification.id)
+      // Update local state so the UI reflects the change
+      const updated = notifications.map(n => n.id === notification.id ? { ...n, read: true } : n)
+      setNotifications(updated)
+      // If no more unread, clear the iOS app icon badge
+      if (!updated.some(n => !n.read)) {
+        try {
+          const { Capacitor } = await import('@capacitor/core')
+          if (Capacitor.isNativePlatform()) {
+            const { PushNotifications } = await import('@capacitor/push-notifications')
+            await PushNotifications.removeAllDeliveredNotifications()
+          }
+        } catch { /* non-fatal */ }
+      }
+    }
     const route = getNotificationRoute(notification)
     if (route) navigate(route)
   }

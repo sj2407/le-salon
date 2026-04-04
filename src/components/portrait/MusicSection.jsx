@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { QuillMenu } from './QuillMenu'
 import { TrackPreviewButton } from './TrackPreviewButton'
 import { LISTENING_MODE_LABELS } from './portraitConstants'
+import { ConfirmModal } from '../ConfirmModal'
 
 /**
  * Music section — top 3 artists, top 3 tracks, top 3 genres, mood,
@@ -9,6 +10,7 @@ import { LISTENING_MODE_LABELS } from './portraitConstants'
  */
 export const MusicSection = ({ spotifyProfile, onSeeAll, isOwner, onConnectSpotify, onDisconnectSpotify, connecting, error }) => {
   const [hoveredArtist, setHoveredArtist] = useState(null)
+  const [confirmState, setConfirmState] = useState(null)
 
   // Empty state
   if (!spotifyProfile || !spotifyProfile.is_active) {
@@ -101,9 +103,14 @@ export const MusicSection = ({ spotifyProfile, onSeeAll, isOwner, onConnectSpoti
           label: 'Disconnect Spotify',
           color: '#C75D5D',
           onClick: () => {
-            if (confirm('Disconnect Spotify? Your music data will be hidden.')) {
-              onDisconnectSpotify()
-            }
+            setConfirmState({
+              message: 'Disconnect Spotify? Your music data will be hidden.',
+              confirmText: 'Disconnect',
+              destructive: true,
+              onConfirm: async () => {
+                onDisconnectSpotify()
+              },
+            })
           },
         }]} />
       )}
@@ -292,6 +299,15 @@ export const MusicSection = ({ spotifyProfile, onSeeAll, isOwner, onConnectSpoti
         </div>
       )}
 
+      <ConfirmModal
+        isOpen={!!confirmState}
+        onClose={() => setConfirmState(null)}
+        onConfirm={async () => { await confirmState?.onConfirm(); setConfirmState(null) }}
+        title="Confirm"
+        message={confirmState?.message || ''}
+        confirmText={confirmState?.confirmText || 'Disconnect'}
+        destructive={confirmState?.destructive ?? true}
+      />
     </>
   )
 }

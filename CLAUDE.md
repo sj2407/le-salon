@@ -56,6 +56,14 @@ Refer to the README.md "Design System" section for:
 - Match existing patterns in the codebase
 - Use inline styles consistently with existing components
 
+## Debugging — Evidence First
+
+**Debug with evidence, not theories.** When something fails: find the error first (logs, tests, CLI output, devtools). If no error is visible, add instrumentation (console.log, intermediate assertions, step-by-step traces) to make the failure observable. Search online for exact error messages. Only fix what the evidence points to. Remove instrumentation after the fix. Never ask the user to test a hypothesis — only test confirmed fixes.
+
+## Dependencies — Verify End-to-End
+
+**Verify every new dependency works before building on it.** Check compatibility at all layers — not just install, but build, resolve, and runtime. Search online for known issues with the specific version + your stack. Run the build system's dependency resolver and confirm zero errors. A successful `npm install` is not verification — a successful run on the target device is.
+
 ## Execution Best Practices
 
 - **Change ONLY what is requested** - when asked to move one element, move only that element. Use `transform: translateY()` to move elements visually without affecting layout of siblings.
@@ -63,6 +71,7 @@ Refer to the README.md "Design System" section for:
 - **My Corner views are the benchmark** - when there's a discrepancy between My Corner and Friend views, always adjust Friend to match My Corner, never the reverse.
 - **Math over intuition** - if a solution needs math (scroll positions, indices, layout), write the equation. Don't reach for DOM heuristics (IntersectionObserver, getBoundingClientRect, data-attribute queries) when arithmetic works: `index = Math.round(scrollLeft / slideWidth)`. If you can't figure out the math, ask for help.
 - **Don't fight React** - never use direct DOM manipulation (`ref.textContent`) for content React also renders. Let React own it (state) or let the DOM own it (no React children). Never both.
+- **iOS input zoom** - NEVER set `font-size` below `16px` on `input`, `textarea`, or `select` elements. iOS auto-zooms the viewport when inputs are below 16px, and the zoom persists across pages. If you need inputs to visually appear smaller, use `font-size: 16px` with `transform: scale(0.85)` + `transformOrigin: left top` + `width: 117.65%` (see `.profile-edit-compact` in index.css for the pattern).
 
 ## Shared Components Architecture
 

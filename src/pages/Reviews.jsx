@@ -16,6 +16,7 @@ import { TAG_TO_MEDIA_TYPE } from '../lib/coverSearchApis'
 import { Microphone, Plus } from '@phosphor-icons/react'
 import { ReviewNotesSection } from '../components/review-notes/ReviewNotesSection'
 import { AspirationalPreview } from '../components/AspirationalPreview'
+import { ConfirmModal } from '../components/ConfirmModal'
 
 // Module-level caches — survive unmount, instant render on return
 let _reviewsCache = null
@@ -51,6 +52,7 @@ export const Reviews = () => {
   const [modalNoteIsQuote, setModalNoteIsQuote] = useState(false)
   const [modalNotePageRef, setModalNotePageRef] = useState('')
   const [showModalNoteForm, setShowModalNoteForm] = useState(false)
+  const [confirmState, setConfirmState] = useState(null)
 
   // Track initial form values to detect dirty state
   const initialFormRef = useRef(null)
@@ -700,21 +702,24 @@ export const Reviews = () => {
     }
   }
 
-  const handleDelete = async (reviewId) => {
-    if (!confirm('Delete this review?')) return
+  const handleDelete = (reviewId) => {
+    setConfirmState({
+      message: 'Delete this review?',
+      onConfirm: async () => {
+        try {
+          const { error } = await supabase
+            .from('reviews')
+            .delete()
+            .eq('id', reviewId)
 
-    try {
-      const { error } = await supabase
-        .from('reviews')
-        .delete()
-        .eq('id', reviewId)
-
-      if (error) throw error
-      fetchReviews()
-      toast.success('Review deleted')
-    } catch (_err) {
-      toast.error('Failed to delete review')
-    }
+          if (error) throw error
+          fetchReviews()
+          toast.success('Review deleted')
+        } catch (_err) {
+          toast.error('Failed to delete review')
+        }
+      }
+    })
   }
 
   const handleDictationSave = async (transcript) => {
@@ -1260,6 +1265,16 @@ export const Reviews = () => {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={!!confirmState}
+        onClose={() => setConfirmState(null)}
+        onConfirm={async () => { await confirmState?.onConfirm(); setConfirmState(null) }}
+        title="Confirm"
+        message={confirmState?.message || ''}
+        confirmText="Delete"
+        destructive
+      />
     </AspirationalPreview>
   )
 }

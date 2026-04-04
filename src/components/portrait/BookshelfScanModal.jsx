@@ -1,7 +1,8 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { PortraitModal } from './PortraitModal'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
+import { useNativeCamera } from '../../hooks/useNativeCamera'
 
 /**
  * Interactive star rating — 5 stars, maps to 0-10 scale (2,4,6,8,10).
@@ -53,7 +54,7 @@ export const BookshelfScanModal = ({ isOpen, onClose, onBooksAdded }) => {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
-  const fileRef = useRef(null)
+  const { pickImage } = useNativeCamera()
 
   // Rating step
   const [step, setStep] = useState('upload') // 'upload' | 'rate'
@@ -72,7 +73,6 @@ export const BookshelfScanModal = ({ isOpen, onClose, onBooksAdded }) => {
     setAddedBooks([])
     setRatings({})
     setSavingRatings(false)
-    if (fileRef.current) fileRef.current.value = ''
   }
 
   const handleClose = () => {
@@ -80,29 +80,17 @@ export const BookshelfScanModal = ({ isOpen, onClose, onBooksAdded }) => {
     onClose()
   }
 
-  const handleFileSelect = async (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    if (file.size > 10 * 1024 * 1024) {
-      setError('Image must be under 10MB')
-      return
-    }
+  const handleCapture = async () => {
+    const result = await pickImage({ camera: true })
+    if (!result) return
 
     setError(null)
     setDetectedBooks(null)
-    setImagePreview(URL.createObjectURL(file))
+    setImagePreview(result.previewUrl)
     setScanning(true)
 
     try {
-      // Convert to base64
-      const buffer = await file.arrayBuffer()
-      const bytes = new Uint8Array(buffer)
-      let binary = ''
-      for (let i = 0; i < bytes.length; i++) {
-        binary += String.fromCharCode(bytes[i])
-      }
-      const imageBase64 = btoa(binary)
+      const imageBase64 = result.base64
 
       const { data, error: invokeError } = await supabase.functions.invoke('vision-scan', {
         body: { image_base64: imageBase64, mode: 'bookshelf' },
@@ -274,17 +262,8 @@ export const BookshelfScanModal = ({ isOpen, onClose, onBooksAdded }) => {
                   Take a photo of your bookshelf. We'll detect the titles and add them to your library.
                 </p>
 
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  onChange={handleFileSelect}
-                  style={{ display: 'none' }}
-                />
-
                 <button
-                  onClick={() => fileRef.current?.click()}
+                  onClick={handleCapture}
                   style={{
                     padding: '20px',
                     background: '#FFFEFA',

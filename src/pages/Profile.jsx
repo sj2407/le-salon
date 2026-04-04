@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
+import { useNativeCamera } from '../hooks/useNativeCamera'
 
 export const Profile = () => {
   const { profile, user, refreshProfile } = useAuth()
@@ -21,6 +22,7 @@ export const Profile = () => {
   const [message, setMessage] = useState('')
   const dragRef = useRef(null)
   const imgRef = useRef(null)
+  const { pickImage } = useNativeCamera()
 
   useEffect(() => {
     if (profile) {
@@ -38,22 +40,13 @@ export const Profile = () => {
     }
   }, [profile])
 
-  const handlePhotoChange = (e) => {
-    const file = e.target.files[0]
-    if (file) {
-      if (file.size > 10 * 1024 * 1024) {
-        setMessage('Photo must be under 10MB')
-        return
-      }
-      setPhotoFile(file)
-      setPhotoPosition('50% 50%')
-      setMessage('')
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setPhotoUrl(reader.result)
-      }
-      reader.readAsDataURL(file)
-    }
+  const handlePhotoChange = async () => {
+    const result = await pickImage({ camera: false })
+    if (!result) return
+    setPhotoFile(result.blob)
+    setPhotoPosition('50% 50%')
+    setMessage('')
+    setPhotoUrl(result.previewUrl)
   }
 
   // Drag-to-reposition: convert pointer movement to object-position %
@@ -234,7 +227,7 @@ export const Profile = () => {
             )}
 
             <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'center', gap: '12px' }}>
-              <label htmlFor="photo-upload" style={{
+              <button type="button" onClick={handlePhotoChange} style={{
                 padding: '8px 20px',
                 border: 'none',
                 background: 'none',
@@ -243,14 +236,7 @@ export const Profile = () => {
                 color: '#777',
               }}>
                 {photoUrl ? 'Change Photo' : 'Upload Photo'}
-              </label>
-              <input
-                id="photo-upload"
-                type="file"
-                accept="image/*"
-                onChange={handlePhotoChange}
-                style={{ display: 'none' }}
-              />
+              </button>
               <button
                 type="button"
                 disabled={loading}

@@ -1,11 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { parse } from "jsr:@std/csv";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { getCorsHeaders } from '../_shared/cors.ts';
 
 const GOOGLE_BOOKS_API = 'https://www.googleapis.com/books/v1/volumes';
 
@@ -52,6 +48,7 @@ async function enrichFromGoogleBooks(title: string, author: string | null) {
 }
 
 Deno.serve(async (req: Request) => {
+  const corsHeaders = getCorsHeaders(req);
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -78,6 +75,25 @@ Deno.serve(async (req: Request) => {
       return new Response(
         JSON.stringify({ error: 'Could not verify user' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Rate limit: 3 per 24 hours
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
+    const { data: allowed } = await supabaseAdmin.rpc('check_rate_limit', {
+      p_user_id: user.id,
+      p_function_name: 'goodreads-import',
+      p_max_requests: 3,
+      p_window_minutes: 1440,
+    });
+
+    if (allowed === false) {
+      return new Response(
+        JSON.stringify({ error: 'Rate limit exceeded — max 3 imports per 24 hours' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -167,7 +183,7 @@ Deno.serve(async (req: Request) => {
   } catch (err) {
     console.error('goodreads-import error:', err);
     return new Response(
-      JSON.stringify({ error: err.message }),
+      JSON.stringify({ error: 'Something went wrong. Please try again.' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

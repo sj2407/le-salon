@@ -1,10 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { getCorsHeaders } from '../_shared/cors.ts';
 
 // Cache Anthropic key across warm invocations
 let cachedAnthropicKey: string | null = null;
@@ -55,6 +51,7 @@ function validateAndFilterBooks(parsed: unknown): DetectedBook[] {
 }
 
 Deno.serve(async (req: Request) => {
+  const corsHeaders = getCorsHeaders(req);
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -215,9 +212,10 @@ Deno.serve(async (req: Request) => {
     );
   } catch (err) {
     const message = (err as Error).message || 'Unknown error';
+    console.error('bookshelf-scan error:', err);
     const status = message.includes('Vision API error') ? 502 : 500;
     return new Response(
-      JSON.stringify({ error: message }),
+      JSON.stringify({ error: 'Something went wrong. Please try again.' }),
       { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

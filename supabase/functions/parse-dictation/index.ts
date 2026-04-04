@@ -1,10 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { getCorsHeaders } from '../_shared/cors.ts';
 
 const TAG_OPTIONS = ['movie', 'book', 'podcast', 'show', 'album', 'performing_arts', 'exhibition', 'other'];
 
@@ -35,6 +31,7 @@ Return ONLY valid JSON: { "entries": [...] }
 Do not include any text outside the JSON.`;
 
 Deno.serve(async (req: Request) => {
+  const corsHeaders = getCorsHeaders(req);
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -49,12 +46,59 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const { transcript, context } = await req.json();
+    const { transcript: rawTranscript, context } = await req.json();
 
-    if (!transcript || !context) {
+    if (!rawTranscript || !context) {
       return new Response(
         JSON.stringify({ error: 'transcript and context are required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Sanitize: strip control characters, collapse whitespace, enforce length limit
+    const transcript = String(rawTranscript)
+      .slice(0, 5000)
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (!transcript) {
+      return new Response(
+        JSON.stringify({ entries: [] }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Verify user from JWT
+    const supabaseUser = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Could not verify user' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Rate limit: 30 per 24 hours
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
+    const { data: allowed } = await supabaseAdmin.rpc('check_rate_limit', {
+      p_user_id: user.id,
+      p_function_name: 'parse-dictation',
+      p_max_requests: 30,
+      p_window_minutes: 1440,
+    });
+
+    if (allowed === false) {
+      return new Response(
+        JSON.stringify({ error: 'Rate limit exceeded — max 30 dictations per 24 hours' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -62,10 +106,6 @@ Deno.serve(async (req: Request) => {
 
     // Use cached key or fetch from vault
     if (!cachedOpenaiKey) {
-      const supabaseAdmin = createClient(
-        Deno.env.get('SUPABASE_URL')!,
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-      );
       const { data: secrets } = await supabaseAdmin.rpc('get_secret', {
         secret_name: 'openai_api_key',
       });
@@ -141,8 +181,9 @@ Deno.serve(async (req: Request) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (err) {
+    console.error('parse-dictation error:', err);
     return new Response(
-      JSON.stringify({ error: (err as Error).message }),
+      JSON.stringify({ error: 'Something went wrong. Please try again.' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

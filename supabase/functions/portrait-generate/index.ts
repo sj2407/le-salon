@@ -1,10 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { getCorsHeaders } from '../_shared/cors.ts';
 
 // Cache Anthropic key across warm invocations
 let cachedAnthropicKey: string | null = null;
@@ -199,6 +195,7 @@ function validatePortrait(text: string | null): boolean {
 }
 
 Deno.serve(async (req: Request) => {
+  const corsHeaders = getCorsHeaders(req);
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -214,14 +211,24 @@ Deno.serve(async (req: Request) => {
     }
 
     const jwt = authHeader.replace('Bearer ', '');
-    const { user_id, manual } = await req.json();
 
-    if (!user_id) {
+    // User-scoped client — extract trusted user ID from JWT
+    const supabaseUser = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: `Bearer ${jwt}` } } }
+    );
+
+    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
+    if (userError || !user) {
       return new Response(
-        JSON.stringify({ error: 'user_id is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    const userId = user.id; // TRUSTED — from JWT
+    const { manual } = await req.json();
 
     // Admin client for cross-user reads (spotify_profiles) and vault access
     const supabaseAdmin = createClient(
@@ -229,18 +236,26 @@ Deno.serve(async (req: Request) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    // User-scoped client for RLS-protected tables (books, reviews, profiles)
-    const supabaseUser = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!,
-      { global: { headers: { Authorization: `Bearer ${jwt}` } } }
-    );
+    // Rate limit: 2 per 24 hours
+    const { data: allowed } = await supabaseAdmin.rpc('check_rate_limit', {
+      p_user_id: userId,
+      p_function_name: 'portrait-generate',
+      p_max_requests: 2,
+      p_window_minutes: 1440,
+    });
+
+    if (allowed === false) {
+      return new Response(
+        JSON.stringify({ error: 'Rate limit exceeded — max 2 generations per 24 hours' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Fetch Spotify profile
     const { data: spotifyRow } = await supabaseAdmin
       .from('spotify_profiles')
       .select('*')
-      .eq('user_id', user_id)
+      .eq('user_id', userId)
       .single();
 
     const spotify: SpotifyProfile | null = spotifyRow || null;
@@ -265,7 +280,7 @@ Deno.serve(async (req: Request) => {
     const { data: booksRaw } = await supabaseUser
       .from('books')
       .select('id, title, author, status, source, rating, review_id, reviews(review_text)')
-      .eq('user_id', user_id);
+      .eq('user_id', userId);
 
     const books: BookWithReview[] = (booksRaw || []).map((b: Record<string, unknown>) => ({
       id: b.id as string,
@@ -354,7 +369,7 @@ Deno.serve(async (req: Request) => {
     const { error: updateError } = await supabaseAdmin
       .from('spotify_profiles')
       .update(updateFields)
-      .eq('user_id', user_id);
+      .eq('user_id', userId);
 
     if (updateError) {
       // If no spotify row exists (books-only user), the update silently affects 0 rows.
@@ -374,9 +389,10 @@ Deno.serve(async (req: Request) => {
   } catch (err) {
     // Distinguish external API failures from internal errors
     const message = (err as Error).message || 'Unknown error';
+    console.error('portrait-generate error:', err);
     const status = message.includes('Anthropic API error') ? 502 : 500;
     return new Response(
-      JSON.stringify({ error: message }),
+      JSON.stringify({ error: 'Something went wrong. Please try again.' }),
       { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

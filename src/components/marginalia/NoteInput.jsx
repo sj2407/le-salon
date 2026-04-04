@@ -8,6 +8,7 @@ export const NoteInput = ({
   maxLength = 280,
   submitLabel = 'Leave a note',
   isEditing = false,
+  shouldAutoFocus = true,
   placeholder = 'Write a note for this section...'
 }) => {
   const [localValue, setLocalValue] = useState(value)
@@ -46,7 +47,7 @@ export const NoteInput = ({
           background: '#FFFEFA',
           lineHeight: 1.4
         }}
-        autoFocus
+        autoFocus={shouldAutoFocus}
       />
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

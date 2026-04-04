@@ -9,17 +9,20 @@ import { DictationModal } from '../components/DictationModal'
 import { isSpeechSupported } from '../lib/useSpeechRecognition'
 import { AspirationalPreview } from '../components/AspirationalPreview'
 
+// Module-level cache — survives unmount, instant render on return
+let _cardCache = null // { card, entries, notes }
+
 export const MyCard = () => {
   const { profile } = useAuth()
   const toast = useToast()
-  const [card, setCard] = useState(null)
-  const [entries, setEntries] = useState([])
-  const [notes, setNotes] = useState([])
+  const [card, setCard] = useState(_cardCache?.card || null)
+  const [entries, setEntries] = useState(_cardCache?.entries || [])
+  const [notes, setNotes] = useState(_cardCache?.notes || [])
   const [isEditing, setIsEditing] = useState(false)
   const [editingSection, setEditingSection] = useState(null)
   const [showDictation, setShowDictation] = useState(false)
   const [pendingDictation, setPendingDictation] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(!_cardCache)
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -30,7 +33,7 @@ export const MyCard = () => {
 
   const fetchCurrentCard = async () => {
     try {
-      setLoading(true)
+      if (!_cardCache) setLoading(true)
 
       // Get current card
       const { data: cardData, error: cardError } = await supabase
@@ -55,13 +58,13 @@ export const MyCard = () => {
         ])
 
         if (entriesResult.error) throw entriesResult.error
-        setEntries(entriesResult.data || [])
+        const fetchedEntries = entriesResult.data || []
+        setEntries(fetchedEntries)
 
-        if (notesResult.error) {
-          setNotes([])
-        } else {
-          setNotes(notesResult.data || [])
-        }
+        const fetchedNotes = notesResult.error ? [] : (notesResult.data || [])
+        setNotes(fetchedNotes)
+
+        _cardCache = { card: cardData, entries: fetchedEntries, notes: fetchedNotes }
       } else {
         // No current card exists, create one
         await createNewCard([])
@@ -87,7 +90,9 @@ export const MyCard = () => {
         return
       }
 
-      setNotes(data || [])
+      const fetchedNotes = data || []
+      setNotes(fetchedNotes)
+      if (_cardCache) _cardCache.notes = fetchedNotes
     } catch (_err) {
       setNotes([])
     }

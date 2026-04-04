@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { PortraitModal } from './PortraitModal'
+import { ConfirmModal } from '../ConfirmModal'
 
 /**
  * Creation Archive — all past creations in reverse chronological order.
@@ -9,6 +10,7 @@ import { PortraitModal } from './PortraitModal'
 export const CreationArchiveModal = ({ isOpen, onClose, creations, isOwner, onToggleVisibility, onDelete, onEdit }) => {
   const [expandedId, setExpandedId] = useState(null)
   const [openMenuId, setOpenMenuId] = useState(null)
+  const [confirmState, setConfirmState] = useState(null)
   const menuRef = useRef(null)
 
   // Close overflow menu on outside click / Escape
@@ -123,10 +125,15 @@ export const CreationArchiveModal = ({ isOpen, onClose, creations, isOwner, onTo
                     {onDelete && (
                       <button
                         onClick={() => {
-                          if (confirm('Delete this creation?')) {
-                            onDelete(creation.id)
-                            setOpenMenuId(null)
-                          }
+                          setOpenMenuId(null)
+                          setConfirmState({
+                            message: 'Delete this creation?',
+                            confirmText: 'Delete',
+                            destructive: true,
+                            onConfirm: async () => {
+                              onDelete(creation.id)
+                            },
+                          })
                         }}
                         style={{
                           display: 'block',
@@ -248,6 +255,15 @@ export const CreationArchiveModal = ({ isOpen, onClose, creations, isOwner, onTo
           </div>
         )}
       </div>
+      <ConfirmModal
+        isOpen={!!confirmState}
+        onClose={() => setConfirmState(null)}
+        onConfirm={async () => { await confirmState?.onConfirm(); setConfirmState(null) }}
+        title="Confirm"
+        message={confirmState?.message || ''}
+        confirmText={confirmState?.confirmText || 'Delete'}
+        destructive={confirmState?.destructive ?? true}
+      />
     </PortraitModal>
   )
 }

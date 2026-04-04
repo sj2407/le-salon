@@ -9,6 +9,7 @@ export function getNotificationRoute(notification) {
     case 'friend_accepted':
       return `/friend/${notification.actor_id}`
     case 'activity_interest':
+    case 'new_activity':
       return '/todo'
     case 'recommendation':
       return '/my-corner?tab=liste'

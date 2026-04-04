@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useDebounce } from '../../hooks/useDebounce'
 import { searchByMediaType } from '../../lib/coverSearchApis'
 import { supabase } from '../../lib/supabase'
+import { useNativeCamera } from '../../hooks/useNativeCamera'
 
 /**
  * Portal-based search modal for cover images.
@@ -20,7 +21,7 @@ export const CoverSearchModal = ({ isOpen, onClose, onSelect, initialQuery = '',
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [uploading, setUploading] = useState(false)
-  const fileInputRef = useRef(null)
+  const { pickImage } = useNativeCamera()
 
   const debouncedQuery = useDebounce(query, 500)
 
@@ -77,19 +78,18 @@ export const CoverSearchModal = ({ isOpen, onClose, onSelect, initialQuery = '',
     onClose()
   }
 
-  const handleUpload = async (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+  const handleUpload = async () => {
+    const result = await pickImage({ camera: false })
+    if (!result) return
 
     setUploading(true)
     setError('')
     try {
-      const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
-      const filename = `upload_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`
+      const filename = `upload_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.jpg`
 
       const { error: uploadError } = await supabase.storage
         .from('covers')
-        .upload(filename, file, { contentType: file.type, upsert: true })
+        .upload(filename, result.blob, { contentType: result.blob.type || 'image/jpeg', upsert: true })
 
       if (uploadError) throw uploadError
 
@@ -103,7 +103,6 @@ export const CoverSearchModal = ({ isOpen, onClose, onSelect, initialQuery = '',
       setError('Upload failed. Try again.')
     } finally {
       setUploading(false)
-      if (fileInputRef.current) fileInputRef.current.value = ''
     }
   }
 
@@ -211,7 +210,7 @@ export const CoverSearchModal = ({ isOpen, onClose, onSelect, initialQuery = '',
           {/* Upload option — always visible in upload-only mode, or after search */}
           {!isLoading && (uploadOnly || query.length >= 2) && (
             <div
-              onClick={() => fileInputRef.current?.click()}
+              onClick={handleUpload}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -243,13 +242,7 @@ export const CoverSearchModal = ({ isOpen, onClose, onSelect, initialQuery = '',
             </div>
           )}
 
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleUpload}
-            style={{ display: 'none' }}
-          />
+
 
           {results.map((result) => (
             <div

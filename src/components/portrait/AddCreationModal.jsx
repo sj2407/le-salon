@@ -1,7 +1,8 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { PortraitModal } from './PortraitModal'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
+import { useNativeCamera } from '../../hooks/useNativeCamera'
 
 /**
  * Add Creation modal — write text or upload an image.
@@ -16,13 +17,14 @@ export const AddCreationModal = ({ isOpen, onClose, onCreated, onUpdated, initia
   const [imagePreview, setImagePreview] = useState(null)
   const [isVisible, setIsVisible] = useState(true)
   const [saving, setSaving] = useState(false)
-  const fileInputRef = useRef(null)
+  const { pickImage } = useNativeCamera()
 
   const isEditing = !!editCreation
 
   // Sync initialMode or editCreation when modal opens
   useEffect(() => {
     if (!isOpen) return
+    let timer
     if (editCreation) {
       setMode(editCreation.type)
       setTitle(editCreation.title || '')
@@ -34,9 +36,10 @@ export const AddCreationModal = ({ isOpen, onClose, onCreated, onUpdated, initia
     } else if (initialMode) {
       setMode(initialMode)
       if (initialMode === 'image') {
-        setTimeout(() => fileInputRef.current?.click(), 100)
+        timer = setTimeout(() => handlePickImage(), 100)
       }
     }
+    return () => { if (timer) clearTimeout(timer) }
   }, [isOpen, initialMode, editCreation])
 
   const reset = () => {
@@ -54,15 +57,11 @@ export const AddCreationModal = ({ isOpen, onClose, onCreated, onUpdated, initia
     onClose()
   }
 
-  const handleFileSelect = (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    if (file.size > 10 * 1024 * 1024) {
-      alert('Image must be under 10MB')
-      return
-    }
-    setImageFile(file)
-    setImagePreview(URL.createObjectURL(file))
+  const handlePickImage = async () => {
+    const result = await pickImage({ camera: false })
+    if (!result) return
+    setImageFile(result.blob)
+    setImagePreview(result.previewUrl)
   }
 
   const handleSave = async () => {
@@ -172,7 +171,7 @@ export const AddCreationModal = ({ isOpen, onClose, onCreated, onUpdated, initia
           </button>
 
           <button
-            onClick={() => { setMode('image'); setTimeout(() => fileInputRef.current?.click(), 100) }}
+            onClick={() => { setMode('image'); setTimeout(() => handlePickImage(), 100) }}
             style={{
               padding: '20px',
               background: '#FFFEFA',
@@ -259,14 +258,6 @@ export const AddCreationModal = ({ isOpen, onClose, onCreated, onUpdated, initia
             }}
           />
 
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleFileSelect}
-            style={{ display: 'none' }}
-          />
-
           {imagePreview ? (
             <div style={{ position: 'relative' }}>
               <img
@@ -281,7 +272,7 @@ export const AddCreationModal = ({ isOpen, onClose, onCreated, onUpdated, initia
                 }}
               />
               <button
-                onClick={() => { setImageFile(null); setImagePreview(null); fileInputRef.current.value = '' }}
+                onClick={() => { setImageFile(null); setImagePreview(null) }}
                 style={{
                   position: 'absolute',
                   top: '8px',
@@ -301,7 +292,7 @@ export const AddCreationModal = ({ isOpen, onClose, onCreated, onUpdated, initia
             </div>
           ) : (
             <button
-              onClick={() => fileInputRef.current?.click()}
+              onClick={handlePickImage}
               style={{
                 padding: '40px 20px',
                 background: '#F5F1EB',

@@ -1,0 +1,11 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "8CKY62C45Z.app.lesalon",
+        "paths": ["/", "/signin", "/signup", "/my-corner", "/reset-password", "/account"]
+      }
+    ]
+  }
+}

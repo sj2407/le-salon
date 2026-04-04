@@ -1,10 +1,16 @@
 /**
  * Spotify PKCE authentication helpers.
  * Client ID comes from env; secrets stay server-side in Supabase Vault.
+ * Supports both web (redirect) and Capacitor (in-app browser + deep link).
  */
+
+import { Capacitor } from '@capacitor/core'
 
 const SPOTIFY_CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENT_ID
 const SPOTIFY_SCOPES = 'user-top-read'
+
+// Web redirect goes through the Vercel domain; Capacitor uses it as a Universal Link
+const WEB_REDIRECT_BASE = 'https://le-salon.vercel.app'
 
 /**
  * Generate a random code verifier (43-128 chars, URL-safe).
@@ -31,7 +37,9 @@ async function generateCodeChallenge(verifier) {
 }
 
 /**
- * Start the Spotify PKCE flow: store verifier, redirect to Spotify.
+ * Start the Spotify PKCE flow.
+ * Web: redirects in same window.
+ * Capacitor: opens in-app browser, redirects back via Universal Link.
  */
 export async function startSpotifyConnect() {
   if (!SPOTIFY_CLIENT_ID) {
@@ -40,9 +48,18 @@ export async function startSpotifyConnect() {
 
   const codeVerifier = generateCodeVerifier()
   const codeChallenge = await generateCodeChallenge(codeVerifier)
-  // Spotify requires 127.0.0.1 instead of localhost (policy change April 2025)
-  const origin = window.location.origin.replace('://localhost', '://127.0.0.1')
-  const redirectUri = origin + '/my-corner'
+
+  const isNative = Capacitor.isNativePlatform()
+
+  // Redirect URI: on web use current origin, on native use the Vercel domain (Universal Link)
+  let redirectUri
+  if (isNative) {
+    redirectUri = WEB_REDIRECT_BASE + '/my-corner'
+  } else {
+    // Spotify requires 127.0.0.1 instead of localhost (policy change April 2025)
+    const origin = window.location.origin.replace('://localhost', '://127.0.0.1')
+    redirectUri = origin + '/my-corner'
+  }
 
   // Store for the callback
   sessionStorage.setItem('spotify_code_verifier', codeVerifier)
@@ -57,7 +74,15 @@ export async function startSpotifyConnect() {
     code_challenge: codeChallenge,
   })
 
-  window.location.href = `https://accounts.spotify.com/authorize?${params}`
+  const authUrl = `https://accounts.spotify.com/authorize?${params}`
+
+  if (isNative) {
+    // Open in system browser — redirect back via Universal Link
+    const { Browser } = await import('@capacitor/browser')
+    await Browser.open({ url: authUrl })
+  } else {
+    window.location.href = authUrl
+  }
 }
 
 /**

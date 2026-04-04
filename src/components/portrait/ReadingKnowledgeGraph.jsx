@@ -3,6 +3,11 @@ import * as THREE from 'three'
 
 const RADIUS = 3.2
 
+function escapeHtml(text) {
+  if (!text) return ''
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+}
+
 function hemispherePoints(count, front) {
   const points = []
   const goldenRatio = (1 + Math.sqrt(5)) / 2
@@ -404,22 +409,22 @@ export const ReadingKnowledgeGraph = ({ books, readingGraph }) => {
           const finalOpacity = isConn ? opacity : opacity * 0.1
 
           if (n.type === 'book') {
-            html += `<div data-node-id="${n.id}" data-node-type="book" style="position:absolute;left:${x}px;top:${y - 4 * scale}px;transform:translate(-50%,0);
+            html += `<div data-node-id="${escapeHtml(n.id)}" data-node-type="book" style="position:absolute;left:${x}px;top:${y - 4 * scale}px;transform:translate(-50%,0);
               padding:4px 8px;cursor:pointer;pointer-events:auto;text-align:center;
               opacity:${finalOpacity};">
               <div style="font:italic 900 ${14 * scale}px/1.3 'Source Serif 4',Georgia,serif;color:#1A1512;
-                white-space:nowrap;text-shadow:0 0 6px #F5F1EB,0 0 12px #F5F1EB,0 0 20px #F5F1EB;">${n.label}</div>
+                white-space:nowrap;text-shadow:0 0 6px #F5F1EB,0 0 12px #F5F1EB,0 0 20px #F5F1EB;">${escapeHtml(n.label)}</div>
               <div style="font:${10 * scale}px 'DM Sans',sans-serif;color:#5C4A3A;font-weight:600;
-                white-space:nowrap;opacity:0.8;text-shadow:0 0 6px #F5F1EB,0 0 12px #F5F1EB;">${n.sub || ''}</div>
+                white-space:nowrap;opacity:0.8;text-shadow:0 0 6px #F5F1EB,0 0 12px #F5F1EB;">${escapeHtml(n.sub)}</div>
             </div>`
           } else {
             const boldness = n.count / maxCount
             const fw = 700 + Math.round(boldness * 200)
-            html += `<div data-node-id="${n.id}" data-node-type="theme" style="position:absolute;left:${x}px;top:${y - 4 * scale}px;transform:translate(-50%,0);
+            html += `<div data-node-id="${escapeHtml(n.id)}" data-node-type="theme" style="position:absolute;left:${x}px;top:${y - 4 * scale}px;transform:translate(-50%,0);
               padding:4px 8px;cursor:pointer;pointer-events:auto;text-align:center;
               opacity:${finalOpacity};">
               <div style="font:${(12 + boldness * 3) * scale}px 'DM Sans',sans-serif;color:#1A1512;
-                font-weight:${fw};white-space:nowrap;text-shadow:0 0 6px #F5F1EB,0 0 12px #F5F1EB,0 0 20px #F5F1EB;">${n.label}</div>
+                font-weight:${fw};white-space:nowrap;text-shadow:0 0 6px #F5F1EB,0 0 12px #F5F1EB,0 0 20px #F5F1EB;">${escapeHtml(n.label)}</div>
               <div style="font:bold ${9 * scale}px 'DM Sans',sans-serif;color:#6B5F53;
                 white-space:nowrap;opacity:0.7;text-shadow:0 0 6px #FDFCF9;">${n.count} book${n.count !== 1 ? 's' : ''}</div>
             </div>`

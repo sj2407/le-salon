@@ -1,0 +1,16 @@
+{
+  "appId": "app.lesalon",
+  "appName": "Le Salon",
+  "webDir": "dist",
+  "ios": {
+    "scrollEnabled": false
+  },
+  "plugins": {
+    "Keyboard": {
+      "resize": "none"
+    },
+    "StatusBar": {
+      "style": "LIGHT"
+    }
+  }
+}
