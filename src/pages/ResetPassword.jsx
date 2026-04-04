@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
@@ -11,10 +11,12 @@ export const ResetPassword = () => {
   const [error, setError] = useState('')
   const [ready, setReady] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const readyRef = useRef(false)
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
+        readyRef.current = true
         setReady(true)
       }
     })
@@ -34,12 +36,15 @@ export const ResetPassword = () => {
 
     // Fallback: check if session already exists
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) setReady(true)
+      if (session) {
+        readyRef.current = true
+        setReady(true)
+      }
     })
 
-    // Timeout for any path that doesn't resolve
+    // Timeout for any path that doesn't resolve (uses ref to avoid stale closure)
     const timeout = setTimeout(() => {
-      if (!ready) setError('Reset link expired or invalid. Please request a new one.')
+      if (!readyRef.current) setError('Reset link expired or invalid. Please request a new one.')
     }, 8000)
 
     return () => {
