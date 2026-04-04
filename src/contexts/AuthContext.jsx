@@ -21,6 +21,16 @@ export const AuthProvider = ({ children }) => {
   const currentUserIdRef = useRef(null)
 
   useEffect(() => {
+    // PKCE code exchange: if any page loads with ?code=XXX, exchange it for a session.
+    // This handles password reset, email change confirmation, and signup verification on web.
+    // The onAuthStateChange listener (below) will pick up the resulting session.
+    const params = new URLSearchParams(window.location.search)
+    const code = params.get('code')
+    if (code) {
+      window.history.replaceState({}, '', window.location.pathname)
+      supabase.auth.exchangeCodeForSession(code)
+    }
+
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       const userId = session?.user?.id ?? null

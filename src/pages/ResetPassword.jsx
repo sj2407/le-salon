@@ -13,19 +13,28 @@ export const ResetPassword = () => {
   const [showPassword, setShowPassword] = useState(false)
 
   useEffect(() => {
-    // Listen for PASSWORD_RECOVERY event from Supabase
+    // PKCE code exchange is handled globally in AuthContext.
+    // Listen for PASSWORD_RECOVERY event (fires after exchange completes).
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
+      if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
         setReady(true)
       }
     })
 
-    // Also check if session already exists (event may have fired before mount)
+    // Check if session already exists (event may have fired before mount)
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) setReady(true)
     })
 
-    return () => subscription.unsubscribe()
+    // Timeout: if no session after 8s, the link is likely invalid/expired
+    const timeout = setTimeout(() => {
+      if (!ready) setError('Reset link expired or invalid. Please request a new one.')
+    }, 8000)
+
+    return () => {
+      subscription.unsubscribe()
+      clearTimeout(timeout)
+    }
   }, [])
 
   const handleSubmit = async (e) => {
@@ -59,7 +68,10 @@ export const ResetPassword = () => {
       <div className="auth-container">
         <div className="auth-card" style={{ textAlign: 'center' }}>
           <h1 className="auth-title">Le Salon</h1>
-          <p style={{ color: '#666', fontStyle: 'italic' }}>Verifying reset link...</p>
+          {error
+            ? <p className="error-message">{error}</p>
+            : <p style={{ color: '#666', fontStyle: 'italic' }}>Verifying reset link...</p>
+          }
         </div>
       </div>
     )
