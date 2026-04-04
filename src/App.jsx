@@ -98,9 +98,22 @@ function AppContent() {
         const { Browser } = await import('@capacitor/browser')
         Browser.close()
         const urlObj = new URL(url)
+
+        // PKCE code exchange (OAuth callbacks)
         const code = urlObj.searchParams.get('code')
         if (code) {
           await supabase.auth.exchangeCodeForSession(code)
+          return
+        }
+
+        // Token hash verification (password reset, email change from email links)
+        const tokenHash = urlObj.searchParams.get('token_hash')
+        const type = urlObj.searchParams.get('type')
+        if (tokenHash && type) {
+          await supabase.auth.verifyOtp({ token_hash: tokenHash, type })
+          if (type === 'recovery') {
+            navigate('/reset-password')
+          }
         }
       })
     }
