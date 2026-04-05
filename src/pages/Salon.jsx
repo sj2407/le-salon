@@ -98,17 +98,20 @@ export const Salon = () => {
 
   // Initial scroll to latest week (instant, no haptic)
   useEffect(() => {
-    if (allWeeks.length === 0) return
+    if (allWeeks.length === 0 || !catchUpDone) return
     lastScrollIndexRef.current = allWeeks.length - 1
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         const c = scrollContainerRef.current
-        if (c) c.scrollLeft = c.scrollWidth
+        if (!c) return
+        c.style.scrollSnapType = 'none'
+        c.scrollLeft = c.scrollWidth - c.clientWidth
+        c.style.scrollSnapType = 'x mandatory'
         const s = sliderRef.current
         if (s) s.value = String(allWeeks.length - 1)
       })
     })
-  }, [allWeeks.length])
+  }, [allWeeks.length, catchUpDone])
 
   // Prevent browser back/forward on horizontal trackpad swipes
   useEffect(() => {
