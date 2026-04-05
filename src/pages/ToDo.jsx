@@ -86,6 +86,7 @@ export const ToDo = () => {
   const [showModal, setShowModal] = useState(false)
   const [editingActivity, setEditingActivity] = useState(null)
   const [cityFilter, setCityFilter] = useState('all')
+  const [hiddenIds, setHiddenIds] = useState(new Set())
 
   // Form state
   const [description, setDescription] = useState('')
@@ -210,6 +211,13 @@ export const ToDo = () => {
         profilesMap[p.id] = p
       })
 
+      // Fetch user's hidden activities
+      const { data: hidesData } = await supabase
+        .from('activity_hides')
+        .select('activity_id')
+        .eq('user_id', profile.id)
+
+      setHiddenIds(new Set((hidesData || []).map(h => h.activity_id)))
       setActivities(activitiesData)
       setInterests(interestsByActivity)
       setProfiles(profilesMap)
@@ -386,6 +394,45 @@ export const ToDo = () => {
     return activityInterests.some((i) => i.user_id === profile.id)
   }
 
+  const handleDone = async (activityId) => {
+    // Optimistic update — remove from list instantly (no flash)
+    const prev = activities
+    setActivities(a => a.filter(x => x.id !== activityId))
+    try {
+      const { error } = await supabase
+        .from('activities')
+        .update({ is_archived: true })
+        .eq('id', activityId)
+
+      if (error) throw error
+      toast.success('Activity marked as done')
+    } catch (_err) {
+      setActivities(prev)
+      toast.error('Failed to archive activity')
+    }
+  }
+
+  const handleHide = async (activityId) => {
+    try {
+      // Optimistic update
+      setHiddenIds(prev => new Set([...prev, activityId]))
+
+      const { error } = await supabase
+        .from('activity_hides')
+        .insert({ user_id: profile.id, activity_id: activityId })
+
+      if (error) throw error
+    } catch (_err) {
+      // Revert optimistic update
+      setHiddenIds(prev => {
+        const next = new Set(prev)
+        next.delete(activityId)
+        return next
+      })
+      toast.error('Failed to hide activity')
+    }
+  }
+
   const getTodayFormatted = () => {
     const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
     const today = new Date()
@@ -400,9 +447,10 @@ export const ToDo = () => {
     )
   }
 
-  const filteredActivities = cityFilter === 'all'
+  const filteredActivities = (cityFilter === 'all'
     ? activities
     : activities.filter(activity => activity.city === cityFilter)
+  ).filter(activity => !hiddenIds.has(activity.id))
 
   return (
     <div className="container" style={{ maxWidth: '720px', position: 'relative' }}>
@@ -477,6 +525,8 @@ export const ToDo = () => {
               isUserInterested={isUserInterested(activity.id)}
               isOwner={activity.user_id === profile.id}
               onToggleInterest={toggleInterest}
+              onDone={handleDone}
+              onHide={handleHide}
               onEdit={openEditModal}
               onDelete={handleDelete}
               isPast={false}
@@ -485,10 +535,15 @@ export const ToDo = () => {
         </div>
       )}
 
-      <div style={{ marginTop: '8px' }}>
+      <div style={{ marginTop: '8px', display: 'flex', justifyContent: 'space-between' }}>
         <Link to="/todo/past" style={{ color: '#999', fontSize: '12px', textDecoration: 'none' }}>
           View past activities
         </Link>
+        {hiddenIds.size > 0 && (
+          <Link to="/todo/hidden" style={{ color: '#999', fontSize: '12px', textDecoration: 'none' }}>
+            View hidden activities
+          </Link>
+        )}
       </div>
 
       {/* Add/Edit Modal */}

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { Eye } from '@phosphor-icons/react'
 
 /**
  * Shared activity card used by ToDo.jsx (active) and PastActivities.jsx (archived).
@@ -14,6 +15,9 @@ export const ActivityCard = ({
   onToggleInterest,
   onEdit,
   onDelete,
+  onDone,
+  onHide,
+  onUnhide,
   isPast
 }) => {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -200,37 +204,98 @@ export const ActivityCard = ({
 
       {/* Interest row */}
       {!isPast && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-          {onToggleInterest && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            {onToggleInterest && (
+              <button
+                onClick={() => onToggleInterest(activity.id)}
+                style={{
+                  padding: '5px 14px',
+                  fontSize: '13px',
+                  fontFamily: "'Source Serif 4', Georgia, serif",
+                  background: isUserInterested ? '#622722' : '#FFFEFA',
+                  color: isUserInterested ? '#FFFEFA' : '#622722',
+                  border: isUserInterested ? '1px solid #622722' : '1px solid #D4C9B8',
+                  borderRadius: '16px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                {isUserInterested ? "I'm interested \u2713" : "I'm interested"}
+              </button>
+            )}
+            {onDone && (
+              <button
+                onClick={() => onDone(activity.id)}
+                style={{
+                  padding: '5px 14px',
+                  fontSize: '13px',
+                  fontFamily: "'Source Serif 4', Georgia, serif",
+                  background: '#FFFEFA',
+                  color: '#622722',
+                  border: '1px solid #D4C9B8',
+                  borderRadius: '16px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                Done
+              </button>
+            )}
+            {interestedText && (
+              <span style={{ fontSize: '12px', color: '#777', fontStyle: 'italic' }}>
+                {interestedText}
+              </span>
+            )}
+          </div>
+          {onHide && (
             <button
-              onClick={() => onToggleInterest(activity.id)}
+              onClick={() => onHide(activity.id)}
               style={{
-                padding: '5px 14px',
-                fontSize: '13px',
-                fontFamily: "'Source Serif 4', Georgia, serif",
-                background: isUserInterested ? '#622722' : '#FFFEFA',
-                color: isUserInterested ? '#FFFEFA' : '#622722',
-                border: isUserInterested ? '1px solid #622722' : '1px solid #D4C9B8',
-                borderRadius: '16px',
+                background: 'none',
+                border: 'none',
                 cursor: 'pointer',
-                transition: 'all 0.2s ease'
+                padding: '6px',
+                opacity: 0.6,
+                lineHeight: 1,
+                WebkitTapHighlightColor: 'transparent',
+                touchAction: 'manipulation',
               }}
+              title="Hide this activity"
             >
-              {isUserInterested ? "I'm interested \u2713" : "I'm interested"}
+              <Eye size={14} weight="duotone" color="#622722" />
             </button>
           )}
+        </div>
+      )}
+
+      {/* Past mode: show interested names read-only + optional unhide */}
+      {isPast && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           {interestedText && (
             <span style={{ fontSize: '12px', color: '#777', fontStyle: 'italic' }}>
               {interestedText}
             </span>
           )}
-        </div>
-      )}
-
-      {/* Past mode: show interested names read-only */}
-      {isPast && interestedText && (
-        <div style={{ fontSize: '12px', color: '#777', fontStyle: 'italic' }}>
-          {interestedText}
+          {onUnhide && (
+            <button
+              onClick={() => onUnhide(activity.id)}
+              style={{
+                padding: '5px 14px',
+                fontSize: '13px',
+                fontFamily: "'Source Serif 4', Georgia, serif",
+                background: '#FFFEFA',
+                color: '#622722',
+                border: '1px solid #D4C9B8',
+                borderRadius: '16px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                marginLeft: 'auto'
+              }}
+            >
+              Unhide
+            </button>
+          )}
         </div>
       )}
     </div>

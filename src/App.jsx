@@ -23,6 +23,7 @@ const Salon = lazy(() => import('./pages/Salon').then(m => ({ default: m.Salon }
 const MyCorner = lazy(() => import('./pages/MyCorner').then(m => ({ default: m.MyCorner })))
 const ToDo = lazy(() => import('./pages/ToDo').then(m => ({ default: m.ToDo })))
 const PastActivities = lazy(() => import('./pages/PastActivities').then(m => ({ default: m.PastActivities })))
+const HiddenActivities = lazy(() => import('./pages/HiddenActivities').then(m => ({ default: m.HiddenActivities })))
 const Friends = lazy(() => import('./pages/Friends').then(m => ({ default: m.Friends })))
 const FindFriends = lazy(() => import('./pages/FindFriends').then(m => ({ default: m.FindFriends })))
 const FriendCard = lazy(() => import('./pages/FriendCard').then(m => ({ default: m.FriendCard })))
@@ -293,6 +294,14 @@ function AppContent() {
               element={
                 <ProtectedRoute>
                   <PastActivities />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/todo/hidden"
+              element={
+                <ProtectedRoute>
+                  <HiddenActivities />
                 </ProtectedRoute>
               }
             />
