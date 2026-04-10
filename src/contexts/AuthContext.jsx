@@ -133,6 +133,73 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
+  // --- Native Google Sign-In (iOS) ---
+  // Nonce helpers for secure token exchange
+  const generateNonce = () => {
+    const array = new Uint8Array(32)
+    crypto.getRandomValues(array)
+    return Array.from(array, b => b.toString(16).padStart(2, '0')).join('')
+  }
+
+  const sha256 = async (message) => {
+    const data = new TextEncoder().encode(message)
+    const hash = await crypto.subtle.digest('SHA-256', data)
+    return Array.from(new Uint8Array(hash), b => b.toString(16).padStart(2, '0')).join('')
+  }
+
+  const decodeJWT = (token) => {
+    try {
+      const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
+      return JSON.parse(decodeURIComponent(
+        atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')
+      ))
+    } catch { return null }
+  }
+
+  const signInWithGoogle = async (retry = false) => {
+    if (!Capacitor.isNativePlatform()) {
+      return signInWithOAuthProvider('google')
+    }
+
+    const { SocialLogin } = await import('@capgo/capacitor-social-login')
+
+    await SocialLogin.initialize({
+      google: {
+        iOSClientId: '1018637320621-ufhg4ipldsho19tchqdf3q70k8hctff3.apps.googleusercontent.com',
+        iOSServerClientId: '1018637320621-4rgjacd25kptnkdttblkgkqlumps1njd.apps.googleusercontent.com',
+        mode: 'online',
+      }
+    })
+
+    const rawNonce = generateNonce()
+    const nonceDigest = await sha256(rawNonce)
+
+    const response = await SocialLogin.login({
+      provider: 'google',
+      options: { scopes: ['email', 'profile'], nonce: nonceDigest }
+    })
+
+    const idToken = response.result?.idToken
+    if (!idToken) throw new Error('Google sign-in failed: no ID token received')
+
+    // Validate nonce — iOS caches tokens, so a stale token may have wrong nonce
+    const decoded = decodeJWT(idToken)
+    if (decoded?.nonce && decoded.nonce !== nonceDigest) {
+      if (!retry) {
+        try { await SocialLogin.logout({ provider: 'google' }) } catch { /* ok */ }
+        return signInWithGoogle(true)
+      }
+      throw new Error('Google sign-in failed: token nonce mismatch')
+    }
+
+    const signInOptions = { provider: 'google', token: idToken }
+    if (decoded?.nonce) signInOptions.nonce = rawNonce
+
+    const { data, error } = await supabase.auth.signInWithIdToken(signInOptions)
+    if (error) throw error
+    return data
+  }
+
   const signInWithApple = async () => {
     if (!Capacitor.isNativePlatform()) {
       // Web fallback: use OAuth redirect
@@ -197,6 +264,7 @@ export const AuthProvider = ({ children }) => {
     signUp,
     signIn,
     signInWithOAuthProvider,
+    signInWithGoogle,
     signInWithApple,
     signOut,
     refreshProfile,

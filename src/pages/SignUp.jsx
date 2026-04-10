@@ -20,7 +20,7 @@ export const SignUp = () => {
   const [showPassword, setShowPassword] = useState(false)
   const [confirmationSent, setConfirmationSent] = useState(false)
 
-  const { signUp, signInWithOAuthProvider, signInWithApple } = useAuth()
+  const { signUp, signInWithGoogle, signInWithApple } = useAuth()
   const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
@@ -168,7 +168,7 @@ export const SignUp = () => {
           className="google-btn"
           onClick={async () => {
             setError('')
-            try { await signInWithOAuthProvider('google') } catch (err) { setError(err.message) }
+            try { await signInWithGoogle() } catch (err) { if (!err.message?.includes('cancel')) setError(err.message) }
           }}
         >
           <GoogleIcon />

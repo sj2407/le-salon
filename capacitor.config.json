@@ -11,6 +11,14 @@
     },
     "StatusBar": {
       "style": "LIGHT"
+    },
+    "SocialLogin": {
+      "providers": {
+        "google": true,
+        "facebook": false,
+        "apple": true,
+        "twitter": false
+      }
     }
   }
 }

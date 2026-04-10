@@ -23,7 +23,7 @@ export const SignIn = () => {
   const [forgotLoading, setForgotLoading] = useState(false)
   const [forgotMessage, setForgotMessage] = useState('')
 
-  const { signIn, signInWithOAuthProvider, signInWithApple } = useAuth()
+  const { signIn, signInWithGoogle, signInWithApple } = useAuth()
   const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
@@ -174,7 +174,7 @@ export const SignIn = () => {
           className="google-btn"
           onClick={async () => {
             setError('')
-            try { await signInWithOAuthProvider('google') } catch (err) { setError(err.message) }
+            try { await signInWithGoogle() } catch (err) { if (!err.message?.includes('cancel')) setError(err.message) }
           }}
         >
           <GoogleIcon />

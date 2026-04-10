@@ -11,7 +11,8 @@
     "test": "playwright test",
     "test:ui": "playwright test --ui",
     "test:headed": "playwright test --headed",
-    "load-weeks": "node scripts/load-all-weeks.js"
+    "load-weeks": "node scripts/load-all-weeks.js",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@capacitor-community/apple-sign-in": "^7.1.0",
@@ -25,6 +26,7 @@
     "@capacitor/push-notifications": "^7.0.6",
     "@capacitor/status-bar": "^7.0.6",
     "@capgo/capacitor-native-biometric": "^7.6.0",
+    "@capgo/capacitor-social-login": "^7.20.0",
     "@phosphor-icons/react": "^2.1.10",
     "@supabase/supabase-js": "^2.93.3",
     "framer-motion": "^12.31.0",
@@ -48,6 +50,7 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
+    "patch-package": "^8.0.1",
     "vite": "^7.2.4"
   }
 }
