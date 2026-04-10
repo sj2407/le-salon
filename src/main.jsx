@@ -16,6 +16,17 @@ if (Capacitor.isNativePlatform()) {
     Keyboard.addListener('keyboardWillShow', (info) => {
       document.documentElement.style.setProperty('--keyboard-height', `${info.keyboardHeight}px`)
     })
+    Keyboard.addListener('keyboardDidShow', (info) => {
+      // Scroll focused input into view within modals/reader only
+      const el = document.activeElement
+      if (!el || el === document.body) return
+      if (!el.closest('[data-modal], .reader-scroll')) return
+      const rect = el.getBoundingClientRect()
+      const visibleBottom = window.innerHeight - info.keyboardHeight
+      if (rect.bottom > visibleBottom) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+      }
+    })
     Keyboard.addListener('keyboardWillHide', () => {
       document.documentElement.style.setProperty('--keyboard-height', '0px')
     })

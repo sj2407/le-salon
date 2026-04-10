@@ -86,7 +86,13 @@ export const ReviewNotesSection = ({
         </h3>
         {isOwner && !showAddForm && (
           <button
-            onClick={() => setShowAddForm(true)}
+            onClick={() => {
+              setShowAddForm(true)
+              setTimeout(() => {
+                const form = document.querySelector('[data-note-form]')
+                if (form) form.scrollIntoView({ behavior: 'smooth', block: 'center' })
+              }, 150)
+            }}
             style={{
               background: 'none',
               border: 'none',
@@ -116,7 +122,7 @@ export const ReviewNotesSection = ({
 
       {/* Add/Edit form (owner only) */}
       {isOwner && showAddForm && (
-          <div style={{ marginTop: '12px' }} onKeyDown={handleKeyDown}>
+          <div style={{ marginTop: '12px' }} onKeyDown={handleKeyDown} data-note-form>
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
@@ -140,16 +146,16 @@ export const ReviewNotesSection = ({
               }}
             />
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '8px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px', flexWrap: 'wrap' }}>
               {/* Quote toggle */}
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#555', cursor: 'pointer' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', color: '#555', cursor: 'pointer' }}>
                 <input
                   type="checkbox"
                   checked={isQuote}
                   onChange={(e) => setIsQuote(e.target.checked)}
-                  style={{ accentColor: '#622722' }}
+                  style={{ accentColor: '#622722', width: 'auto' }}
                 />
-                This is a quote
+                Quote
               </label>
 
               {/* Page reference */}
@@ -157,16 +163,16 @@ export const ReviewNotesSection = ({
                 type="text"
                 value={pageRef}
                 onChange={(e) => setPageRef(e.target.value)}
-                placeholder="p. 42, Ch. 3..."
+                placeholder="p. 42..."
                 maxLength={50}
                 style={{
-                  width: '100px',
-                  padding: '4px 8px',
-                  fontSize: '12px',
+                  width: '110px',
+                  padding: '6px 10px',
                   border: '1px solid #D9CBAD',
                   borderRadius: '3px',
                   background: '#FFFEFA',
-                  outline: 'none'
+                  outline: 'none',
+                  boxSizing: 'border-box'
                 }}
               />
 

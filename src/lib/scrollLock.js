@@ -23,20 +23,22 @@ export const scrollLock = {
   enable() {
     if (isLocked) return
     isLocked = true
-    scrollPosition = window.pageYOffset
-    document.body.style.overflow = 'hidden'
-    document.body.style.position = 'fixed'
-    document.body.style.top = `-${scrollPosition}px`
-    document.body.style.width = '100%'
+    // Target .app-scroll-content — the actual scrollable container.
+    // document.body is already overflow:hidden in index.css, so locking body is a no-op.
+    const scrollEl = document.querySelector('.app-scroll-content')
+    if (scrollEl) {
+      scrollPosition = scrollEl.scrollTop
+      scrollEl.style.overflow = 'hidden'
+    }
   },
 
   disable() {
     if (!isLocked) return
     isLocked = false
-    document.body.style.removeProperty('overflow')
-    document.body.style.removeProperty('position')
-    document.body.style.removeProperty('top')
-    document.body.style.removeProperty('width')
-    window.scrollTo(0, scrollPosition)
+    const scrollEl = document.querySelector('.app-scroll-content')
+    if (scrollEl) {
+      scrollEl.style.removeProperty('overflow')
+      scrollEl.scrollTop = scrollPosition
+    }
   }
 }

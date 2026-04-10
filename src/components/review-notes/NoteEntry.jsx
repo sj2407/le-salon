@@ -7,6 +7,7 @@ import { useState, useRef, useEffect } from 'react'
  */
 export const NoteEntry = ({ note, isOwner, onEdit, onDelete }) => {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [menuDirection, setMenuDirection] = useState('down')
   const menuRef = useRef(null)
 
   // Close menu on outside click
@@ -25,7 +26,14 @@ export const NoteEntry = ({ note, isOwner, onEdit, onDelete }) => {
       {isOwner && (
         <div ref={menuRef} style={{ position: 'absolute', top: 0, right: 0, zIndex: 5 }}>
           <button
-            onClick={() => setMenuOpen(!menuOpen)}
+            onClick={() => {
+              if (!menuOpen) {
+                const rect = menuRef.current?.getBoundingClientRect()
+                const viewportMid = window.innerHeight / 2
+                setMenuDirection(rect && rect.top > viewportMid ? 'up' : 'down')
+              }
+              setMenuOpen(!menuOpen)
+            }}
             className="cover-menu-btn"
           >
             &middot;&middot;&middot;
@@ -33,7 +41,7 @@ export const NoteEntry = ({ note, isOwner, onEdit, onDelete }) => {
           {menuOpen && (
             <div style={{
               position: 'absolute',
-              top: '100%',
+              ...(menuDirection === 'up' ? { bottom: '100%' } : { top: '100%' }),
               right: 0,
               background: '#FFFEFA',
               boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
@@ -87,7 +95,8 @@ export const NoteEntry = ({ note, isOwner, onEdit, onDelete }) => {
           fontStyle: 'italic',
           color: '#2C2C2C',
           margin: '0 0 4px',
-          whiteSpace: 'pre-wrap'
+          whiteSpace: 'pre-wrap',
+          paddingRight: '32px'
         }}>
           <span style={{ fontFamily: 'Georgia, serif', fontSize: '24px', lineHeight: 0, color: '#D9CBAD', marginRight: '2px' }}>&ldquo;</span>
           {note.content}
@@ -104,7 +113,8 @@ export const NoteEntry = ({ note, isOwner, onEdit, onDelete }) => {
           lineHeight: 1.8,
           color: '#2C2C2C',
           margin: '0 0 4px',
-          whiteSpace: 'pre-wrap'
+          whiteSpace: 'pre-wrap',
+          paddingRight: '32px'
         }}>
           {note.content}
         </p>
