@@ -299,7 +299,9 @@ export const LaListe = () => {
           user_id: profile.id,
           title: review.title,
           tag: review.tag,
-          note: `Recommended by ${review.profiles?.display_name || 'a friend'}`
+          note: `Recommended by ${review.profiles?.display_name || 'a friend'}`,
+          image_url: review.image_url || null,
+          cover_manual: !!review.image_url
         })
 
       if (error) throw error
