@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useDebounce } from '../../hooks/useDebounce'
 import { jsonpFetch } from '../../lib/coverSearchApis'
+import ModalViewport from '../ModalViewport'
 
 export const ITunesSearch = ({ isOpen, onClose, onSelect, initialQuery = '' }) => {
   const [query, setQuery] = useState(initialQuery)
@@ -82,21 +83,21 @@ export const ITunesSearch = ({ isOpen, onClose, onSelect, initialQuery = '' }) =
         right: 0,
         bottom: 0,
         background: 'rgba(0, 0, 0, 0.4)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 9999
+        zIndex: 9999,
+        touchAction: 'none',
       }}
       onClick={onClose}
     >
+      <ModalViewport padding="16px">
       <div
+        data-modal
         style={{
           background: '#FFFEFA',
           border: '1px solid #E8DCC8',
           borderRadius: '8px',
           padding: '16px',
           width: '300px',
-          maxHeight: '70vh',
+          maxHeight: '75%',
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
@@ -123,7 +124,6 @@ export const ITunesSearch = ({ isOpen, onClose, onSelect, initialQuery = '' }) =
             padding: '10px 12px',
             border: '1px solid #999',
             borderRadius: '6px',
-            fontSize: '15px',
             boxSizing: 'border-box',
             outline: 'none'
           }}
@@ -231,6 +231,7 @@ export const ITunesSearch = ({ isOpen, onClose, onSelect, initialQuery = '' }) =
           Cancel
         </button>
       </div>
+      </ModalViewport>
     </div>,
     document.body
   )

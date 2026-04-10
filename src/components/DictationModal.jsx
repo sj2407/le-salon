@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { useSpeechRecognition } from '../lib/useSpeechRecognition'
 import { CATEGORY_CONFIG } from '../lib/cardConstants'
 import { Microphone } from '@phosphor-icons/react'
+import ModalViewport from './ModalViewport'
 
 const CATEGORY_LABELS = {
   'Reading': 'Reading',
@@ -187,13 +188,12 @@ export const DictationModal = ({ isOpen, onClose, onAcceptEntries, mode = 'card'
             bottom: 0,
             background: 'rgba(0, 0, 0, 0.4)',
             zIndex: 9999,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '20px'
+            touchAction: 'none',
           }}
         >
+          <ModalViewport>
           <Motion.div
+            data-modal
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -204,7 +204,7 @@ export const DictationModal = ({ isOpen, onClose, onAcceptEntries, mode = 'card'
               boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)',
               width: '100%',
               maxWidth: '480px',
-              maxHeight: '80vh',
+              maxHeight: '80%',
               overflowY: 'auto',
               padding: '28px 24px'
             }}
@@ -377,7 +377,6 @@ export const DictationModal = ({ isOpen, onClose, onAcceptEntries, mode = 'card'
                             width: '100%',
                             border: 'none',
                             background: 'transparent',
-                            fontSize: '15px',
                             fontFamily: "'Source Serif 4', Georgia, serif",
                             color: '#2C2C2C',
                             padding: 0,
@@ -454,6 +453,7 @@ export const DictationModal = ({ isOpen, onClose, onAcceptEntries, mode = 'card'
               </>
             )}
           </Motion.div>
+          </ModalViewport>
         </Motion.div>
       )}
     </AnimatePresence>,

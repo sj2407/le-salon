@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import ModalViewport from './ModalViewport'
 
 /**
  * Reusable confirmation modal — replaces browser confirm() dialogs.
@@ -89,14 +90,13 @@ export const ConfirmModal = ({
             position: 'fixed',
             inset: 0,
             background: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
             zIndex: 9999,
-            padding: '20px',
+            touchAction: 'none',
           }}
         >
+          <ModalViewport>
           <motion.div
+            data-modal
             variants={contentVariants}
             initial="initial"
             animate="animate"
@@ -176,6 +176,7 @@ export const ConfirmModal = ({
               </button>
             </div>
           </motion.div>
+          </ModalViewport>
         </motion.div>
       )}
     </AnimatePresence>,

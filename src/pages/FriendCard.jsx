@@ -13,6 +13,7 @@ import { ExpandedReviewText } from '../components/review-comments/ExpandedReview
 import { GearSix } from '@phosphor-icons/react'
 import { Portrait } from './Portrait'
 import { ReviewNotesSection } from '../components/review-notes/ReviewNotesSection'
+import ModalViewport from '../components/ModalViewport'
 
 const FRIEND_TABS = ['card', 'reviews', 'liste', 'wishlist', 'portrait']
 
@@ -578,17 +579,14 @@ export const FriendCard = () => {
             right: 0,
             bottom: 0,
             background: 'rgba(0, 0, 0, 0.4)',
-            display: 'flex',
-            alignItems: 'flex-start',
-            justifyContent: 'center',
             zIndex: 9999,
-            overflowY: 'auto',
-            paddingTop: '20px',
-            paddingBottom: '20px'
+            touchAction: 'none',
           }}
-          onClick={(e) => { if (e.target === profileBackdropRef.current) setShowProfile(false) }}
+          onClick={(e) => { if (!e.target.closest('[data-modal]')) setShowProfile(false) }}
         >
+          <ModalViewport>
           <Motion.div
+            data-modal
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -599,6 +597,8 @@ export const FriendCard = () => {
               padding: '14px',
               width: '90%',
               maxWidth: '400px',
+              maxHeight: '90%',
+              overflowY: 'auto',
               boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)',
             }}
             className="profile-edit-compact"
@@ -689,6 +689,7 @@ export const FriendCard = () => {
               </div>
             )}
           </Motion.div>
+          </ModalViewport>
         </Motion.div>,
         document.body
       )}

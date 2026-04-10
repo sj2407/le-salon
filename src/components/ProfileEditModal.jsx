@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import { supabase } from '../lib/supabase'
 import { useNativeCamera } from '../hooks/useNativeCamera'
+import ModalViewport from './ModalViewport'
 
 export const ProfileEditModal = ({ onClose }) => {
   const { profile, user, refreshProfile } = useAuth()
@@ -193,17 +194,14 @@ export const ProfileEditModal = ({ onClose }) => {
         right: 0,
         bottom: 0,
         background: 'rgba(0, 0, 0, 0.4)',
-        display: 'flex',
-        alignItems: 'flex-start',
-        justifyContent: 'center',
         zIndex: 9999,
-        overflowY: 'auto',
-        paddingTop: '20px',
-        paddingBottom: '20px'
+        touchAction: 'none',
       }}
       onClick={undefined}
     >
+      <ModalViewport>
       <Motion.div
+        data-modal
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -214,6 +212,8 @@ export const ProfileEditModal = ({ onClose }) => {
           padding: '14px',
           width: '90%',
           maxWidth: '400px',
+          maxHeight: '90%',
+          overflowY: 'auto',
           boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)',
         }}
         className="profile-edit-compact"
@@ -432,6 +432,7 @@ export const ProfileEditModal = ({ onClose }) => {
           </button>
         </div>
       </Motion.div>
+      </ModalViewport>
     </Motion.div>,
     document.body
   )

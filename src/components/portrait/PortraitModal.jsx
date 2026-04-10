@@ -1,6 +1,8 @@
 import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useScrollLock } from '../../hooks/useScrollLock'
+import ModalViewport from '../ModalViewport'
 
 /**
  * Shared modal wrapper for all Portrait modals.
@@ -20,20 +22,8 @@ export const PortraitModal = ({ isOpen, onClose, title, children, maxWidth = '48
     return () => window.removeEventListener('keydown', handleKey)
   }, [isOpen, onClose])
 
-  // Scroll lock
-  useEffect(() => {
-    if (!isOpen) return
-    const scrollY = window.scrollY
-    document.body.style.position = 'fixed'
-    document.body.style.top = `-${scrollY}px`
-    document.body.style.width = '100%'
-    return () => {
-      document.body.style.position = ''
-      document.body.style.top = ''
-      document.body.style.width = ''
-      window.scrollTo(0, scrollY)
-    }
-  }, [isOpen])
+  // Scroll lock — targets .app-scroll-content (the real scrollable container)
+  useScrollLock(isOpen)
 
   // No click-outside-to-close — user must use × or Cancel to dismiss
 
@@ -68,14 +58,13 @@ export const PortraitModal = ({ isOpen, onClose, title, children, maxWidth = '48
             position: 'fixed',
             inset: 0,
             background: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
             zIndex: 9999,
-            padding: '20px',
+            touchAction: 'none',
           }}
         >
+          <ModalViewport>
           <motion.div
+            data-modal
             variants={contentVariants}
             initial="initial"
             animate="animate"
@@ -87,7 +76,7 @@ export const PortraitModal = ({ isOpen, onClose, title, children, maxWidth = '48
               boxShadow: '0 20px 60px rgba(0, 0, 0, 0.25)',
               width: '100%',
               maxWidth,
-              maxHeight: '85vh',
+              maxHeight: '85%',
               overflow: 'hidden',
               display: 'flex',
               flexDirection: 'column',
@@ -126,10 +115,13 @@ export const PortraitModal = ({ isOpen, onClose, title, children, maxWidth = '48
               overflowY: 'auto',
               padding: '16px 20px 20px',
               flex: 1,
+              touchAction: 'pan-y',
+              overscrollBehavior: 'contain',
             }}>
               {children}
             </div>
           </motion.div>
+          </ModalViewport>
         </motion.div>
       )}
     </AnimatePresence>,

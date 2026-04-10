@@ -10,6 +10,7 @@ import { scrollLock } from '../lib/scrollLock'
 import { Plus } from '@phosphor-icons/react'
 import { ConfirmModal } from '../components/ConfirmModal'
 import { AspirationalPreview } from '../components/AspirationalPreview'
+import ModalViewport from '../components/ModalViewport'
 
 // Module-level cache — survives unmount, instant render on return
 let _wishlistCache = null
@@ -275,14 +276,14 @@ export const Wishlist = () => {
             right: 0,
             bottom: 0,
             background: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000
+            zIndex: 1000,
+            touchAction: 'none'
           }}
           onClick={(e) => e.stopPropagation()}
         >
+          <ModalViewport>
           <div
+            data-modal
             style={{
               background: '#FFFEFA',
               border: 'none',
@@ -290,8 +291,10 @@ export const Wishlist = () => {
               padding: '20px 24px',
               maxWidth: '500px',
               width: '90%',
-              maxHeight: '90vh',
+              maxHeight: '90%',
               overflowY: 'auto',
+              touchAction: 'pan-y',
+              overscrollBehavior: 'contain',
               boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
             }}
             onClick={(e) => e.stopPropagation()}
@@ -392,6 +395,7 @@ export const Wishlist = () => {
               </div>
             </form>
           </div>
+          </ModalViewport>
         </div>
       )}
 

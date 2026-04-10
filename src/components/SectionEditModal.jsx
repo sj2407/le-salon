@@ -2,10 +2,15 @@ import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { MusicEntryInput } from './music/MusicEntryInput'
 import { CATEGORY_CONFIG } from '../lib/cardConstants'
+import { useScrollLock } from '../hooks/useScrollLock'
+import ModalViewport from './ModalViewport'
 
 export const SectionEditModal = ({ category, entries, onSave, onClose }) => {
   const config = CATEGORY_CONFIG[category]
   const backdropRef = useRef(null)
+
+  // Lock background scroll while modal is open
+  useScrollLock(true)
 
   // Initialize form data ONCE on mount using initializer function (not useEffect)
   const [formData, setFormData] = useState(() => {
@@ -162,22 +167,24 @@ export const SectionEditModal = ({ category, entries, onSave, onClose }) => {
         right: 0,
         bottom: 0,
         background: 'rgba(0, 0, 0, 0.4)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 9999
+        zIndex: 9999,
+        touchAction: 'none'
       }}
       onClick={undefined}
     >
+      <ModalViewport padding="14px">
       <div
+        data-modal
         style={{
           background: '#FFFEFA',
           borderRadius: '4px',
           padding: '14px',
           width: '90%',
           maxWidth: '400px',
-          maxHeight: '80vh',
+          maxHeight: '80%',
           overflow: 'auto',
+          touchAction: 'pan-y',
+          overscrollBehavior: 'contain',
           boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)'
         }}
       >
@@ -304,6 +311,7 @@ export const SectionEditModal = ({ category, entries, onSave, onClose }) => {
           </button>
         </div>
       </div>
+      </ModalViewport>
     </div>,
     document.body
   )

@@ -4,6 +4,7 @@ import { useDebounce } from '../../hooks/useDebounce'
 import { searchByMediaType } from '../../lib/coverSearchApis'
 import { supabase } from '../../lib/supabase'
 import { useNativeCamera } from '../../hooks/useNativeCamera'
+import ModalViewport from '../ModalViewport'
 
 /**
  * Portal-based search modal for cover images.
@@ -131,20 +132,20 @@ export const CoverSearchModal = ({ isOpen, onClose, onSelect, initialQuery = '',
         right: 0,
         bottom: 0,
         background: 'rgba(0, 0, 0, 0.4)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
         zIndex: 9999,
+        touchAction: 'none',
       }}
       onClick={onClose}
     >
+      <ModalViewport padding="16px">
       <div
+        data-modal
         style={{
           background: '#FFFEFA',
           borderRadius: '8px',
           padding: '16px',
           width: '300px',
-          maxHeight: '70vh',
+          maxHeight: '75%',
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
@@ -327,6 +328,7 @@ export const CoverSearchModal = ({ isOpen, onClose, onSelect, initialQuery = '',
           Cancel
         </button>
       </div>
+      </ModalViewport>
     </div>,
     document.body
   )

@@ -11,6 +11,7 @@ import { useScrollLock } from '../hooks/useScrollLock'
 import { ConfirmModal } from '../components/ConfirmModal'
 import { useEscapeClose } from '../hooks/useEscapeClose'
 import { Plus } from '@phosphor-icons/react'
+import ModalViewport from '../components/ModalViewport'
 
 // Parse date_text into date_parsed
 const parseDate = (dateText) => {
@@ -556,21 +557,21 @@ export const ToDo = () => {
             right: 0,
             bottom: 0,
             background: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000
+            zIndex: 1000,
+            touchAction: 'none'
           }}
           onClick={(e) => e.stopPropagation()}
         >
+          <ModalViewport>
           <div
+            data-modal
             style={{
               background: '#FFFEFA',
               borderRadius: '3px',
               padding: '14px',
               maxWidth: '400px',
               width: '90%',
-              maxHeight: '90vh',
+              maxHeight: '90%',
               overflowY: 'auto',
               boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)'
             }}
@@ -753,6 +754,7 @@ export const ToDo = () => {
               </div>
             </form>
           </div>
+          </ModalViewport>
         </div>
       )}
 

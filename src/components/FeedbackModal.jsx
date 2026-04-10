@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import { supabase } from '../lib/supabase'
+import ModalViewport from './ModalViewport'
 
 export const FeedbackModal = ({ onClose }) => {
   const { profile } = useAuth()
@@ -56,14 +57,14 @@ export const FeedbackModal = ({ onClose }) => {
         right: 0,
         bottom: 0,
         background: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000
+        zIndex: 1000,
+        touchAction: 'none',
       }}
       onClick={() => !submitting && onClose()}
     >
+      <ModalViewport>
       <div
+        data-modal
         style={{
           background: '#FFFEFA',
           borderRadius: '4px',
@@ -123,6 +124,7 @@ export const FeedbackModal = ({ onClose }) => {
           </>
         )}
       </div>
+      </ModalViewport>
     </div>
   )
 }

@@ -13,6 +13,7 @@ import { CoverSearchModal } from '../components/cover-search/CoverSearchModal'
 import { CoverThumbnail } from '../components/cover-search/CoverThumbnail'
 import { scrollLock } from '../lib/scrollLock'
 import { TAG_TO_MEDIA_TYPE } from '../lib/coverSearchApis'
+import ModalViewport from '../components/ModalViewport'
 import { Microphone, Plus } from '@phosphor-icons/react'
 import { ReviewNotesSection } from '../components/review-notes/ReviewNotesSection'
 import { AspirationalPreview } from '../components/AspirationalPreview'
@@ -870,14 +871,14 @@ export const Reviews = () => {
             right: 0,
             bottom: 0,
             background: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000
+            zIndex: 1000,
+            touchAction: 'none'
           }}
           onClick={(e) => e.stopPropagation()}
         >
+          <ModalViewport>
           <div
+            data-modal
             style={{
               background: '#FFFEFA',
               border: 'none',
@@ -885,8 +886,10 @@ export const Reviews = () => {
               padding: '20px 24px',
               maxWidth: '500px',
               width: '90%',
-              maxHeight: '90vh',
+              maxHeight: '90%',
               overflowY: 'auto',
+              touchAction: 'pan-y',
+              overscrollBehavior: 'contain',
               boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
             }}
             onClick={(e) => e.stopPropagation()}
@@ -968,7 +971,6 @@ export const Reviews = () => {
                         padding: '8px 10px',
                         border: '1px solid #ccc',
                         borderRadius: '3px',
-                        fontSize: '13px',
                         fontStyle: 'italic',
                         boxSizing: 'border-box',
                         background: '#FFFEFA'
@@ -1050,7 +1052,6 @@ export const Reviews = () => {
                         width: '100%',
                         minHeight: '60px',
                         padding: '8px 10px',
-                        fontSize: '14px',
                         lineHeight: 1.5,
                         fontFamily: modalNoteIsQuote ? "'Source Serif 4', Georgia, serif" : 'inherit',
                         fontStyle: modalNoteIsQuote ? 'italic' : 'normal',
@@ -1064,7 +1065,7 @@ export const Reviews = () => {
                     />
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '6px', flexWrap: 'wrap' }}>
                       <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: '#555', cursor: 'pointer' }}>
-                        <input type="checkbox" checked={modalNoteIsQuote} onChange={(e) => setModalNoteIsQuote(e.target.checked)} style={{ accentColor: '#622722' }} />
+                        <input type="checkbox" checked={modalNoteIsQuote} onChange={(e) => setModalNoteIsQuote(e.target.checked)} style={{ accentColor: '#622722', width: 'auto' }} />
                         Quote
                       </label>
                       <input
@@ -1073,7 +1074,7 @@ export const Reviews = () => {
                         onChange={(e) => setModalNotePageRef(e.target.value)}
                         placeholder="p. 42..."
                         maxLength={50}
-                        style={{ width: '80px', padding: '3px 6px', fontSize: '11px', border: '1px solid #D9CBAD', borderRadius: '3px', background: '#FFFEFA', outline: 'none' }}
+                        style={{ width: '120px', padding: '6px 8px', border: '1px solid #D9CBAD', borderRadius: '3px', background: '#FFFEFA', outline: 'none', boxSizing: 'border-box' }}
                       />
                       <div style={{ marginLeft: 'auto', display: 'flex', gap: '6px' }}>
                         <button
@@ -1263,6 +1264,7 @@ export const Reviews = () => {
               </div>
             </form>
           </div>
+          </ModalViewport>
         </div>
       )}
 
