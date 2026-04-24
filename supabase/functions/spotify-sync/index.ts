@@ -78,7 +78,8 @@ const REGION_KEYWORDS: [string, string][] = [
   ["reggaeton", "Latin America"], ["latin", "Latin America"], ["cumbia", "Latin America"],
   ["arabic", "Arab World"], ["rai", "North Africa"],
   ["turkish", "Turkey"], ["persian", "Iran"],
-  ["flamenco", "Spain"], ["fado", "Portugal"],
+  ["flamenco", "Spain"], ["fado", "Portugal"], ["spanish", "Spain"],
+  ["italian", "Italy"],
   ["grime", "United Kingdom"], ["uk", "United Kingdom"],
   ["reggae", "Jamaica"], ["dancehall", "Jamaica"],
   ["bollywood", "India"], ["indian", "India"],
@@ -137,6 +138,8 @@ async function spotifyFetch(
     headers: { 'Authorization': `Bearer ${accessToken}` },
   });
   if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    console.error(`Spotify ${res.status} — ${url.split('?')[0]} — ${body}`);
     return { ok: false, status: res.status };
   }
   return { ok: true, data: await res.json(), status: res.status };
@@ -145,13 +148,23 @@ async function spotifyFetch(
 // ── Aggregate computation ───────────────────────────────────────────────
 
 function mapGenre(raw: string): string | null {
-  const lower = raw.toLowerCase();
+  const lower = raw.toLowerCase().replace(/-/g, ' '); // normalize hyphens → spaces
   if (GENRE_MAP[lower] !== undefined) return GENRE_MAP[lower];
-  // Try partial matches for compound genres
   for (const [key, mapped] of Object.entries(GENRE_MAP)) {
     if (lower.includes(key) && mapped !== null) return mapped;
   }
-  return raw; // Return as-is if no mapping found
+  return raw;
+}
+
+// Only accept Last.fm tags that map to a recognized genre.
+// Filters out descriptive tags: "female vocalists", "seen live", "70s", "chillout", etc.
+function isGenreTag(raw: string): boolean {
+  const lower = raw.toLowerCase().replace(/-/g, ' ');
+  if (GENRE_MAP[lower] !== undefined && GENRE_MAP[lower] !== null) return true;
+  for (const [key, mapped] of Object.entries(GENRE_MAP)) {
+    if (lower.includes(key) && mapped !== null) return true;
+  }
+  return false;
 }
 
 function deriveRegions(rawGenres: string[]): { region: string; count: number }[] {
@@ -168,25 +181,6 @@ function deriveRegions(rawGenres: string[]): { region: string; count: number }[]
   return Object.entries(regionCounts)
     .map(([region, count]) => ({ region, count }))
     .sort((a, b) => b.count - a.count);
-}
-
-function classifyMood(valence: number, energy: number): { label: string; line: string } {
-  const label =
-    valence > 0.6 && energy > 0.6 ? 'Euphoric' :
-    valence > 0.6 && energy <= 0.6 ? 'Peaceful' :
-    valence <= 0.6 && energy > 0.6 ? 'Intense' :
-    'Melancholic';
-
-  // Build mood_line from aggregates
-  const parts: string[] = [];
-  if (valence <= 0.4) parts.push('minor key');
-  else if (valence >= 0.7) parts.push('major key');
-
-  if (energy <= 0.3) parts.push('contemplative');
-  else if (energy <= 0.5) parts.push('measured');
-  else if (energy >= 0.7) parts.push('high energy');
-
-  return { label, line: parts.join(' · ') || label.toLowerCase() };
 }
 
 // ── Main handler ────────────────────────────────────────────────────────
@@ -290,9 +284,9 @@ Deno.serve(async (req: Request) => {
 
     let accessToken = tokenRow.access_token;
 
-    // ── 1. Fetch top artists ────────────────────────────────────────────
+    // ── 1. Fetch top artists (short_term = last 4 weeks) ───────────────
     let artistsRes = await spotifyFetch(
-      `${SPOTIFY_API}/me/top/artists?time_range=medium_term&limit=50`,
+      `${SPOTIFY_API}/me/top/artists?time_range=short_term&limit=50`,
       accessToken
     );
 
@@ -307,7 +301,7 @@ Deno.serve(async (req: Request) => {
       }
       accessToken = newToken;
       artistsRes = await spotifyFetch(
-        `${SPOTIFY_API}/me/top/artists?time_range=medium_term&limit=50`,
+        `${SPOTIFY_API}/me/top/artists?time_range=short_term&limit=50`,
         accessToken
       );
     }
@@ -319,9 +313,9 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // ── 2. Fetch top tracks ─────────────────────────────────────────────
+    // ── 2. Fetch top tracks (short_term = last 4 weeks) ────────────────
     const tracksRes = await spotifyFetch(
-      `${SPOTIFY_API}/me/top/tracks?time_range=medium_term&limit=50`,
+      `${SPOTIFY_API}/me/top/tracks?time_range=short_term&limit=50`,
       accessToken
     );
 
@@ -332,8 +326,15 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // ── 3. Fetch audio features ─────────────────────────────────────────
-    const tracksData = tracksRes.data as { items: { id: string; artists: { name: string }[] }[] };
+    // ── 3. Fetch audio features (optional — graceful if restricted) ─────
+    const tracksData = tracksRes.data as {
+      items: {
+        id: string;
+        name: string;
+        artists: { name: string }[];
+        album: { images: { url: string }[] };
+      }[]
+    };
     const trackIds = tracksData.items.map(t => t.id).join(',');
 
     const featuresRes = await spotifyFetch(
@@ -341,61 +342,131 @@ Deno.serve(async (req: Request) => {
       accessToken
     );
 
-    if (!featuresRes.ok) {
-      return new Response(
-        JSON.stringify({ error: `Spotify audio features API error: ${featuresRes.status}` }),
-        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // ── All three calls succeeded — compute aggregates ──────────────────
+    // ── Compute aggregates ──────────────────────────────────────────────
 
     const artistsData = artistsRes.data as {
       items: { name: string; images: { url: string }[]; genres: string[] }[]
     };
-    const featuresData = featuresRes.data as {
-      audio_features: ({
-        valence: number; energy: number; tempo: number;
-        mode: number; acousticness: number;
-      } | null)[]
-    };
 
-    // Top 10 artists with image + raw genres
-    const top_artists = artistsData.items.slice(0, 10).map(a => ({
-      name: a.name,
-      image_url: a.images?.[0]?.url || null,
-      genres: a.genres || [],
-    }));
+    // ── Track-based artist scoring ──────────────────────────────────
+    // Rank artists by weighted listening signal from top tracks.
+    // Primary artist (first listed) gets full credit; rank 1 = weight 1.0, rank N = weight 1/N.
+    // This is music-only, future-proof, and works for any user's data.
 
-    // Collect ALL raw genres from ALL 50 artists
-    const allRawGenres: string[] = [];
-    for (const artist of artistsData.items) {
-      allRawGenres.push(...(artist.genres || []));
+    // Build artist image lookup from Spotify's affinity list (profile photos when available)
+    const artistProfileImages: Record<string, string | null> = {};
+    for (const a of artistsData.items) {
+      artistProfileImages[a.name] = a.images?.[0]?.url || null;
     }
 
-    // Map genres and count
+    const artistScores: Record<string, number> = {};
+    const artistAlbumArt: Record<string, string | null> = {}; // fallback image from highest-ranked track
+
+    const totalTracks = tracksData.items.length;
+    tracksData.items.forEach((track, i) => {
+      const rank = i + 1;
+      const weight = (totalTracks + 1 - rank) / totalTracks;
+      const primaryArtistName = track.artists[0]?.name;
+      if (!primaryArtistName) return;
+      artistScores[primaryArtistName] = (artistScores[primaryArtistName] || 0) + weight;
+      // Album art from first (highest-ranked) track appearance as image fallback
+      if (!artistAlbumArt[primaryArtistName]) {
+        artistAlbumArt[primaryArtistName] = track.album?.images?.[0]?.url || null;
+      }
+    });
+
+    const rankedArtists = Object.entries(artistScores)
+      .sort(([, a], [, b]) => b - a)
+      .map(([name]) => ({
+        name,
+        // Use Spotify profile photo if available, otherwise track album art
+        image_url: artistProfileImages[name] || artistAlbumArt[name] || null,
+      }));
+
+    // ── Last.fm enrichment on track-derived artists ─────────────────
+    // Only enrich artists who actually appear in listening history.
+    // Only accept tags that map to recognised genres (filters "female vocalists" etc.)
+    const genreOverrides: Record<string, string[]> = {};
+    const { data: lfmSecrets } = await supabaseAdmin.rpc('get_secret', { secret_name: 'lastfm_api_key' });
+    const lastfmKey = lfmSecrets?.[0]?.secret || null;
+    if (lastfmKey && rankedArtists.length > 0) {
+      await Promise.all(rankedArtists.map(async ({ name: artistName }) => {
+        try {
+          const res = await fetch(
+            `https://ws.audioscrobbler.com/2.0/?method=artist.getTopTags&artist=${encodeURIComponent(artistName)}&api_key=${lastfmKey}&format=json`,
+            { signal: AbortSignal.timeout(3000) }
+          );
+          if (!res.ok) return;
+          const data = await res.json();
+          if (data.error) return;
+          // Keep all tags — isGenreTag is applied later when building top_genres.
+          // Geography detection (REGION_KEYWORDS) needs tags like "french", "bollywood", "indian".
+          const tags = (data?.toptags?.tag || [])
+            .slice(0, 8)
+            .map((t: { name: string }) => t.name.toLowerCase())
+            .filter((t: string) => t.length > 0);
+          if (tags.length > 0) genreOverrides[artistName] = tags;
+        } catch { /* non-blocking per artist */ }
+      }));
+    }
+
+    // Build top_artists for display — track-ranked, with enriched genres
+    const top_artists = rankedArtists.slice(0, 10).map(a => ({
+      name: a.name,
+      image_url: a.image_url,
+      genres: genreOverrides[a.name] || [],
+    }));
+
+    // Top 10 tracks for the music section display
+    const top_tracks = tracksData.items.slice(0, 10).map(t => ({
+      name: t.name,
+      artist: t.artists.map(a => a.name).join(', '),
+      album_image_url: t.album?.images?.[0]?.url || null,
+    }));
+
+    // Collect raw genres from track-derived artists only — correct source for genres + geography
+    const allRawGenres: string[] = [];
+    for (const artist of top_artists) {
+      allRawGenres.push(...artist.genres);
+    }
+
+    // Map genres and count — only genre-mappable tags (filters "female vocalists", "bollywood" etc. from display)
+    // Geography uses allRawGenres directly (no isGenreTag filter) so region tags are preserved.
     const genreCounts: Record<string, number> = {};
     for (const raw of allRawGenres) {
+      if (!isGenreTag(raw)) continue; // display filter: keep only recognised genre tags
       const mapped = mapGenre(raw);
-      if (mapped === null) continue; // Discarded genre
+      if (!mapped || mapped === raw) continue; // drop unmapped raw strings from display
       genreCounts[mapped] = (genreCounts[mapped] || 0) + 1;
     }
     const top_genres = Object.entries(genreCounts)
       .map(([genre, count]) => ({ genre, count }))
       .sort((a, b) => b.count - a.count);
 
-    // Cultural geography — derived from raw genre strings
     const cultural_geography = deriveRegions(allRawGenres);
 
-    // Audio feature averages
-    const validFeatures = featuresData.audio_features.filter(f => f !== null);
-    const n = validFeatures.length || 1;
+    // Audio features — raw signal data for portrait-generate (Haiku determines mood holistically)
+    let avg_valence: number | null = null;
+    let avg_energy: number | null = null;
+    let avg_tempo: number | null = null;
+    let avg_acousticness: number | null = null;
+    let pct_minor: number | null = null;
 
-    const avg_valence = validFeatures.reduce((s, f) => s + f!.valence, 0) / n;
-    const avg_energy = validFeatures.reduce((s, f) => s + f!.energy, 0) / n;
-    const avg_tempo = validFeatures.reduce((s, f) => s + f!.tempo, 0) / n;
-    const avg_acousticness = validFeatures.reduce((s, f) => s + f!.acousticness, 0) / n;
-    const pct_minor = validFeatures.filter(f => f!.mode === 0).length / n;
+    if (featuresRes.ok) {
+      const featuresData = featuresRes.data as {
+        audio_features: ({
+          valence: number; energy: number; tempo: number;
+          mode: number; acousticness: number;
+        } | null)[]
+      };
+      const validFeatures = featuresData.audio_features.filter(f => f !== null);
+      const n = validFeatures.length || 1;
+      avg_valence = Math.round(validFeatures.reduce((s, f) => s + f!.valence, 0) / n * 1000) / 1000;
+      avg_energy = Math.round(validFeatures.reduce((s, f) => s + f!.energy, 0) / n * 1000) / 1000;
+      avg_tempo = Math.round(validFeatures.reduce((s, f) => s + f!.tempo, 0) / n * 10) / 10;
+      avg_acousticness = Math.round(validFeatures.reduce((s, f) => s + f!.acousticness, 0) / n * 1000) / 1000;
+      pct_minor = Math.round(validFeatures.filter(f => f!.mode === 0).length / n * 1000) / 1000;
+    }
 
     // Listening mode: "immersion" if top 5 artists account for >60% of top tracks
     const trackArtistCounts: Record<string, number> = {};
@@ -410,12 +481,11 @@ Deno.serve(async (req: Request) => {
     const topFiveTotal = topFiveArtists.reduce((s, [, c]) => s + c, 0);
     const listening_mode = (topFiveTotal / tracksData.items.length) > 0.6 ? 'immersion' : 'explorer';
 
-    // Mood classification
-    const { label: mood_label, line: mood_line } = classifyMood(avg_valence, avg_energy);
-
     const synced_at = new Date().toISOString();
 
     // ── Atomic upsert ───────────────────────────────────────────────────
+    // mood_label and mood_line are owned by portrait-generate (Haiku's holistic judgment).
+    // spotify-sync only saves raw music data as input signals for Haiku.
     const { error: upsertError } = await supabaseAdmin
       .from('spotify_profiles')
       .upsert({
@@ -423,16 +493,15 @@ Deno.serve(async (req: Request) => {
         synced_at,
         is_active: true,
         top_artists,
+        top_tracks,
         top_genres,
-        avg_valence: Math.round(avg_valence * 1000) / 1000,
-        avg_energy: Math.round(avg_energy * 1000) / 1000,
-        avg_tempo: Math.round(avg_tempo * 10) / 10,
-        pct_minor: Math.round(pct_minor * 1000) / 1000,
-        avg_acousticness: Math.round(avg_acousticness * 1000) / 1000,
+        avg_valence,
+        avg_energy,
+        avg_tempo,
+        pct_minor,
+        avg_acousticness,
         listening_mode,
         cultural_geography,
-        mood_label,
-        mood_line,
       });
 
     if (upsertError) {
@@ -441,6 +510,20 @@ Deno.serve(async (req: Request) => {
         JSON.stringify({ error: 'Failed to save Spotify data' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+    }
+
+    // After cron sync, chain into portrait-generate with fresh data (fire-and-forget)
+    if (cronSecret) {
+      fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/portrait-generate`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+          'Content-Type': 'application/json',
+          'apikey': Deno.env.get('SUPABASE_ANON_KEY')!,
+          'x-cron-secret': cronSecret,
+        },
+        body: JSON.stringify({ user_id: userId, manual: false }),
+      }).catch(err => console.warn('portrait-generate chain failed:', err));
     }
 
     return new Response(

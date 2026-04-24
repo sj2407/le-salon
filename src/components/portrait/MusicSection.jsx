@@ -282,7 +282,8 @@ export const MusicSection = ({ spotifyProfile, onSeeAll, isOwner, onConnectSpoti
 
       {/* Cultural geography — top 3 */}
       {cultural_geography && cultural_geography.length > 0 && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+        <div style={{ marginBottom: '4px' }}>
+          <span style={{ fontSize: '12px', color: '#999', marginRight: '6px' }}>Geography</span>
           {cultural_geography.slice(0, 3).map((g, i) => (
             <span key={i} style={{
               display: 'inline-block',
@@ -292,6 +293,7 @@ export const MusicSection = ({ spotifyProfile, onSeeAll, isOwner, onConnectSpoti
               fontSize: '13px',
               color: '#6B6156',
               fontWeight: 500,
+              marginRight: '6px',
             }}>
               {g.region}
             </span>
