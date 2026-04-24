@@ -137,7 +137,6 @@ export const FindFriends = () => {
             }}>
               <div>
                 <div style={{ fontWeight: 600 }}>{user.display_name}</div>
-                <div style={{ fontSize: '14px', color: '#777' }}>@{user.username}</div>
               </div>
               <button onClick={() => handleSendRequest(user.id)} className="primary">
                 Send Request
