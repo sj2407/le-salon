@@ -131,23 +131,52 @@ async function searchGoogleBooks(query) {
 }
 
 /**
- * Search books — Google Books + Open Library combined.
- * Always fetches both sources for better coverage of classics and translations.
+ * Search books via iTunes (Apple Books) — free, no key, day-one new releases.
+ * Uses same JSONP infrastructure as searchPodcasts.
+ */
+async function searchItunesBooks(query) {
+  try {
+    const res = await fetch(
+      `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=ebook&limit=8`
+    )
+    if (!res.ok) return []
+    const data = await res.json()
+    return (data.results || [])
+      .filter(r => r.artworkUrl100)
+      .map(r => ({
+        id: `itunes_${r.trackId}`,
+        title: r.trackName || '',
+        subtitle: [r.artistName, r.releaseDate?.slice(0, 4)].filter(Boolean).join(', '),
+        imageUrl: itunesArtwork(r.artworkUrl100),
+      }))
+  } catch {
+    return []
+  }
+}
+
+/**
+ * Search books — Google Books + Open Library + iTunes combined.
+ * GB first (best covers), OL second, iTunes third (best for new releases).
+ * All three fetched in parallel; iTunes results deduped against GB+OL.
  */
 export async function searchBooks(query) {
-  // Fetch both in parallel for speed
-  const [gbResults, olResults] = await Promise.all([
+  const [gbResults, olResults, itunesResults] = await Promise.all([
     searchGoogleBooks(query),
     searchOpenLibrary(query),
+    searchItunesBooks(query),
   ])
 
-  // Merge: Google Books first (generally better covers), then Open Library deduped
+  // GB first, then OL deduped, then iTunes deduped against both
   const seenTitles = new Set(gbResults.map(r => r.title.toLowerCase()))
   const newOlResults = olResults.filter(r =>
     r.imageUrl && !seenTitles.has(r.title.toLowerCase())
   )
+  newOlResults.forEach(r => seenTitles.add(r.title.toLowerCase()))
+  const newItunesResults = itunesResults.filter(r =>
+    r.imageUrl && !seenTitles.has(r.title.toLowerCase())
+  )
 
-  return [...gbResults, ...newOlResults].slice(0, 12)
+  return [...gbResults, ...newOlResults, ...newItunesResults].slice(0, 12)
 }
 
 /**

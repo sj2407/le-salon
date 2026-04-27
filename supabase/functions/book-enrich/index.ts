@@ -87,6 +87,47 @@ async function searchGoogleBooks(
   return null;
 }
 
+// ── iTunes Books fallback ──
+
+async function searchItunesBooksCover(
+  title: string,
+  author: string | null
+): Promise<string | null> {
+  try {
+    // Strip subtitle for better match rate (e.g. "London Falling: A Mysterious..." → "London Falling")
+    const searchTitle = title.split(/\s*[:—]\s*/)[0].trim()
+    const term = author ? `${searchTitle} ${author}` : searchTitle
+    const res = await fetch(
+      `https://itunes.apple.com/search?term=${encodeURIComponent(term)}&media=ebook&limit=8`
+    )
+    if (!res.ok) return null
+    const data = await res.json()
+
+    const normalise = (s: string) =>
+      s.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim()
+    const targetTitle = normalise(searchTitle)
+
+    const scored = ((data.results || []) as Record<string, unknown>[])
+      .filter(r => r.artworkUrl100)
+      .map(r => {
+        const t = normalise((r.trackName as string) || '')
+        let score = 0
+        if (t === targetTitle) score += 5
+        else if (t.startsWith(targetTitle) || targetTitle.startsWith(t)) score += 3
+        else if (t.includes(targetTitle) || targetTitle.includes(t)) score += 2
+        if (author && normalise((r.artistName as string) || '').includes(normalise(author))) score += 3
+        return { artworkUrl: r.artworkUrl100 as string, score }
+      })
+      .sort((a, b) => b.score - a.score)
+
+    const best = scored[0]
+    if (!best || best.score < 2) return null
+    return best.artworkUrl.replace(/\d+x\d+bb/, '400x400bb')
+  } catch {
+    return null
+  }
+}
+
 // ── Open Library fallback ──
 
 async function searchOpenLibraryCover(
@@ -202,20 +243,21 @@ Deno.serve(async (req: Request) => {
     const volume = await searchGoogleBooks(title, author || null);
 
     if (!volume) {
-      // Google Books found nothing — try Open Library for a cover
+      // Google Books found nothing — try Open Library then iTunes
       const olCover = await searchOpenLibraryCover(title, author || null);
+      const cover_url = olCover || await searchItunesBooksCover(title, author || null);
       return new Response(
-        JSON.stringify({ success: true, cover_url: olCover, genres: null, description: null, google_books_id: null }),
+        JSON.stringify({ success: true, cover_url, genres: null, description: null, google_books_id: null }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     const result = extractBookData(volume);
 
-    // Fallback to Open Library if Google Books returned no cover
+    // Fallback to Open Library then iTunes if Google Books returned no cover
     if (!result.cover_url) {
       const olCover = await searchOpenLibraryCover(title, author || null);
-      if (olCover) result.cover_url = olCover;
+      result.cover_url = olCover || await searchItunesBooksCover(title, author || null);
     }
 
     return new Response(
