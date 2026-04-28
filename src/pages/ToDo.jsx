@@ -4,7 +4,6 @@ import { useToast } from '../contexts/ToastContext'
 import { supabase } from '../lib/supabase'
 import { Link } from 'react-router-dom'
 import { EmptyStateFantom } from '../components/EmptyStateFantom'
-import { FilterDropdown } from '../components/FilterDropdown'
 import { ActivityCard } from '../components/ActivityCard'
 import { CoverSearchModal } from '../components/cover-search/CoverSearchModal'
 import { useScrollLock } from '../hooks/useScrollLock'
@@ -74,7 +73,7 @@ const parseDate = (dateText) => {
   return null
 }
 
-const CITY_OPTIONS = ['New York', 'London', 'Paris']
+const titleCaseCity = (s) => s.trim().replace(/\b\w+/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
 
 export const ToDo = () => {
   const { profile } = useAuth()
@@ -85,14 +84,13 @@ export const ToDo = () => {
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingActivity, setEditingActivity] = useState(null)
-  const [cityFilter, setCityFilter] = useState('all')
+  const [cityFilter, setCityFilter] = useState('')
   const [hiddenIds, setHiddenIds] = useState(new Set())
 
   // Form state
   const [description, setDescription] = useState('')
   const [dateText, setDateText] = useState('')
   const [city, setCity] = useState('')
-  const [cityDropdownOpen, setCityDropdownOpen] = useState(false)
   const [location, setLocation] = useState('')
   const [price, setPrice] = useState('')
   const [imageUrl, setImageUrl] = useState('')
@@ -276,7 +274,7 @@ export const ToDo = () => {
             description,
             date_text: dateText.trim() || null,
             date_parsed: dateParsed,
-            city: city.trim() || null,
+            city: city.trim() ? titleCaseCity(city) : null,
             location: location.trim() || null,
             price: price.trim() || null,
             image_url: imageUrl || null,
@@ -294,7 +292,7 @@ export const ToDo = () => {
             description,
             date_text: dateText.trim() || null,
             date_parsed: dateParsed,
-            city: city.trim() || null,
+            city: city.trim() ? titleCaseCity(city) : null,
             location: location.trim() || null,
             price: price.trim() || null,
             image_url: imageUrl || null
@@ -447,9 +445,10 @@ export const ToDo = () => {
     )
   }
 
-  const filteredActivities = (cityFilter === 'all'
+  const cityFilterTrimmed = cityFilter.trim().toLowerCase()
+  const filteredActivities = (cityFilterTrimmed === ''
     ? activities
-    : activities.filter(activity => activity.city === cityFilter)
+    : activities.filter(activity => activity.city?.toLowerCase().startsWith(cityFilterTrimmed))
   ).filter(activity => !hiddenIds.has(activity.id))
 
   return (
@@ -482,13 +481,22 @@ export const ToDo = () => {
 
       {/* Filter + Add toolbar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', position: 'relative', zIndex: 1 }}>
-        <FilterDropdown
+        <input
+          type="text"
           value={cityFilter}
-          onChange={setCityFilter}
-          options={[
-            { value: 'all', label: 'All Cities' },
-            ...CITY_OPTIONS.map(c => ({ value: c, label: c }))
-          ]}
+          onChange={(e) => setCityFilter(e.target.value)}
+          placeholder="Filter by city…"
+          style={{
+            fontFamily: "'Source Serif 4', Georgia, serif",
+            fontStyle: 'italic',
+            fontSize: '16px',
+            padding: '4px 8px',
+            border: 'none',
+            borderRadius: '3px',
+            background: '#FFFEFA',
+            outline: 'none',
+            width: '160px'
+          }}
         />
         <button
           onClick={openAddModal}
@@ -511,7 +519,7 @@ export const ToDo = () => {
           <EmptyStateFantom />
         ) : (
           <div style={{ textAlign: 'center', padding: '40px', fontStyle: 'italic', color: '#777' }}>
-            {`No activities in ${cityFilter}.`}
+            {`No activities matching "${cityFilter.trim()}".`}
           </div>
         )
       ) : (
@@ -574,7 +582,7 @@ export const ToDo = () => {
               overflowY: 'auto',
               boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)'
             }}
-            onClick={(e) => { e.stopPropagation(); setCityDropdownOpen(false) }}
+            onClick={(e) => e.stopPropagation()}
             className="profile-edit-compact"
           >
             <h2 className="handwritten" style={{ fontSize: '22px', marginBottom: '10px', marginTop: 0, textAlign: 'center' }}>
@@ -651,68 +659,15 @@ export const ToDo = () => {
                 />
               </div>
 
-              <div className="form-group" style={{ position: 'relative' }}>
+              <div className="form-group">
                 <label className="form-label">City</label>
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); setCityDropdownOpen(!cityDropdownOpen) }}
-                  style={{
-                    width: '100%',
-                    padding: '8px 10px',
-                    border: '1px solid #ccc',
-                    borderRadius: '3px',
-                    background: '#FFFEFA',
-                    fontSize: '16px',
-                    fontFamily: "'Source Serif 4', Georgia, serif",
-                    fontStyle: 'italic',
-                    fontWeight: 400,
-                    color: city ? '#2C2C2C' : '#999',
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    boxSizing: 'border-box'
-                  }}
-                >
-                  {city || 'Select city'}
-                  <span style={{ fontSize: '10px', color: '#999' }}>▾</span>
-                </button>
-                {cityDropdownOpen && (
-                  <div style={{
-                    position: 'absolute',
-                    top: '100%',
-                    left: 0,
-                    right: 0,
-                    background: '#FFFEFA',
-                    borderRadius: '0 0 4px 4px',
-                    boxShadow: '2px 3px 12px rgba(0, 0, 0, 0.15)',
-                    zIndex: 10,
-                    maxHeight: '200px',
-                    overflowY: 'auto'
-                  }}>
-                    {['', ...CITY_OPTIONS].map((opt) => (
-                      <div
-                        key={opt}
-                        onClick={() => { setCity(opt); setCityDropdownOpen(false) }}
-                        style={{
-                          padding: '8px 12px',
-                          cursor: 'pointer',
-                          fontFamily: "'Source Serif 4', Georgia, serif",
-                          fontSize: '15px',
-                          fontStyle: 'italic',
-                          color: opt ? '#2C2C2C' : '#999',
-                          background: opt === city ? '#F5F0EB' : 'transparent',
-                          transition: 'background 0.15s'
-                        }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = '#F5F0EB' }}
-                        onMouseLeave={(e) => { if (opt !== city) e.currentTarget.style.background = 'transparent' }}
-                      >
-                        {opt || 'Select city'}
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <input
+                  type="text"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  maxLength={100}
+                  placeholder="e.g., Tokyo, New York"
+                />
               </div>
 
               <div className="form-group">
