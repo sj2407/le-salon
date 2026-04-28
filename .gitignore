@@ -17,6 +17,10 @@ dist-ssr
 .env.local
 .env.production
 
+# Secrets and signing keys (NEVER commit)
+*.p8
+*-credentials.txt
+
 # MCP config (contains access tokens)
 .mcp.json
 
