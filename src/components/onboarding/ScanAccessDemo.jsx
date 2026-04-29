@@ -45,7 +45,7 @@ const ScanAccessDemo = ({ title, subtitle, frames, onContinue }) => (
     <ScreenshotSequence
       frames={frames}
       advance="both"
-      intervalMs={3500}
+      intervalMs={2300}
       WrapperComponent={ScreenFrame}
     />
 
