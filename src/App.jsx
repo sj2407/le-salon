@@ -4,7 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from
 import { AnimatePresence, motion as Motion } from 'framer-motion'
 import { Capacitor } from '@capacitor/core'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
-import { ToastProvider, useToast } from './contexts/ToastContext'
+import { ToastProvider } from './contexts/ToastContext'
 import { supabase } from './lib/supabase'
 import { Navigation } from './components/Navigation'
 import { BottomTabBar } from './components/BottomTabBar'
@@ -12,6 +12,7 @@ import { Footer } from './components/Footer'
 import { useShareTokenSync } from './hooks/useShareTokenSync'
 import { usePushNotifications } from './hooks/usePushNotifications'
 import { useBiometricLock } from './hooks/useBiometricLock'
+import { useOnboardingTrigger } from './hooks/useOnboardingTrigger'
 import { LockScreen } from './components/LockScreen'
 import { ShareNotificationBanner } from './components/ShareNotificationBanner'
 import { SignUp } from './pages/SignUp'
@@ -33,6 +34,7 @@ const AdminFeedback = lazy(() => import('./pages/AdminFeedback').then(m => ({ de
 const Help = lazy(() => import('./pages/Help').then(m => ({ default: m.Help })))
 const AccountSettings = lazy(() => import('./pages/AccountSettings').then(m => ({ default: m.AccountSettings })))
 const Privacy = lazy(() => import('./pages/Privacy').then(m => ({ default: m.Privacy })))
+const Onboarding = lazy(() => import('./pages/Onboarding').then(m => ({ default: m.Onboarding })))
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth()
@@ -74,7 +76,6 @@ function AppContent() {
   const location = useLocation()
   const navigate = useNavigate()
   const { user } = useAuth()
-  const toast = useToast()
   // Intro video — hoisted here so it renders BEFORE Suspense/lazy load
   const [introPlayed, setIntroPlayed] = useState(() => !!sessionStorage.getItem('salon-intro-played'))
   const introVideoRef = useRef(null)
@@ -86,6 +87,16 @@ function AppContent() {
   useShareTokenSync(user)
   usePushNotifications(user, navigate, introPlayed)
   const { isLocked, unlock } = useBiometricLock(user)
+  const onboardingStatus = useOnboardingTrigger()
+
+  // Redirect first-time users into the onboarding flow.
+  useEffect(() => {
+    if (onboardingStatus !== 'redirect') return
+    if (location.pathname === '/onboarding') return
+    if (location.pathname === '/signin' || location.pathname === '/signup' || location.pathname === '/reset-password') return
+    navigate('/onboarding', { replace: true })
+  }, [onboardingStatus, location.pathname, navigate])
+
 
   // Handle OAuth redirects from system browser back to native app (Universal Links)
   useEffect(() => {
@@ -176,8 +187,18 @@ function AppContent() {
     }
   }, [user, introPlayed, handleIntroDone])
 
-  // Intro splash — renders as portal ABOVE everything, before lazy chunks load
-  if (user && !introPlayed) {
+  // Intro splash — renders as portal ABOVE everything, before lazy chunks load.
+  // Suppressed during /onboarding because the closing VideoStep IS the splash.
+  // Re-reads sessionStorage at render so VideoStep's flag write is honored.
+  const splashAlreadyPlayed = typeof window !== 'undefined'
+    && !!sessionStorage.getItem('salon-intro-played')
+  if (
+    user
+    && !introPlayed
+    && !splashAlreadyPlayed
+    && onboardingStatus === 'allow'
+    && location.pathname !== '/onboarding'
+  ) {
     return createPortal(
       <div style={{
         position: 'fixed',
@@ -264,6 +285,10 @@ function AppContent() {
             <Route
               path="/reset-password"
               element={<ResetPassword />}
+            />
+            <Route
+              path="/onboarding"
+              element={<Onboarding />}
             />
             <Route
               path="/"

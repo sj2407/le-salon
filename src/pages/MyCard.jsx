@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import { supabase } from '../lib/supabase'
@@ -24,6 +24,10 @@ export const MyCard = () => {
   const [pendingDictation, setPendingDictation] = useState(null)
   const [loading, setLoading] = useState(!_cardCache)
   const [error, setError] = useState('')
+  // Guards against StrictMode's double-effect (and any other source of
+  // concurrent fetches) racing on createNewCard and tripping the partial
+  // unique index `idx_one_current_card_per_user`.
+  const fetchingRef = useRef(false)
 
   useEffect(() => {
     if (profile) {
@@ -32,6 +36,8 @@ export const MyCard = () => {
   }, [profile])
 
   const fetchCurrentCard = async () => {
+    if (fetchingRef.current) return
+    fetchingRef.current = true
     try {
       if (!_cardCache) setLoading(true)
 
@@ -73,6 +79,7 @@ export const MyCard = () => {
       setError(err.message)
     } finally {
       setLoading(false)
+      fetchingRef.current = false
     }
   }
 

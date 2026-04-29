@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+
 export const Help = () => {
   return (
     <div className="container" style={{ maxWidth: '800px', position: 'relative' }}>
@@ -257,7 +259,21 @@ export const Help = () => {
         </div>
       </div>
 
-      <div style={{ textAlign: 'center', marginTop: '24px', marginBottom: '24px' }}>
+      <div style={{ textAlign: 'center', marginTop: '24px', marginBottom: '8px' }}>
+        <Link
+          to="/onboarding?mode=replay"
+          style={{
+            fontSize: '14px',
+            color: '#622722',
+            textDecoration: 'underline',
+            fontStyle: 'italic',
+          }}
+        >
+          Replay the onboarding tour
+        </Link>
+      </div>
+
+      <div style={{ textAlign: 'center', marginTop: '12px', marginBottom: '24px' }}>
         <p style={{ fontSize: '14px', fontStyle: 'italic', color: '#999' }}>
           Questions? Suggestions? Feel free to reach out!
         </p>

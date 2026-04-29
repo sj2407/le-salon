@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import { supabase } from '../lib/supabase'
 import { useNativeCamera } from '../hooks/useNativeCamera'
+import { uploadProfilePhoto } from '../lib/profilePhoto'
 
 export const ProfileEditModal = ({ onClose }) => {
   const { profile, user, refreshProfile } = useAuth()
@@ -124,30 +125,11 @@ export const ProfileEditModal = ({ onClose }) => {
       let uploadedPhotoUrl = profile?.profile_photo_url || ''
 
       if (photoFile) {
-        const fileExt = photoFile.name.split('.').pop().toLowerCase()
-        const fileName = `photo-${Date.now()}.${fileExt}`
-        const filePath = `${user.id}/${fileName}`
-
-        const { error: uploadError } = await supabase.storage
-          .from('profile-photo')
-          .upload(filePath, photoFile)
-
-        if (uploadError) throw new Error(`Photo upload failed: ${uploadError.message}`)
-
-        // Delete old photo file if it exists
-        const oldUrl = profile?.profile_photo_url
-        if (oldUrl) {
-          const oldPath = oldUrl.split('/profile-photo/')[1]?.split('?')[0]
-          if (oldPath && oldPath !== filePath) {
-            await supabase.storage.from('profile-photo').remove([oldPath])
-          }
-        }
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('profile-photo')
-          .getPublicUrl(filePath)
-
-        uploadedPhotoUrl = publicUrl
+        uploadedPhotoUrl = await uploadProfilePhoto({
+          file: photoFile,
+          userId: user.id,
+          oldUrl: profile?.profile_photo_url
+        })
       }
 
       const { error: updateError } = await supabase

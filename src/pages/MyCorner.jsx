@@ -9,6 +9,7 @@ import { Wishlist } from './Wishlist'
 import { Portrait } from './Portrait'
 // import { Profile } from './Profile' // Merged into Card tab — edit via gear icon
 import { ProfileEditModal } from '../components/ProfileEditModal'
+import { FinishSetupBanner } from '../components/onboarding/FinishSetupBanner'
 import { GearSix } from '@phosphor-icons/react'
 
 const MY_CORNER_TABS = ['card', 'reviews', 'liste', 'wishlist', 'portrait']
@@ -33,6 +34,7 @@ export const MyCorner = () => {
 
   return (
     <div className="container">
+      <FinishSetupBanner />
       <div style={{ minHeight: 'calc(100vh - 120px)' }}>
         {/* Tab Navigation */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', paddingLeft: '10px', paddingRight: '4px' }}>
