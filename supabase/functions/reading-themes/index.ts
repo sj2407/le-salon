@@ -13,41 +13,62 @@ interface BookForThemes {
   title: string;
   author: string | null;
   google_books_description: string | null;
+  // Best available reading date: prefer date_read, fall back to created_at.
+  // Used to bias theme generation toward recent reads.
+  read_at: string | null;
+  // Always populated; used for the "books since last regen" trigger logic.
+  created_at: string;
 }
 
-// Warm palette that matches the app's aesthetic
+// Warm palette that matches the app's aesthetic. Expanded to 10 entries so
+// that graphs with up to 10 themes have unique colors.
 const THEME_COLORS = [
   '#C97B63', // terracotta
   '#7BA78A', // sage
   '#8B7DAE', // lavender
   '#CDA74E', // gold
   '#6B9BC3', // slate blue
+  '#A85F8E', // mauve
+  '#5F8C8C', // teal
+  '#B8794D', // rust
+  '#6E8C5F', // moss
+  '#9B7BC9', // amethyst
 ];
 
 function buildUserPrompt(books: BookForThemes[]): string {
+  // Books arrive sorted newest-first by read_at. The LLM is told to weight
+  // recent reads more heavily so the theme set tracks current preoccupations
+  // instead of being permanently anchored on the user's earliest history.
   const bookLines = books.map(b => {
+    const date = b.read_at ? b.read_at.slice(0, 10) : null;
     const desc = b.google_books_description
-      ? ` — ${b.google_books_description.slice(0, 200)}`
+      ? ` (${b.google_books_description.slice(0, 200)})`
       : '';
+    const dateLabel = date ? ` (read ${date})` : '';
     return b.author
-      ? `"${b.title}" by ${b.author}${desc}`
-      : `"${b.title}"${desc}`;
+      ? `"${b.title}" by ${b.author}${dateLabel}${desc}`
+      : `"${b.title}"${dateLabel}${desc}`;
   });
 
-  return `Given these books (all rated 8-10 or reviewed): ${bookLines.join('; ')}
+  return `Given these books (all rated 7-10 or reviewed), sorted newest-first by reading date: ${bookLines.join('; ')}
 
-Identify 3-4 recurring thematic preoccupations. Not genre labels — actual themes.
+Identify 6-10 recurring thematic preoccupations. Not genre labels, actual themes.
 Good examples: "memory & loss", "post-colonial voices", "slow fiction",
 "female interiority", "political violence", "the absurd".
+
+Weight recent reads more heavily: books from roughly the last six months should
+have the strongest influence on the theme set; books from a year ago count
+about half as much; older books still inform recurring patterns. Newer reads
+deserve fresh themes if their preoccupations differ from older ones.
 
 Return only a JSON array of strings, no preamble.`;
 }
 
 function validateThemes(parsed: unknown): parsed is string[] {
   if (!Array.isArray(parsed)) return false;
-  if (parsed.length < 2 || parsed.length > 5) return false;
+  if (parsed.length < 4 || parsed.length > 12) return false;
   return parsed.every(
-    (item: unknown) => typeof item === 'string' && item.length > 0 && item.length <= 40
+    (item: unknown) => typeof item === 'string' && item.length > 0 && item.length <= 50
   );
 }
 
@@ -76,17 +97,22 @@ function buildGraphPrompt(
   books: BookForThemes[],
   themes: string[]
 ): string {
+  // Match buildIncrementalGraphPrompt: include the description so the LLM
+  // does not map books on title alone (which produces fluff like
+  // "A Surfeit of Lampreys" -> "power & corruption").
   const bookLines = books.map((b, i) =>
-    `${i}: "${b.title}"${b.author ? ` by ${b.author}` : ''}`
+    `${i}: "${b.title}"${b.author ? ` by ${b.author}` : ''}${
+      b.google_books_description ? ` (${b.google_books_description.slice(0, 200)})` : ''
+    }`
   );
 
   return `Books:\n${bookLines.join('\n')}
 
 Themes: ${JSON.stringify(themes)}
 
-For each book, list which themes it connects to (1-3 themes per book). Every theme must have at least 1 book.
+For each book, return an array of 0-3 themes from the list above, or [] if no theme genuinely fits the book. Do not force-fit outliers. Return an entry for every book, even if its array is empty.
 
-Return JSON: {"mapping": {"0": ["theme1", "theme2"], "1": ["theme2"], ...}}
+Return JSON: {"mapping": {"0": ["theme1", "theme2"], "1": [], "2": ["theme2"], ...}}
 Keys are book indices (as strings), values are arrays of theme strings from the list above.`;
 }
 
@@ -98,7 +124,7 @@ function buildIncrementalGraphPrompt(
 ): string {
   const bookLines = newBooks.map((b, i) =>
     `${i}: "${b.title}"${b.author ? ` by ${b.author}` : ''}${
-      b.google_books_description ? ` — ${b.google_books_description.slice(0, 200)}` : ''
+      b.google_books_description ? ` (${b.google_books_description.slice(0, 200)})` : ''
     }`
   );
 
@@ -107,10 +133,9 @@ function buildIncrementalGraphPrompt(
 New books to map:
 ${bookLines.join('\n')}
 
-For each new book, list which existing themes it connects to (1-3 themes per book).
-If a book doesn't fit any theme well, map it to the single closest theme.
+For each new book, return an array of 0-3 themes from the existing themes list, or [] if no theme genuinely fits. Do not force-fit outliers into a theme that does not really apply. Return an entry for every book, even if its array is empty.
 
-Return JSON: {"mapping": {"0": ["theme1", "theme2"], ...}}
+Return JSON: {"mapping": {"0": ["theme1", "theme2"], "1": [], ...}}
 Keys are book indices (as strings), values are arrays of theme strings from the existing themes list.`;
 }
 
@@ -165,7 +190,14 @@ function buildReadingGraph(
     }
   }
 
-  return { themes: themeNodes, edges };
+  // Drop themes that ended up with zero edges. Now that books are allowed to
+  // map to [], the LLM may produce a theme that no book connects to. Empty
+  // themes render as floating bubbles in the graph and would also appear as
+  // labels in profiles.reading_themes that have no underlying support.
+  const usedThemeIds = new Set(edges.map(e => e.theme_id));
+  const filteredThemes = themeNodes.filter(t => usedThemeIds.has(t.id));
+
+  return { themes: filteredThemes, edges };
 }
 
 // ── Merge incremental edges into existing graph ─────────────────────
@@ -196,9 +228,17 @@ function mergeIncrementalEdges(
     }
   }
 
+  const mergedEdges = [...prunedEdges, ...newEdges];
+
+  // Drop themes that no longer have any edges (e.g. all the books that
+  // anchored them were removed from primary signal, or the new mapping
+  // happens not to use them). Mirrors the post-filter in buildReadingGraph.
+  const usedThemeIds = new Set(mergedEdges.map(e => e.theme_id));
+  const filteredThemes = existingGraph.themes.filter(t => usedThemeIds.has(t.id));
+
   return {
-    themes: existingGraph.themes, // unchanged
-    edges: [...prunedEdges, ...newEdges],
+    themes: filteredThemes,
+    edges: mergedEdges,
   };
 }
 
@@ -294,25 +334,41 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Fetch primary-signal books: read + (rating >= 8 OR has a review)
+    // Fetch primary-signal books: read + (rating >= 7 OR has a review)
     const { data: booksRaw } = await supabaseUser
       .from('books')
-      .select('id, title, author, google_books_description, rating, review_id')
+      .select('id, title, author, google_books_description, rating, review_id, date_read, created_at')
       .eq('user_id', userId)
       .eq('status', 'read');
 
-    // Filter in code: rating >= 8 OR review_id IS NOT NULL
+    // Filter in code: rating >= 7 OR review_id IS NOT NULL
     const primaryBooks: BookForThemes[] = (booksRaw || [])
       .filter((b: Record<string, unknown>) => {
         const rating = b.rating != null ? Number(b.rating) : null;
-        return (rating != null && rating >= 8) || b.review_id != null;
+        return (rating != null && rating >= 7) || b.review_id != null;
       })
-      .map((b: Record<string, unknown>) => ({
-        id: b.id as string,
-        title: b.title as string,
-        author: b.author as string | null,
-        google_books_description: b.google_books_description as string | null,
-      }));
+      .map((b: Record<string, unknown>) => {
+        const dateRead = b.date_read as string | null;
+        const createdAt = b.created_at as string;
+        return {
+          id: b.id as string,
+          title: b.title as string,
+          author: b.author as string | null,
+          google_books_description: b.google_books_description as string | null,
+          // Prefer the explicit reading date, fall back to row creation time
+          // so books without a date_read still get a stable recency signal.
+          read_at: dateRead ?? createdAt,
+          created_at: createdAt,
+        };
+      })
+      // Sort newest-first so the LLM's recency-bias instruction lines up with
+      // the order of the book list. Also lets buildGraphPrompt use the same
+      // ordering for free, since indices into primaryBooks are reused.
+      .sort((a, b) => {
+        const ta = a.read_at ? new Date(a.read_at).getTime() : 0;
+        const tb = b.read_at ? new Date(b.read_at).getTime() : 0;
+        return tb - ta;
+      });
 
     // Need at least 3 primary-signal books
     if (primaryBooks.length < 3) {
@@ -352,7 +408,12 @@ Deno.serve(async (req: Request) => {
     // ── Three-path decision ─────────────────────────────────────────
 
     const isFirstTime = !hasExistingGraph;
-    const isBulkImport = newBooks.length > primaryBooks.length * 0.3;
+    // Trigger a full regeneration once 5 or more primary-signal books have
+    // accumulated since the last graph was generated. "newBooks" are books
+    // that pass the primary-signal filter but are not yet referenced in the
+    // existing graph's edges, so this captures both fresh adds and books
+    // whose rating crossed the threshold since the last regen.
+    const isBulkImport = newBooks.length >= 5;
     const needsFullRegen = isFirstTime || isBulkImport;
     const needsIncremental = !needsFullRegen && newBooks.length > 0;
     const hasStaleEdges = staleBookIds.length > 0;
@@ -536,6 +597,15 @@ Deno.serve(async (req: Request) => {
     }
 
     // ── Save to profiles ────────────────────────────────────────────
+
+    // Re-sync finalThemes to the post-filter graph theme labels. Both
+    // buildReadingGraph and mergeIncrementalEdges may drop themes that ended
+    // up with zero edges, so the standalone reading_themes array on profiles
+    // must mirror the surviving graph themes to avoid drift between the two
+    // representations consumed by Portrait and AspirationalPreview.
+    if (readingGraph) {
+      finalThemes = readingGraph.themes.map(t => t.label);
+    }
 
     const updatePayload: Record<string, unknown> = {
       reading_themes_at: new Date().toISOString(),
