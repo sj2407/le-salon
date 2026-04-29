@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion as Motion } from 'framer-motion'
+import { App as CapacitorApp } from '@capacitor/app'
+import { Capacitor } from '@capacitor/core'
 import { supabase } from '../lib/supabase'
 import { useSpeechRecognition } from '../lib/useSpeechRecognition'
 import { CATEGORY_CONFIG } from '../lib/cardConstants'
@@ -65,15 +67,37 @@ export const DictationModal = ({ isOpen, onClose, onAcceptEntries, mode = 'card'
     return () => { document.body.style.overflow = '' }
   }, [isOpen])
 
+  // Stop dictation if the app backgrounds (iOS native only)
+  useEffect(() => {
+    if (!isOpen || !Capacitor.isNativePlatform()) return
+    let listener
+    let cancelled = false
+    CapacitorApp.addListener('appStateChange', ({ isActive }) => {
+      if (!isActive) {
+        handleClose()
+      }
+    }).then((l) => {
+      if (cancelled) {
+        l.remove()
+      } else {
+        listener = l
+      }
+    })
+    return () => {
+      cancelled = true
+      listener?.remove()
+    }
+  }, [isOpen]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleClose = () => {
     stop()
     onClose()
   }
 
   const handleDone = async () => {
-    stop()
-    const fullTranscript = transcript || ''
-    if (!fullTranscript.trim()) {
+    const stopped = await stop()
+    const fullTranscript = (stopped || transcript || '').trim()
+    if (!fullTranscript) {
       handleClose()
       return
     }
@@ -158,14 +182,12 @@ export const DictationModal = ({ isOpen, onClose, onAcceptEntries, mode = 'card'
 
   // No click-outside-to-close — user must use Cancel or Done
 
-  const toggleLang = () => {
+  const toggleLang = async () => {
     const newLang = lang === 'en-US' ? 'fr-FR' : 'en-US'
     setLang(newLang)
-    // Restart recognition with new language if currently listening
-    // 200ms allows React to re-render and update the lang ref
     if (isListening) {
-      stop()
-      setTimeout(() => start(), 200)
+      await stop()
+      start()
     }
   }
 

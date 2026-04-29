@@ -18,6 +18,7 @@
 		A28A39D22F7C608C00B3B430 /* ShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A28A39C82F7C608C00B3B430 /* ShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		A28A39DA2F7C998900B3B430 /* MyViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A28A39D92F7C998900B3B430 /* MyViewController.swift */; };
 		A28A39DC2F7C9B8000B3B430 /* AppGroupPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A28A39DB2F7C9B8000B3B430 /* AppGroupPlugin.swift */; };
+		A28A39DE2F7CA00000B3B430 /* SpeechRecognitionPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A28A39DD2F7CA00000B3B430 /* SpeechRecognitionPlugin.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -59,6 +60,7 @@
 		A28A39C82F7C608C00B3B430 /* ShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		A28A39D92F7C998900B3B430 /* MyViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyViewController.swift; sourceTree = "<group>"; };
 		A28A39DB2F7C9B8000B3B430 /* AppGroupPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppGroupPlugin.swift; sourceTree = "<group>"; };
+		A28A39DD2F7CA00000B3B430 /* SpeechRecognitionPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechRecognitionPlugin.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -117,6 +119,7 @@
 			isa = PBXGroup;
 			children = (
 				A28A39DB2F7C9B8000B3B430 /* AppGroupPlugin.swift */,
+				A28A39DD2F7CA00000B3B430 /* SpeechRecognitionPlugin.swift */,
 				A28A39D92F7C998900B3B430 /* MyViewController.swift */,
 				A28A39C32F7C602900B3B430 /* App.entitlements */,
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
@@ -249,6 +252,7 @@
 			files = (
 				A28A39DA2F7C998900B3B430 /* MyViewController.swift in Sources */,
 				A28A39DC2F7C9B8000B3B430 /* AppGroupPlugin.swift in Sources */,
+				A28A39DE2F7CA00000B3B430 /* SpeechRecognitionPlugin.swift in Sources */,
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
