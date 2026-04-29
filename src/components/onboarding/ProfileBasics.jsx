@@ -56,7 +56,7 @@ export const ProfileBasics = ({ onContinue, onSkip }) => {
 
   return (
     <div style={{
-      minHeight: 'calc(100vh - 120px)',
+      minHeight: '100vh',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',

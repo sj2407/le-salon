@@ -16,20 +16,15 @@ const CARDS = [
     title: 'Recommend a review',
     body: "Write a review and tag the friend who'd love that movie or book.",
   },
-  {
-    key: 'activity',
-    image: '/onboarding/share-features/activity.jpeg',
-    title: 'Post an activity',
-    body: 'Post something you want to do. Friends see it on the shared activity board and can join.',
-  },
 ]
 
 export const ShareWithFriends = ({ onContinue }) => (
   <div style={{
-    minHeight: 'calc(100vh - 120px)',
+    minHeight: '100vh',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
+    justifyContent: 'center',
     padding: '32px 20px',
   }}>
     <h2 className="handwritten" style={{
@@ -48,7 +43,7 @@ export const ShareWithFriends = ({ onContinue }) => (
       textAlign: 'center',
       lineHeight: 1.5,
     }}>
-      Three small ways to share what you love.
+      Two small ways to share what you love.
     </p>
 
     <div style={{
@@ -73,8 +68,8 @@ export const ShareWithFriends = ({ onContinue }) => (
           }}
         >
           <div style={{
-            width: '200px',
-            height: '200px',
+            width: 'clamp(130px, 35vw, 200px)',
+            height: 'clamp(130px, 35vw, 200px)',
             flexShrink: 0,
             borderRadius: '6px',
             overflow: 'hidden',

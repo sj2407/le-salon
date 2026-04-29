@@ -88,10 +88,11 @@ export const PortraitTour = ({ onContinue, onResumeStepBeforeRedirect }) => {
 
   return (
     <div style={{
-      minHeight: 'calc(100vh - 120px)',
+      minHeight: '100vh',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
+      justifyContent: 'center',
       padding: '32px 20px',
     }}>
       <h2 className="handwritten" style={{

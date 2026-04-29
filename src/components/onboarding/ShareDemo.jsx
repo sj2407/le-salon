@@ -15,7 +15,7 @@ const FRAMES = [
 // so the screenshots look natural without mimicking the device chrome.
 const ScreenFrame = ({ children }) => (
   <div style={{
-    width: '240px',
+    height: 'min(520px, 50vh)',
     aspectRatio: '9 / 19.5',
     borderRadius: '14px',
     overflow: 'hidden',
@@ -29,7 +29,7 @@ const ScreenFrame = ({ children }) => (
 // Step 3: animated demo of the iOS Share Extension flow.
 export const ShareDemo = ({ onContinue }) => (
   <div style={{
-    minHeight: 'calc(100vh - 120px)',
+    minHeight: '100vh',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',

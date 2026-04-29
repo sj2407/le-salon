@@ -27,6 +27,7 @@ export const Navigation = () => {
   }
 
   if (!user) return null
+  if (location.pathname === '/onboarding') return null
 
   return (
     <nav>

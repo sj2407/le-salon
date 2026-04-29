@@ -2,7 +2,7 @@ import { ScreenshotSequence } from '../ScreenshotSequence'
 
 const ScreenFrame = ({ children }) => (
   <div style={{
-    width: '240px',
+    height: 'min(520px, 50vh)',
     aspectRatio: '9 / 19.5',
     borderRadius: '14px',
     overflow: 'hidden',
@@ -17,7 +17,7 @@ const ScreenFrame = ({ children }) => (
 // in named exports, but the rendering is shared.
 const ScanAccessDemo = ({ title, subtitle, frames, onContinue }) => (
   <div style={{
-    minHeight: 'calc(100vh - 120px)',
+    minHeight: '100vh',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',

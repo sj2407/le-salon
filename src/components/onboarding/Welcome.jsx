@@ -1,7 +1,7 @@
 // Step 0: locked welcome copy + Begin / "I'll explore on my own" skip.
 export const Welcome = ({ onBegin, onSkip }) => (
   <div style={{
-    minHeight: 'calc(100vh - 120px)',
+    minHeight: '100vh',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',

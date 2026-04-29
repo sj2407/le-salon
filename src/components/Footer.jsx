@@ -1,8 +1,13 @@
 import { useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { FeedbackModal } from './FeedbackModal'
 
 export const Footer = () => {
   const [showFeedback, setShowFeedback] = useState(false)
+  const location = useLocation()
+
+  // Hide on /onboarding so the step layouts stay self-contained.
+  if (location.pathname === '/onboarding') return null
 
   return (
     <>

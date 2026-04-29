@@ -10,6 +10,7 @@ import { ShareSheetTip } from '../components/onboarding/ShareSheetTip'
 import { PortraitTour } from '../components/onboarding/PortraitTour'
 import { ScanAccessExperience, ScanAccessBooks } from '../components/onboarding/ScanAccessDemo'
 import { ShareWithFriends } from '../components/onboarding/ShareWithFriends'
+import { Closing } from '../components/onboarding/Closing'
 import { VideoStep } from '../components/onboarding/VideoStep'
 
 // Step order:
@@ -20,9 +21,10 @@ import { VideoStep } from '../components/onboarding/VideoStep'
 //   4 = PortraitTour          (Spotify OAuth resumes here via FinishSetupBanner)
 //   5 = ScanAccessExperience  (how to find the playbill scan)
 //   6 = ScanAccessBooks       (how to find the bookshelf scan)
-//   7 = ShareWithFriends      (three ways to share with friends)
-//   8 = VideoStep             (closing salon intro before /my-corner)
-const STEP_COUNT = 9
+//   7 = ShareWithFriends      (Marginalia + Recommend a review)
+//   8 = Closing               (Post an activity + send-off line)
+//   9 = VideoStep             (closing salon intro before /my-corner)
+const STEP_COUNT = 10
 
 export const Onboarding = () => {
   const { user, profile, loading, refreshProfile } = useAuth()
@@ -149,7 +151,7 @@ export const Onboarding = () => {
   }
 
   return (
-    <div className="container" style={{ paddingTop: 0 }}>
+    <div className="container" style={{ paddingTop: 0, paddingBottom: 0 }}>
       <AnimatePresence mode="wait">
         <Motion.div
           key={step}
@@ -192,6 +194,9 @@ export const Onboarding = () => {
             <ShareWithFriends onContinue={() => goTo(8)} />
           )}
           {step === 8 && (
+            <Closing onContinue={() => goTo(9)} />
+          )}
+          {step === 9 && (
             <VideoStep onFinish={finish} />
           )}
         </Motion.div>

@@ -1,7 +1,7 @@
 // Step 4: text-only setup tip for the iOS Share Sheet. No animation.
 export const ShareSheetTip = ({ onContinue }) => (
   <div style={{
-    minHeight: 'calc(100vh - 120px)',
+    minHeight: '100vh',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',

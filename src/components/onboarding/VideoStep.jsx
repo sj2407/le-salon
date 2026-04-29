@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 
 // Step 8 (final): Le Salon intro video. Plays inline as the welcome beat
 // before the user lands in My Corner. Mirrors the App splash visuals so
@@ -13,7 +14,11 @@ export const VideoStep = ({ onFinish }) => {
     return () => clearTimeout(timer)
   }, [onFinish])
 
-  return (
+  // Portal to document.body so the fixed-position overlay escapes the
+  // AnimatePresence ancestor's transform (which would otherwise turn
+  // position:fixed into position:absolute relative to the transformed div,
+  // breaking the layout when the page is scrolled).
+  return createPortal(
     <div style={{
       position: 'fixed',
       inset: 0,
@@ -24,7 +29,7 @@ export const VideoStep = ({ onFinish }) => {
       backgroundImage: 'url(/images/parchment-video-bg.jpg)',
       backgroundSize: 'cover',
       backgroundPosition: 'center',
-      zIndex: 50,
+      zIndex: 99999,
     }}>
       <video
         ref={videoRef}
@@ -58,6 +63,7 @@ export const VideoStep = ({ onFinish }) => {
       >
         Skip
       </button>
-    </div>
+    </div>,
+    document.body
   )
 }

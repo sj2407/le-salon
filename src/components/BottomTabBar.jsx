@@ -110,6 +110,11 @@ export const BottomTabBar = () => {
   // Check if any More-menu page is active
   const isMorePageActive = MORE_ITEMS.some(item => location.pathname.startsWith(item.path))
 
+  // Hide during onboarding so the user can't escape the flow and the
+  // Continue button isn't covered by the fixed tab bar.
+  if (!user) return null
+  if (location.pathname === '/onboarding') return null
+
   return (
     <>
       <div className="bottom-tab-bar">
