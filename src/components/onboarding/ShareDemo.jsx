@@ -57,7 +57,7 @@ export const ShareDemo = ({ onContinue }) => (
     <ScreenshotSequence
       frames={FRAMES}
       advance="both"
-      intervalMs={2300}
+      intervalMs={2000}
       WrapperComponent={ScreenFrame}
     />
 

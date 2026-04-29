@@ -69,7 +69,7 @@ export const ScreenshotSequence = ({
         WebkitTapHighlightColor: 'transparent',
       }}
     >
-      <AnimatePresence mode="wait">
+      <AnimatePresence>
         <Motion.img
           key={current.src}
           src={current.src}
@@ -79,6 +79,8 @@ export const ScreenshotSequence = ({
           exit={{ opacity: 0 }}
           transition={{ duration: 0.4 }}
           style={{
+            position: 'absolute',
+            inset: 0,
             width: '100%',
             height: '100%',
             objectFit: 'cover',
