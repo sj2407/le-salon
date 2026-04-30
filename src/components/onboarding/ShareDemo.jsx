@@ -1,4 +1,5 @@
 import { ScreenshotSequence } from '../ScreenshotSequence'
+import { ScreenFrame } from './ScreenFrame'
 
 const FRAMES = [
   { src: '/onboarding/share/click_le_salon_icon.png',
@@ -10,21 +11,6 @@ const FRAMES = [
   { src: '/onboarding/share/la_liste_card.jpeg',
     caption: '…and lands in the right place. No typing.' },
 ]
-
-// Plain rounded-rect screen frame. no iPhone bezel. Sized like a phone screen
-// so the screenshots look natural without mimicking the device chrome.
-const ScreenFrame = ({ children }) => (
-  <div style={{
-    height: 'min(520px, 50vh)',
-    aspectRatio: '9 / 19.5',
-    borderRadius: '14px',
-    overflow: 'hidden',
-    background: '#000',
-    boxShadow: '0 12px 28px rgba(0,0,0,0.16), 0 2px 6px rgba(0,0,0,0.08)',
-  }}>
-    {children}
-  </div>
-)
 
 // Step 3: animated demo of the iOS Share Extension flow.
 export const ShareDemo = ({ onContinue }) => (

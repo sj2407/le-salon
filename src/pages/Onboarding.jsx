@@ -4,6 +4,7 @@ import { AnimatePresence, motion as Motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { Welcome } from '../components/onboarding/Welcome'
+import { MyCornerTour } from '../components/onboarding/MyCornerTour'
 import { ProfileBasics } from '../components/onboarding/ProfileBasics'
 import { ShareDemo } from '../components/onboarding/ShareDemo'
 import { ShareSheetTip } from '../components/onboarding/ShareSheetTip'
@@ -14,17 +15,18 @@ import { Closing } from '../components/onboarding/Closing'
 import { VideoStep } from '../components/onboarding/VideoStep'
 
 // Step order:
-//   0 = Welcome
-//   1 = ProfileBasics
-//   2 = ShareDemo
-//   3 = ShareSheetTip
-//   4 = PortraitTour          (Spotify OAuth resumes here via FinishSetupBanner)
-//   5 = ScanAccessExperience  (how to find the playbill scan)
-//   6 = ScanAccessBooks       (how to find the bookshelf scan)
-//   7 = ShareWithFriends      (Marginalia + Recommend a review)
-//   8 = Closing               (Post an activity + send-off line)
-//   9 = VideoStep             (closing salon intro before /my-corner)
-const STEP_COUNT = 10
+//    0 = Welcome
+//    1 = ProfileBasics
+//    2 = MyCornerTour          (carousel of the 5 My Corner tabs)
+//    3 = ShareDemo
+//    4 = ShareSheetTip
+//    5 = PortraitTour          (Spotify OAuth resumes here via FinishSetupBanner)
+//    6 = ScanAccessExperience  (how to find the playbill scan)
+//    7 = ScanAccessBooks       (how to find the bookshelf scan)
+//    8 = ShareWithFriends      (Marginalia + Recommend a review)
+//    9 = Closing               (Post an activity + send-off line)
+//   10 = VideoStep             (closing salon intro before /my-corner)
+const STEP_COUNT = 11
 
 export const Onboarding = () => {
   const { user, profile, loading, refreshProfile } = useAuth()
@@ -173,30 +175,33 @@ export const Onboarding = () => {
             />
           )}
           {step === 2 && (
-            <ShareDemo onContinue={() => goTo(3)} />
+            <MyCornerTour onContinue={() => goTo(3)} />
           )}
           {step === 3 && (
-            <ShareSheetTip onContinue={() => goTo(4)} />
+            <ShareDemo onContinue={() => goTo(4)} />
           )}
           {step === 4 && (
-            <PortraitTour
-              onContinue={() => goTo(5)}
-              onResumeStepBeforeRedirect={() => persistStep(4)}
-            />
+            <ShareSheetTip onContinue={() => goTo(5)} />
           )}
           {step === 5 && (
-            <ScanAccessExperience onContinue={() => goTo(6)} />
+            <PortraitTour
+              onContinue={() => goTo(6)}
+              onResumeStepBeforeRedirect={() => persistStep(5)}
+            />
           )}
           {step === 6 && (
-            <ScanAccessBooks onContinue={() => goTo(7)} />
+            <ScanAccessExperience onContinue={() => goTo(7)} />
           )}
           {step === 7 && (
-            <ShareWithFriends onContinue={() => goTo(8)} />
+            <ScanAccessBooks onContinue={() => goTo(8)} />
           )}
           {step === 8 && (
-            <Closing onContinue={() => goTo(9)} />
+            <ShareWithFriends onContinue={() => goTo(9)} />
           )}
           {step === 9 && (
+            <Closing onContinue={() => goTo(10)} />
+          )}
+          {step === 10 && (
             <VideoStep onFinish={finish} />
           )}
         </Motion.div>

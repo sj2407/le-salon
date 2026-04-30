@@ -1,17 +1,5 @@
 import { ScreenshotSequence } from '../ScreenshotSequence'
-
-const ScreenFrame = ({ children }) => (
-  <div style={{
-    height: 'min(520px, 50vh)',
-    aspectRatio: '9 / 19.5',
-    borderRadius: '14px',
-    overflow: 'hidden',
-    background: '#000',
-    boxShadow: '0 12px 28px rgba(0,0,0,0.16), 0 2px 6px rgba(0,0,0,0.08)',
-  }}>
-    {children}
-  </div>
-)
+import { ScreenFrame } from './ScreenFrame'
 
 // Generic "how to find the scan in the app" step. Two configs live below
 // in named exports, but the rendering is shared.

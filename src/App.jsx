@@ -187,6 +187,19 @@ function AppContent() {
     }
   }, [user, introPlayed, handleIntroDone])
 
+  // Block protected routes from rendering while the onboarding decision is in
+  // flight. Without this, signed-in empty users briefly see Salon (the default
+  // route) before the redirect effect navigates to /onboarding. Public routes
+  // (auth pages, help, privacy) and /onboarding itself are exempt.
+  const PUBLIC_PATHS = ['/signin', '/signup', '/reset-password', '/help', '/privacy', '/onboarding']
+  if (user && onboardingStatus === 'pending' && !PUBLIC_PATHS.includes(location.pathname)) {
+    return (
+      <div className="container">
+        <div className="loading">Loading...</div>
+      </div>
+    )
+  }
+
   // Intro splash — renders as portal ABOVE everything, before lazy chunks load.
   // Suppressed during /onboarding because the closing VideoStep IS the splash.
   // Re-reads sessionStorage at render so VideoStep's flag write is honored.

@@ -1,12 +1,6 @@
-// Step 8: the third "bring friends in" feature (Post an activity) plus the
-// closing send-off line, on its own page.
-
-const ACTIVITY_CARD = {
-  image: '/onboarding/share-features/activity.jpeg',
-  title: 'Post an activity',
-  body: 'Post something you want to do. Friends see it on the shared activity board and can join.',
-}
-
+// Closing: Parlor screenshot scaled to fit, then caption, send-off, Continue.
+// Image keeps its natural aspect; max-height + max-width let the browser
+// shrink it as needed without cropping or letterboxing.
 export const Closing = ({ onContinue }) => (
   <div style={{
     minHeight: '100vh',
@@ -14,72 +8,41 @@ export const Closing = ({ onContinue }) => (
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: '32px 20px',
+    padding: '24px 20px',
+    textAlign: 'center',
   }}>
-    <div style={{
-      background: '#FFFEFA',
-      borderRadius: '8px',
-      boxShadow: '2px 3px 10px rgba(0,0,0,0.08)',
-      padding: '14px',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '16px',
-      width: '100%',
-      maxWidth: '500px',
-      marginBottom: '40px',
+    <img
+      src="/onboarding/closing/parlor.jpeg?v=2"
+      alt=""
+      style={{
+        maxHeight: 'min(420px, 50vh)',
+        maxWidth: '100%',
+        width: 'auto',
+        height: 'auto',
+        display: 'block',
+        borderRadius: '8px',
+        marginBottom: '20px',
+      }}
+    />
+
+    <p style={{
+      fontSize: '15px',
+      color: '#2C2C2C',
+      margin: '0 auto 20px',
+      maxWidth: '340px',
+      lineHeight: 1.5,
     }}>
-      <div style={{
-        width: 'clamp(130px, 35vw, 200px)',
-        height: 'clamp(130px, 35vw, 200px)',
-        flexShrink: 0,
-        borderRadius: '6px',
-        overflow: 'hidden',
-        background: '#F4F1EA',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}>
-        <img
-          src={ACTIVITY_CARD.image}
-          alt=""
-          style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'contain',
-            objectPosition: 'center',
-            display: 'block',
-          }}
-        />
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{
-          fontSize: '17px',
-          fontWeight: 600,
-          color: '#2C2C2C',
-          marginBottom: '6px',
-        }}>
-          {ACTIVITY_CARD.title}
-        </div>
-        <div style={{
-          fontSize: '14px',
-          color: '#555',
-          lineHeight: 1.5,
-        }}>
-          {ACTIVITY_CARD.body}
-        </div>
-      </div>
-    </div>
+      Every Monday, a new essay in the Parlor. Your friends gather around the same one.
+    </p>
 
     <p className="handwritten" style={{
-      fontSize: '30px',
+      fontSize: '32px',
       color: '#2C2C2C',
-      textAlign: 'center',
-      lineHeight: 1.3,
+      lineHeight: 1.25,
       maxWidth: '420px',
-      marginBottom: '32px',
-      marginTop: 0,
+      margin: '0 auto 28px',
     }}>
-      We hope you enjoy your time in le Salon
+      I hope you enjoy your time in le Salon, Soumi
     </p>
 
     <button

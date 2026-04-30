@@ -17,6 +17,8 @@ export const ScreenshotSequence = ({
   frame: frameKind = 'borderless',
   advance = 'auto',
   intervalMs = DEFAULT_INTERVAL,
+  imageFit = 'cover',
+  captionMinHeight = 44,
   onComplete,
   WrapperComponent,
 }) => {
@@ -83,7 +85,7 @@ export const ScreenshotSequence = ({
             inset: 0,
             width: '100%',
             height: '100%',
-            objectFit: 'cover',
+            objectFit: imageFit,
             display: 'block',
             pointerEvents: 'none',
           }}
@@ -99,25 +101,36 @@ export const ScreenshotSequence = ({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px' }}>
       {wrapped}
-      <AnimatePresence mode="wait">
-        <Motion.div
-          key={current.caption}
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -6 }}
-          transition={{ duration: 0.25 }}
-          style={{
-            fontSize: '15px',
-            color: '#2C2C2C',
-            textAlign: 'center',
-            maxWidth: '320px',
-            lineHeight: 1.5,
-            minHeight: '44px',
-          }}
-        >
-          {current.caption}
-        </Motion.div>
-      </AnimatePresence>
+      {/* Caption wrapper holds the layout space at a constant height so the
+          button below doesn't shift when caption length changes between
+          frames. Inner Motion.div renders at its natural height, vertically
+          centered inside the wrapper. */}
+      <div style={{
+        minHeight: `${captionMinHeight}px`,
+        width: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        <AnimatePresence mode="wait">
+          <Motion.div
+            key={current.caption}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.25 }}
+            style={{
+              fontSize: '15px',
+              color: '#2C2C2C',
+              textAlign: 'center',
+              maxWidth: '320px',
+              lineHeight: 1.5,
+            }}
+          >
+            {current.caption}
+          </Motion.div>
+        </AnimatePresence>
+      </div>
       <div style={{ display: 'flex', gap: '6px' }}>
         {frames.map((_, i) => (
           <button

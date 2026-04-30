@@ -40,6 +40,7 @@ const VIEWPORTS = [
 const STEPS = [
   { name: 'Welcome',                    button: 'Begin' },
   { name: 'Profile basics',             button: 'Continue' },
+  { name: 'My Corner tour',             button: 'Continue' },
   { name: 'Share extension demo',       button: 'Continue' },
   { name: 'Share sheet tip',            button: 'Continue' },
   { name: 'Portrait tour',              button: 'Continue' },
