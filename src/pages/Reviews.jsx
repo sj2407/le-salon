@@ -15,7 +15,6 @@ import { scrollLock } from '../lib/scrollLock'
 import { TAG_TO_MEDIA_TYPE } from '../lib/coverSearchApis'
 import { Microphone, Plus } from '@phosphor-icons/react'
 import { ReviewNotesSection } from '../components/review-notes/ReviewNotesSection'
-import { AspirationalPreview } from '../components/AspirationalPreview'
 import { ConfirmModal } from '../components/ConfirmModal'
 
 // Module-level caches — survive unmount, instant render on return
@@ -757,7 +756,7 @@ export const Reviews = () => {
   }
 
   return (
-    <AspirationalPreview tab="reviews" isEmpty={reviews.length === 0}>
+    <>
       <ReviewsDisplay
         reviews={reviews}
         title="My Reviews"
@@ -1275,6 +1274,6 @@ export const Reviews = () => {
         confirmText="Delete"
         destructive
       />
-    </AspirationalPreview>
+    </>
   )
 }

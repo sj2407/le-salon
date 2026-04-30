@@ -9,7 +9,6 @@ import { typeToMediaType, fetchBestBookCover } from '../lib/coverSearchApis'
 import { scrollLock } from '../lib/scrollLock'
 import { Plus } from '@phosphor-icons/react'
 import { ConfirmModal } from '../components/ConfirmModal'
-import { AspirationalPreview } from '../components/AspirationalPreview'
 
 // Module-level cache — survives unmount, instant render on return
 let _wishlistCache = null
@@ -223,7 +222,7 @@ export const Wishlist = () => {
   }
 
   return (
-    <AspirationalPreview tab="wishlist" isEmpty={items.length === 0}>
+    <>
       <WishlistDisplay
         items={items}
         title="My Wishlist"
@@ -404,6 +403,6 @@ export const Wishlist = () => {
         confirmText="Delete"
         destructive
       />
-    </AspirationalPreview>
+    </>
   )
 }

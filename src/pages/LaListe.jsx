@@ -18,7 +18,6 @@ import { CoverThumbnail } from '../components/cover-search/CoverThumbnail'
 import { CoverflowCarousel } from '../components/CoverflowCarousel'
 import { TAG_TO_MEDIA_TYPE } from '../lib/coverSearchApis'
 import { linkifyText } from '../lib/linkifyText'
-import { AspirationalPreview } from '../components/AspirationalPreview'
 
 // Extract display title (strip URL) from title string
 const getDisplayTitle = (title) => {
@@ -385,7 +384,6 @@ export const LaListe = () => {
   const activeDisplayTitle = activeItem ? getDisplayTitle(activeItem.title) : ''
 
   return (
-    <AspirationalPreview tab="liste" isEmpty={items.length === 0 && recommendations.length === 0}>
     <div style={{ maxWidth: '720px', position: 'relative', display: 'flex', flexDirection: 'column', minHeight: 'calc(100dvh - 160px)' }}>
       <h1 className="handwritten" style={{ fontSize: '42px', marginBottom: '0', marginTop: '8px', marginLeft: '10px', transform: 'translateY(16px)', color: '#2C2C2C' }}>
         La Liste
@@ -1106,6 +1104,5 @@ export const LaListe = () => {
         onSaveDirectly={handleDictationSave}
       />
     </div>
-    </AspirationalPreview>
   )
 }
