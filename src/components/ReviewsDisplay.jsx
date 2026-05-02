@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { TAG_ICONS, TAG_OPTIONS, TAG_LABELS } from '../lib/reviewConstants'
 import { TAG_TO_MEDIA_TYPE } from '../lib/coverSearchApis'
-import { EmptyStateFantom } from './EmptyStateFantom'
 import { FilterDropdown } from './FilterDropdown'
 import { TagAutocomplete } from './TagAutocomplete'
 import { useOutsideClick } from '../hooks/useOutsideClick'
@@ -58,7 +57,8 @@ export const ReviewsDisplay = ({
   initialReviewId,
   renderNotesSection,
   reviewHasContent,
-  getReaderLabel
+  getReaderLabel,
+  onTriggerAdd
 }) => {
   const [filterTag, setFilterTag] = useState('all')
   const [openMenuId, setOpenMenuId] = useState(null)
@@ -87,6 +87,12 @@ export const ReviewsDisplay = ({
     : reviews.filter(review => review.tag === filterTag)
 
   const hasActions = onEdit || onDelete
+
+  // Empty state → 3 placeholder slots, mixed with real items until 3 are present.
+  const placeholderCount = onTriggerAdd && filteredReviews.length < ITEMS_PER_ROW
+    ? ITEMS_PER_ROW - filteredReviews.length
+    : 0
+  const placeholderTagForAdd = filterTag === 'all' ? null : filterTag
 
   // Chunk items into rows for shelf planks
   const rows = []
@@ -286,18 +292,16 @@ export const ReviewsDisplay = ({
       </div>
 
       {/* Bookshelf grid */}
-      {filteredReviews.length === 0 ? (
-        reviews.length === 0 ? (
-          <EmptyStateFantom />
-        ) : (
+      {filteredReviews.length === 0 && placeholderCount === 0 ? (
+        reviews.length === 0 ? null : (
           <div style={{ textAlign: 'center', padding: '40px', fontStyle: 'italic', color: '#777' }}>
             {emptyFilteredMessage || `No ${TAG_LABELS[filterTag] || filterTag} reviews yet.`}
           </div>
         )
       ) : (
         <div className="bookshelf" ref={shelfRef}>
-          {rows.map((rowItems, rowIndex) => (
-            <div className="shelf-section" key={`row-${rowIndex}-${rowItems[0]?.id}`}>
+          {(rows.length > 0 ? rows : [[]]).map((rowItems, rowIndex) => (
+            <div className="shelf-section" key={`row-${rowIndex}-${rowItems[0]?.id || 'placeholder-shelf'}`}>
               <div className="shelf-row">
                 {rowItems.map((review, itemIndex) => {
                   const hasReview = reviewHasContent ? reviewHasContent(review) : !!review.review_text
@@ -379,6 +383,16 @@ export const ReviewsDisplay = ({
                     </div>
                   )
                 })}
+                {rowIndex === 0 && placeholderCount > 0 && Array.from({ length: placeholderCount }).map((_, i) => (
+                  <div
+                    key={`placeholder-${i}`}
+                    className="placeholder-slot placeholder-cover"
+                    style={{ transitionDelay: `${(rowItems.length + i) * 80}ms` }}
+                    onClick={() => onTriggerAdd(placeholderTagForAdd)}
+                  >
+                    Add a review
+                  </div>
+                ))}
               </div>
               <div className="shelf-plank" />
             </div>

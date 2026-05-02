@@ -6,14 +6,13 @@ import { useToast } from '../contexts/ToastContext'
 import { supabase } from '../lib/supabase'
 import { TAG_ICONS, TAG_OPTIONS, TAG_LABELS } from '../lib/reviewConstants'
 import { TagAutocomplete } from '../components/TagAutocomplete'
-import { EmptyStateFantom } from '../components/EmptyStateFantom'
 import { FilterDropdown } from '../components/FilterDropdown'
 import { DictationModal } from '../components/DictationModal'
 import { useScrollLock } from '../hooks/useScrollLock'
 import { useOutsideClick } from '../hooks/useOutsideClick'
 import { isSpeechSupported } from '../lib/useSpeechRecognition'
 import { CoverSearchModal } from '../components/cover-search/CoverSearchModal'
-import { Microphone, Plus } from '@phosphor-icons/react'
+import { Microphone, Plus, X, ArrowCounterClockwise } from '@phosphor-icons/react'
 import { CoverThumbnail } from '../components/cover-search/CoverThumbnail'
 import { CoverflowCarousel } from '../components/CoverflowCarousel'
 import { TAG_TO_MEDIA_TYPE } from '../lib/coverSearchApis'
@@ -121,7 +120,7 @@ export const LaListe = () => {
     try {
       const { data: recsData, error: recsError } = await supabase
         .from('review_recommendations')
-        .select('review_id')
+        .select('id, review_id, dismissed_at')
         .eq('recommended_to_user_id', profile.id)
 
       if (recsError) throw recsError
@@ -138,7 +137,17 @@ export const LaListe = () => {
         .order('created_at', { ascending: false })
 
       if (reviewsError) throw reviewsError
-      _listeRecsCache = reviewsData || []
+
+      // Attach the recommendation row's id and dismissed_at to each review
+      const recByReviewId = Object.fromEntries(
+        recsData.map(r => [r.review_id, { recId: r.id, dismissedAt: r.dismissed_at }])
+      )
+      const merged = (reviewsData || []).map(r => ({
+        ...r,
+        _recId: recByReviewId[r.id]?.recId || null,
+        _dismissedAt: recByReviewId[r.id]?.dismissedAt || null,
+      }))
+      _listeRecsCache = merged
       setRecommendations(_listeRecsCache)
 
       // Check which recommended reviews have notes
@@ -290,6 +299,38 @@ export const LaListe = () => {
     }
   }
 
+  const handleToggleDismissRec = async (review) => {
+    if (!review._recId) return
+    const previous = review._dismissedAt
+    const next = previous ? null : new Date().toISOString()
+
+    setRecommendations(prev => {
+      const updated = prev.map(r =>
+        r.id === review.id ? { ...r, _dismissedAt: next } : r
+      )
+      _listeRecsCache = updated
+      return updated
+    })
+
+    const { error } = await supabase
+      .from('review_recommendations')
+      .update({ dismissed_at: next })
+      .eq('id', review._recId)
+      .eq('recommended_to_user_id', profile.id)
+
+    if (error) {
+      // Roll back
+      setRecommendations(prev => {
+        const rolled = prev.map(r =>
+          r.id === review.id ? { ...r, _dismissedAt: previous } : r
+        )
+        _listeRecsCache = rolled
+        return rolled
+      })
+      toast.error('Could not update. Try again.')
+    }
+  }
+
   const handleAdoptRec = async (review) => {
     try {
       const { error } = await supabase
@@ -298,7 +339,9 @@ export const LaListe = () => {
           user_id: profile.id,
           title: review.title,
           tag: review.tag,
-          note: `Recommended by ${review.profiles?.display_name || 'a friend'}`
+          note: `Recommended by ${review.profiles?.display_name || 'a friend'}`,
+          image_url: review.image_url || null,
+          cover_manual: !!review.image_url
         })
 
       if (error) throw error
@@ -755,39 +798,40 @@ export const LaListe = () => {
         </div>
       )}
 
-      {/* Pending items — coverflow carousel */}
-      {filteredPending.length === 0 && filteredDone.length === 0 && recommendations.length === 0 ? (
-        <EmptyStateFantom />
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, position: 'relative', zIndex: 1 }}>
-          {filteredPending.length === 0 && hasPendingItems ? (
-            <div style={{ textAlign: 'center', padding: '20px', fontStyle: 'italic', color: 'rgba(255, 254, 250, 0.7)' }}>
-              No {TAG_LABELS[filterTag] || filterTag} items yet.
-            </div>
-          ) : filteredPending.length > 0 && (
-            <CoverflowCarousel
-              key={carouselKey}
-              initialIndex={carouselStartIndex}
-              items={filteredPending.map(i => ({
-                id: i.id,
-                imageUrl: i.image_url,
-                title: i.title,
-                tag: i.tag,
-                isPrivate: i.is_private,
-              }))}
-              onToggleDone={(item) => {
-                const fullItem = items.find(i => i.id === item.id)
-                if (fullItem) handleToggleDone(fullItem)
-              }}
-              onEdit={(item) => {
-                const fullItem = items.find(i => i.id === item.id)
-                if (fullItem) startEdit(fullItem)
-              }}
-              onTogglePrivate={handleTogglePrivate}
-              onDelete={(id) => handleDelete(id)}
-              onActiveChange={setActiveCarouselIndex}
-            />
-          )}
+      {/* Pending items — coverflow carousel (placeholders fill empty slots up to 3) */}
+      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, position: 'relative', zIndex: 1 }}>
+        <CoverflowCarousel
+          key={carouselKey}
+          initialIndex={carouselStartIndex}
+          items={[
+            ...filteredPending.map(i => ({
+              id: i.id,
+              imageUrl: i.image_url,
+              title: i.title,
+              tag: i.tag,
+              isPrivate: i.is_private,
+            })),
+            ...Array.from({ length: Math.max(0, 3 - filteredPending.length) }).map((_, i) => ({
+              id: `placeholder-${i}`,
+              isPlaceholder: true,
+            })),
+          ]}
+          onToggleDone={(item) => {
+            const fullItem = items.find(i => i.id === item.id)
+            if (fullItem) handleToggleDone(fullItem)
+          }}
+          onEdit={(item) => {
+            const fullItem = items.find(i => i.id === item.id)
+            if (fullItem) startEdit(fullItem)
+          }}
+          onTogglePrivate={handleTogglePrivate}
+          onDelete={(id) => handleDelete(id)}
+          onActiveChange={setActiveCarouselIndex}
+          onPlaceholderClick={() => {
+            if (filterTag !== 'all') setNewTag(filterTag)
+            setShowAddForm(true)
+          }}
+        />
 
           {/* Active item title */}
           {activeDisplayTitle && filteredPending.length > 0 && (
@@ -808,8 +852,7 @@ export const LaListe = () => {
           )}
 
           {/* Done section */}
-          {filteredDone.length > 0 && (
-            <div style={{ marginTop: '24px' }}>
+          <div style={{ marginTop: '24px' }}>
               <button
                 onClick={() => setShowDone(!showDone)}
                 style={{
@@ -953,11 +996,9 @@ export const LaListe = () => {
                 </div>
               )}
             </div>
-          )}
 
           {/* From Friends — collapsible section */}
-          {recommendations.length > 0 && (
-            <div style={{ marginTop: '16px', position: 'relative', zIndex: 1 }}>
+          <div style={{ marginTop: '16px', position: 'relative', zIndex: 1 }}>
           <button
             onClick={() => setRecsExpanded(!recsExpanded)}
             style={{
@@ -991,7 +1032,11 @@ export const LaListe = () => {
                 style={{ overflow: 'hidden' }}
               >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingTop: '12px' }}>
-                  {recommendations.map((review) => (
+                  {recommendations.map((review) => {
+                    const isAdopted = items.some(item => item.title?.toLowerCase() === review.title?.toLowerCase())
+                    const isDismissed = !!review._dismissedAt
+                    const greyed = isAdopted || isDismissed
+                    return (
                     <div
                       key={review.id}
                       style={{
@@ -999,29 +1044,59 @@ export const LaListe = () => {
                         borderRadius: '2px',
                         padding: '12px 16px',
                         boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)',
-                        position: 'relative'
+                        position: 'relative',
+                        opacity: greyed ? 0.6 : 1
                       }}
                     >
                       <div style={{ fontSize: '12px', color: '#999', marginBottom: '8px', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <span>Recommended by {review.profiles?.display_name || 'a friend'}</span>
-                        {items.some(item => item.title?.toLowerCase() === review.title?.toLowerCase()) && (
+                        {isAdopted && (
                           <span style={{ fontSize: '11px', color: '#5A8A5A', fontWeight: 600, fontStyle: 'normal' }}>
                             Added
+                          </span>
+                        )}
+                        {!isAdopted && isDismissed && (
+                          <span style={{ fontSize: '11px', color: '#999', fontWeight: 600, fontStyle: 'normal' }}>
+                            Dismissed
                           </span>
                         )}
                       </div>
 
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <CoverThumbnail imageUrl={review.image_url} tag={review.tag} />
-                        <h3 style={{ fontSize: '14px', fontStyle: 'italic', fontWeight: 400, margin: 0, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <h3 style={{ fontSize: '14px', fontStyle: 'italic', fontWeight: 400, margin: 0, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textDecoration: greyed ? 'line-through' : 'none' }}>
                           {review.title}
                         </h3>
                         <span className="handwritten" style={{ fontSize: '14px', lineHeight: 1, color: '#2C2C2C', flexShrink: 0 }}>
                           {review.rating}/10
                         </span>
 
-                        {/* Adopt button — hidden if already added */}
-                        {!items.some(item => item.title?.toLowerCase() === review.title?.toLowerCase()) && (
+                        {/* Discard / Restore toggle — only when not adopted */}
+                        {!isAdopted && (
+                          <button
+                            onClick={() => handleToggleDismissRec(review)}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              cursor: 'pointer',
+                              padding: 0,
+                              lineHeight: 1,
+                              flexShrink: 0,
+                              display: 'flex',
+                              alignItems: 'center'
+                            }}
+                            title={isDismissed ? 'Restore' : 'Discard'}
+                          >
+                            {isDismissed ? (
+                              <ArrowCounterClockwise size={16} weight="duotone" color="#622722" />
+                            ) : (
+                              <X size={16} weight="duotone" color="#999" />
+                            )}
+                          </button>
+                        )}
+
+                        {/* Adopt button — hidden if already added or dismissed */}
+                        {!isAdopted && !isDismissed && (
                           <button
                             onClick={() => handleAdoptRec(review)}
                             style={{
@@ -1073,15 +1148,14 @@ export const LaListe = () => {
                         </button>
                       )}
                     </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </Motion.div>
             )}
             </AnimatePresence>
           </div>
-          )}
         </div>
-      )}
 
       <CoverSearchModal
         isOpen={showCoverSearch}

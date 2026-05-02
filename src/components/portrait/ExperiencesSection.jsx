@@ -1,17 +1,6 @@
+import { useState, useRef } from 'react'
 import { QuillMenu } from './QuillMenu'
-
-/**
- * Format a date string to a short readable format (e.g., "Jan 15").
- */
-const formatShortDate = (dateStr) => {
-  if (!dateStr) return ''
-  try {
-    const d = new Date(dateStr)
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  } catch {
-    return dateStr
-  }
-}
+import { useOutsideClick } from '../../hooks/useOutsideClick'
 
 const emptyStateButtonStyle = {
   padding: '10px 14px',
@@ -26,11 +15,22 @@ const emptyStateButtonStyle = {
 }
 
 /**
- * Experiences section — 3-column grid of cultural experiences.
- * Quill menu for owners with scan/add options.
+ * Experiences section — bulleted list of cultural experiences.
+ * Section quill menu (owner) for scan/add. Per-row three-dot menu (owner) for edit/delete.
  */
-export const ExperiencesSection = ({ experiences, isOwner, onExperienceClick, onAddExperience, onScanPlaybill }) => {
+export const ExperiencesSection = ({
+  experiences,
+  isOwner,
+  onExperienceClick,
+  onAddExperience,
+  onScanPlaybill,
+  onEditExperience,
+  onDeleteExperience,
+}) => {
   const safeExperiences = experiences || []
+  const [openMenuId, setOpenMenuId] = useState(null)
+  const menuRef = useRef(null)
+  useOutsideClick(menuRef, () => setOpenMenuId(null), openMenuId !== null)
 
   // Sort reverse chronological
   const sorted = [...safeExperiences].sort((a, b) => {
@@ -79,9 +79,11 @@ export const ExperiencesSection = ({ experiences, isOwner, onExperienceClick, on
     )
   }
 
+  const showRowMenu = isOwner && (onEditExperience || onDeleteExperience)
+
   return (
     <>
-      {/* Quill menu — owner only */}
+      {/* Section quill — owner only */}
       {isOwner && (onScanPlaybill || onAddExperience) && (
         <QuillMenu items={[
           onScanPlaybill && { label: 'Scan a playbill', onClick: onScanPlaybill },
@@ -97,23 +99,112 @@ export const ExperiencesSection = ({ experiences, isOwner, onExperienceClick, on
       {/* Bullet list */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
         {sorted.map(exp => {
-          const detail = [exp.city, formatShortDate(exp.date)].filter(Boolean).join(' \u00b7 ')
+          const menuOpen = openMenuId === exp.id
           return (
             <div
               key={exp.id}
-              onClick={() => onExperienceClick && onExperienceClick(exp)}
               style={{
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
                 fontSize: '14px',
                 color: '#2C2C2C',
                 lineHeight: 1.5,
-                cursor: onExperienceClick ? 'pointer' : 'default',
               }}
             >
-              <span style={{ fontWeight: 500 }}>{exp.name}</span>
-              {detail && (
-                <span style={{ color: '#999', fontSize: '12px', marginLeft: '6px' }}>
-                  {detail}
-                </span>
+              <div
+                onClick={() => onExperienceClick && onExperienceClick(exp)}
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                  cursor: onExperienceClick ? 'pointer' : 'default',
+                }}
+              >
+                <span style={{ fontWeight: 500 }}>{exp.name}</span>
+                {exp.rating != null && (
+                  <span className="handwritten" style={{ color: '#2C2C2C', fontSize: '14px', marginLeft: '6px' }}>
+                    {exp.rating}/10
+                  </span>
+                )}
+              </div>
+
+              {showRowMenu && (
+                <div ref={menuOpen ? menuRef : null} style={{ position: 'relative', flexShrink: 0 }}>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setOpenMenuId(menuOpen ? null : exp.id)
+                    }}
+                    aria-label="Actions"
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: '4px 6px',
+                      fontSize: '16px',
+                      color: '#999',
+                      lineHeight: 1,
+                      letterSpacing: '1px',
+                    }}
+                  >
+                    &middot;&middot;&middot;
+                  </button>
+                  {menuOpen && (
+                    <div
+                      onClick={(e) => e.stopPropagation()}
+                      style={{
+                        position: 'absolute',
+                        top: '100%',
+                        right: 0,
+                        marginTop: '2px',
+                        background: '#FFFEFA',
+                        borderRadius: '4px',
+                        boxShadow: '0 2px 12px rgba(0,0,0,0.12)',
+                        padding: '4px 0',
+                        minWidth: '110px',
+                        zIndex: 10,
+                      }}
+                    >
+                      {onEditExperience && (
+                        <button
+                          onClick={() => { onEditExperience(exp); setOpenMenuId(null) }}
+                          style={{
+                            display: 'block',
+                            width: '100%',
+                            background: 'none',
+                            border: 'none',
+                            padding: '8px 16px',
+                            fontSize: '14px',
+                            color: '#2C2C2C',
+                            cursor: 'pointer',
+                            textAlign: 'left',
+                          }}
+                        >
+                          Edit
+                        </button>
+                      )}
+                      {onDeleteExperience && (
+                        <button
+                          onClick={() => { onDeleteExperience(exp); setOpenMenuId(null) }}
+                          style={{
+                            display: 'block',
+                            width: '100%',
+                            background: 'none',
+                            border: 'none',
+                            padding: '8px 16px',
+                            fontSize: '14px',
+                            color: '#C75D5D',
+                            cursor: 'pointer',
+                            textAlign: 'left',
+                          }}
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           )

@@ -1,5 +1,4 @@
 import { useState, useRef } from 'react'
-import { EmptyStateFantom } from './EmptyStateFantom'
 import { typeToMediaType } from '../lib/coverSearchApis'
 import { TAG_ICONS } from '../lib/reviewConstants'
 import { useOutsideClick } from '../hooks/useOutsideClick'
@@ -22,7 +21,8 @@ export const WishlistDisplay = ({
   onDelete,
   renderItemActions,
   renderItemStatus,
-  renderHeaderActions
+  renderHeaderActions,
+  onTriggerAdd
 }) => {
   const [openMenuId, setOpenMenuId] = useState(null)
   const [failedImages, setFailedImages] = useState(new Set())
@@ -54,9 +54,7 @@ export const WishlistDisplay = ({
       {/* Spacer when no toolbar */}
       {!renderHeaderActions && <div style={{ marginTop: '28px' }} />}
 
-      {items.length === 0 ? (
-        <EmptyStateFantom />
-      ) : (
+      {items.length === 0 && !onTriggerAdd ? null : (
         <div className="wishlist-grid">
           {items.map((item, index) => {
             const hasImage = item.image_url && !failedImages.has(item.id)
@@ -222,6 +220,16 @@ export const WishlistDisplay = ({
               </div>
             )
           })}
+          {onTriggerAdd && items.length < 3 && Array.from({ length: 3 - items.length }).map((_, i) => (
+            <div
+              key={`placeholder-${i}`}
+              className="placeholder-slot"
+              onClick={() => onTriggerAdd()}
+              style={{ aspectRatio: '1', minHeight: '100px' }}
+            >
+              Add a wish
+            </div>
+          ))}
         </div>
       )}
     </div>

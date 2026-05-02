@@ -228,6 +228,7 @@ export const Wishlist = () => {
         title="My Wishlist"
         emptyMessage="Nothing on your wishlist yet..."
         description="Add items you'd like, and friends can anonymously claim them as gifts for you."
+        onTriggerAdd={openAddModal}
         renderHeaderActions={() => (
           <button onClick={openAddModal} style={{
             background: 'none',

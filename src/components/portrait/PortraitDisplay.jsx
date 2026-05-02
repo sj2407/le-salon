@@ -29,8 +29,6 @@ const useIsMobile = () => {
   return isMobile
 }
 
-/** Swipe threshold in pixels to trigger a move */
-const SWIPE_THRESHOLD = 40
 
 /**
  * Arrow button for reordering — minimal, no background.
@@ -87,6 +85,8 @@ export const PortraitDisplay = ({
   onViewCreationArchive,
   onAddExperience,
   onScanPlaybill,
+  onEditExperience,
+  onDeleteExperience,
   // Navigation callbacks
   onPortraitImageClick,
   onBookClick,
@@ -169,30 +169,6 @@ export const PortraitDisplay = ({
     onSectionOrderChange?.(newOrder)
   }, [gridOrder, cols, total, onSectionOrderChange])
 
-  /** Swipe handler — detects drag direction and triggers move */
-  const handleDragEnd = useCallback((index) => (event, info) => {
-    const { offset } = info
-    const absX = Math.abs(offset.x)
-    const absY = Math.abs(offset.y)
-
-    // Determine dominant axis
-    if (absX > absY && absX > SWIPE_THRESHOLD) {
-      // Horizontal swipe
-      const dir = offset.x > 0 ? 'right' : 'left'
-      if (canMove(index, dir)) {
-        hapticTap()
-        handleMove(index, dir)
-      }
-    } else if (absY > SWIPE_THRESHOLD) {
-      // Vertical swipe
-      const dir = offset.y > 0 ? 'down' : 'up'
-      if (canMove(index, dir)) {
-        hapticTap()
-        handleMove(index, dir)
-      }
-    }
-  }, [canMove, handleMove])
-
   // Map section key → "see all" handler
   const getSeeAllHandler = (key) => {
     switch (key) {
@@ -242,6 +218,8 @@ export const PortraitDisplay = ({
             onExperienceClick={onExperienceClick}
             onAddExperience={onAddExperience}
             onScanPlaybill={onScanPlaybill}
+            onEditExperience={onEditExperience}
+            onDeleteExperience={onDeleteExperience}
           />
         )
       case 'creation':
@@ -459,13 +437,7 @@ export const PortraitDisplay = ({
                     layout
                     transition={{ type: 'spring', stiffness: 120, damping: 22 }}
                     className={wrapperProps.className}
-                    style={{ ...wrapperProps.style, cursor: isHidden ? 'default' : 'grab' }}
-                    drag={!isHidden}
-                    dragSnapToOrigin
-                    dragElastic={0.15}
-                    dragConstraints={{ top: 0, bottom: 0, left: 0, right: 0 }}
-                    onDragEnd={handleDragEnd(index)}
-                    whileDrag={{ scale: 1.02, boxShadow: '0 6px 20px rgba(0,0,0,0.12)' }}
+                    style={wrapperProps.style}
                   >
                     {renderOwnerSection(key, index)}
                   </motion.div>

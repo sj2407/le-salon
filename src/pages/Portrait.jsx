@@ -61,6 +61,7 @@ export const Portrait = ({ userId: friendUserId }) => {
   const [addCreationMode, setAddCreationMode] = useState(null)
   const [editingCreation, setEditingCreation] = useState(null)
   const [selectedExperience, setSelectedExperience] = useState(null)
+  const [editingSelectedExperience, setEditingSelectedExperience] = useState(false)
   const [selectedBook, setSelectedBook] = useState(null)
   const [bookPopoverRect, setBookPopoverRect] = useState(null)
   const [coverSearchBook, setCoverSearchBook] = useState(null) // book being cover-searched
@@ -364,7 +365,19 @@ export const Portrait = ({ userId: friendUserId }) => {
   }
 
   const handleThemeClick = () => setShowReadingModal(true)
-  const handleExperienceClick = (exp) => setSelectedExperience(exp)
+  const handleExperienceClick = (exp) => { setEditingSelectedExperience(false); setSelectedExperience(exp) }
+  const handleEditExperience = (exp) => { setEditingSelectedExperience(true); setSelectedExperience(exp) }
+  const handleDeleteExperience = (exp) => {
+    setConfirmState({
+      message: `Delete "${exp.name}" from your experiences?`,
+      onConfirm: async () => {
+        const { error } = await supabase.from('experiences').delete().eq('id', exp.id)
+        if (error) return
+        setExperiences(prev => prev.filter(e => e.id !== exp.id))
+        if (selectedExperience?.id === exp.id) setSelectedExperience(null)
+      },
+    })
+  }
 
   // --- Item created callbacks ---
 
@@ -517,6 +530,8 @@ export const Portrait = ({ userId: friendUserId }) => {
           onBookClick={handleBookClick}
           onThemeClick={handleThemeClick}
           onExperienceClick={handleExperienceClick}
+          onEditExperience={isOwner ? handleEditExperience : undefined}
+          onDeleteExperience={isOwner ? handleDeleteExperience : undefined}
           onMusicSeeAll={handleMusicSeeAll}
           onReadingSeeAll={handleReadingSeeAll}
           onExperiencesSeeAll={handleExperiencesSeeAll}
@@ -577,8 +592,13 @@ export const Portrait = ({ userId: friendUserId }) => {
 
       <ExperienceDetailModal
         isOpen={!!selectedExperience}
-        onClose={() => setSelectedExperience(null)}
+        onClose={() => { setSelectedExperience(null); setEditingSelectedExperience(false) }}
         experience={selectedExperience}
+        startInEdit={editingSelectedExperience}
+        onUpdated={(updated) => {
+          setExperiences(prev => prev.map(e => e.id === updated.id ? updated : e))
+          setSelectedExperience(updated)
+        }}
       />
 
       {/* Owner-only add/import modals */}

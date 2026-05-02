@@ -40,7 +40,7 @@ const getCardWidth = () => {
  * 3D coverflow carousel — absolute-positioned, overlapping cards.
  * Center card faces forward, sides fan out behind it.
  */
-export const CoverflowCarousel = ({ items, onToggleDone, onEdit, onDelete, onTogglePrivate, onActiveChange, initialIndex }) => {
+export const CoverflowCarousel = ({ items, onToggleDone, onEdit, onDelete, onTogglePrivate, onActiveChange, onPlaceholderClick, initialIndex }) => {
   const [activeIndex, setActiveIndex] = useState(() => initialIndex != null ? initialIndex : Math.floor(items.length / 2))
   const [openMenuId, setOpenMenuId] = useState(null)
   const [cardW, setCardW] = useState(getCardWidth)
@@ -158,6 +158,10 @@ export const CoverflowCarousel = ({ items, onToggleDone, onEdit, onDelete, onTog
 
         const handleCardClick = () => {
           if (wasDrag.current) return
+          if (item.isPlaceholder) {
+            onPlaceholderClick?.()
+            return
+          }
           if (offset !== 0) {
             setActiveIndex(i)
           } else if (url) {
@@ -189,6 +193,19 @@ export const CoverflowCarousel = ({ items, onToggleDone, onEdit, onDelete, onTog
             }}
           >
             {/* Card body */}
+            {item.isPlaceholder ? (
+              <div
+                className="placeholder-slot"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  fontSize: '20px',
+                  borderRadius: '8px',
+                }}
+              >
+                Add to your list
+              </div>
+            ) : (
             <div style={{
               width: '100%',
               height: '100%',
@@ -294,9 +311,10 @@ export const CoverflowCarousel = ({ items, onToggleDone, onEdit, onDelete, onTog
                 </div>
               )}
             </div>
+            )}
 
             {/* Done button — empty circle, only on active card, only in owner mode */}
-            {offset === 0 && onToggleDone && (
+            {!item.isPlaceholder && offset === 0 && onToggleDone && (
               <button
                 onClick={(e) => { e.stopPropagation(); onToggleDone(item) }}
                 style={{
@@ -322,7 +340,7 @@ export const CoverflowCarousel = ({ items, onToggleDone, onEdit, onDelete, onTog
             )}
 
             {/* Privacy toggle — only on active card, only in owner mode */}
-            {offset === 0 && onTogglePrivate && (
+            {!item.isPlaceholder && offset === 0 && onTogglePrivate && (
               <button
                 onClick={(e) => { e.stopPropagation(); onTogglePrivate(item) }}
                 style={{
@@ -352,7 +370,7 @@ export const CoverflowCarousel = ({ items, onToggleDone, onEdit, onDelete, onTog
             )}
 
             {/* Overflow menu — only on active card, only in owner mode */}
-            {offset === 0 && (onEdit || onDelete) && (
+            {!item.isPlaceholder && offset === 0 && (onEdit || onDelete) && (
               <div
                 ref={openMenuId === item.id ? menuRef : null}
                 style={{ position: 'absolute', top: '4px', right: '4px', zIndex: 10 }}

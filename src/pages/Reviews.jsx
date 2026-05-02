@@ -346,10 +346,11 @@ export const Reviews = () => {
     }
   }
 
-  const openAddModal = () => {
+  const openAddModal = (prefillTag) => {
+    const initialTag = prefillTag || 'other'
     setEditingReview(null)
     setTitle('')
-    setTag('other')
+    setTag(initialTag)
     setRating(7.0)
     setReviewText('')
     setRecommendToFriends([])
@@ -361,7 +362,7 @@ export const Reviews = () => {
     setModalNoteIsQuote(false)
     setModalNotePageRef('')
     setShowModalNoteForm(false)
-    initialFormRef.current = { title: '', tag: 'other', rating: 7.0, reviewText: '', recommendToFriends: [] }
+    initialFormRef.current = { title: '', tag: initialTag, rating: 7.0, reviewText: '', recommendToFriends: [] }
     setShowModal(true)
   }
 
@@ -761,6 +762,7 @@ export const Reviews = () => {
         reviews={reviews}
         title="My Reviews"
         emptyMessage="No reviews yet. Share your thoughts on movies, books, and more!"
+        onTriggerAdd={openAddModal}
         reviewHasContent={(review) => !!review.review_text || reviewNotes.some(n => n.review_id === review.id)}
         getReaderLabel={(review) => {
           if (review.review_text) return 'read'
@@ -912,51 +914,49 @@ export const Reviews = () => {
                 <TagAutocomplete value={tag} onChange={setTag} />
               </div>
 
-              {tag !== 'other' && (
-                <div className="form-group">
-                  <label className="form-label">Cover Image (optional)</label>
-                  {imageUrl ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <CoverThumbnail imageUrl={imageUrl} tag={tag} size="medium" />
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        {TAG_TO_MEDIA_TYPE[tag] && (
-                          <button
-                            type="button"
-                            onClick={() => setShowCoverSearch(true)}
-                            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: '#4A7BA7', padding: '4px 0' }}
-                          >
-                            Change
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => setImageUrl('')}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: '#999', padding: '4px 0' }}
-                        >
-                          Remove
-                        </button>
-                      </div>
+              <div className="form-group">
+                <label className="form-label">Cover Image (optional)</label>
+                {imageUrl ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <CoverThumbnail imageUrl={imageUrl} tag={tag} size="medium" />
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        type="button"
+                        onClick={() => setShowCoverSearch(true)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: '#4A7BA7', padding: '4px 0' }}
+                      >
+                        Change
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setImageUrl('')}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: '#999', padding: '4px 0' }}
+                      >
+                        Remove
+                      </button>
                     </div>
-                  ) : TAG_TO_MEDIA_TYPE[tag] ? (
-                    <button
-                      type="button"
-                      onClick={() => setShowCoverSearch(true)}
-                      style={{
-                        background: 'none',
-                        border: '1px dashed #ccc',
-                        borderRadius: '3px',
-                        cursor: 'pointer',
-                        padding: '8px 12px',
-                        fontSize: '13px',
-                        color: '#999',
-                        fontStyle: 'italic',
-                        width: '100%',
-                        textAlign: 'left'
-                      }}
-                    >
-                      Search cover...
-                    </button>
-                  ) : (
+                  </div>
+                ) : TAG_TO_MEDIA_TYPE[tag] ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowCoverSearch(true)}
+                    style={{
+                      background: 'none',
+                      border: '1px dashed #ccc',
+                      borderRadius: '3px',
+                      cursor: 'pointer',
+                      padding: '8px 12px',
+                      fontSize: '13px',
+                      color: '#999',
+                      fontStyle: 'italic',
+                      width: '100%',
+                      textAlign: 'left'
+                    }}
+                  >
+                    Search cover...
+                  </button>
+                ) : (
+                  <>
                     <input
                       type="url"
                       value={imageUrl}
@@ -973,9 +973,24 @@ export const Reviews = () => {
                         background: '#FFFEFA'
                       }}
                     />
-                  )}
-                </div>
-              )}
+                    <button
+                      type="button"
+                      onClick={() => setShowCoverSearch(true)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: '6px 0 0 0',
+                        fontSize: '12px',
+                        color: '#4A7BA7',
+                        fontStyle: 'italic',
+                      }}
+                    >
+                      Or upload from photos
+                    </button>
+                  </>
+                )}
+              </div>
 
               <div className="form-group">
                 <label className="form-label">Rating (0-10) *</label>

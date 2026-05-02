@@ -19,6 +19,7 @@ export const PlaybillScanModal = ({ isOpen, onClose, onExperiencesAdded }) => {
   const [scanning, setScanning] = useState(false)
   const [detectedExperiences, setDetectedExperiences] = useState(null)
   const [selectedItems, setSelectedItems] = useState({})
+  const [ratings, setRatings] = useState({})
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
@@ -29,6 +30,7 @@ export const PlaybillScanModal = ({ isOpen, onClose, onExperiencesAdded }) => {
     setScanning(false)
     setDetectedExperiences(null)
     setSelectedItems({})
+    setRatings({})
     setSaving(false)
     setError(null)
     setImagePreview(null)
@@ -87,8 +89,10 @@ export const PlaybillScanModal = ({ isOpen, onClose, onExperiencesAdded }) => {
   const handleAddSelected = async () => {
     if (!profile?.id) return
 
-    const toAdd = detectedExperiences.filter((_, i) => selectedItems[i])
-    if (toAdd.length === 0) return
+    const selectedIndices = detectedExperiences
+      .map((_, i) => i)
+      .filter(i => selectedItems[i])
+    if (selectedIndices.length === 0) return
 
     setSaving(true)
 
@@ -107,20 +111,26 @@ export const PlaybillScanModal = ({ isOpen, onClose, onExperiencesAdded }) => {
         }
       }
 
-      const rows = toAdd.map(exp => ({
-        user_id: profile.id,
-        name: exp.name,
-        category: exp.category || 'other',
-        date: exp.date || null,
-        city: exp.city || null,
-        source: 'playbill_scan',
-        image_url: imageUrl,
-      }))
+      const rows = selectedIndices.map(i => {
+        const exp = detectedExperiences[i]
+        const r = ratings[i]
+        const parsed = r === '' || r == null ? null : parseFloat(r)
+        return {
+          user_id: profile.id,
+          name: exp.name,
+          category: exp.category || 'other',
+          date: exp.date || null,
+          city: exp.city || null,
+          source: 'playbill_scan',
+          image_url: imageUrl,
+          rating: Number.isFinite(parsed) ? parsed : null,
+        }
+      })
 
       const { error } = await supabase.from('experiences').insert(rows)
       if (error) throw error
 
-      if (onExperiencesAdded) onExperiencesAdded(toAdd.length)
+      if (onExperiencesAdded) onExperiencesAdded(rows.length)
       handleClose()
     } catch (err) {
       console.error('Error adding scanned experiences:', err)
@@ -232,6 +242,33 @@ export const PlaybillScanModal = ({ isOpen, onClose, onExperiencesAdded }) => {
                     {(exp.city || exp.date) && (
                       <div style={{ fontSize: '12px', color: '#999' }}>
                         {[exp.city, exp.date].filter(Boolean).join(' \u00b7 ')}
+                      </div>
+                    )}
+                    {selectedItems[i] && (
+                      <div
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px' }}
+                      >
+                        <span style={{ fontSize: '12px', color: '#666' }}>Rating</span>
+                        <input
+                          type="number"
+                          min="0"
+                          max="10"
+                          step="0.1"
+                          value={ratings[i] ?? ''}
+                          onChange={(e) => setRatings(prev => ({ ...prev, [i]: e.target.value }))}
+                          placeholder="\u2014"
+                          style={{
+                            width: '56px',
+                            padding: '3px 6px',
+                            fontSize: '13px',
+                            border: '1px solid #ccc',
+                            borderRadius: '3px',
+                            background: '#FFFEFA',
+                            boxSizing: 'border-box',
+                          }}
+                        />
+                        <span className="handwritten" style={{ fontSize: '13px', color: '#999' }}>/10</span>
                       </div>
                     )}
                   </div>

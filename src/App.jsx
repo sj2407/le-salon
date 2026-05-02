@@ -211,6 +211,7 @@ function AppContent() {
     && !splashAlreadyPlayed
     && onboardingStatus === 'allow'
     && location.pathname !== '/onboarding'
+    && location.pathname !== '/reset-password'
   ) {
     return createPortal(
       <div style={{
