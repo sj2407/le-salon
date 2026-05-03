@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { TAG_ICONS, TAG_OPTIONS, TAG_LABELS } from '../lib/reviewConstants'
 import { TAG_TO_MEDIA_TYPE } from '../lib/coverSearchApis'
+import { linkifyText } from '../lib/linkifyText'
 import { FilterDropdown } from './FilterDropdown'
 import { TagAutocomplete } from './TagAutocomplete'
 import { useOutsideClick } from '../hooks/useOutsideClick'
@@ -536,7 +537,7 @@ export const ReviewsDisplay = ({
                       </>
                     ) : (
                       <>
-                        <div className="reader-title">{displayedReview.title}</div>
+                        <div className="reader-title">{linkifyText(displayedReview.title)}</div>
                         <div className="reader-meta">
                           {TAG_ICONS[displayedReview.tag]} {TAG_LABELS[displayedReview.tag] || displayedReview.tag}
                         </div>

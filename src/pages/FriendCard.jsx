@@ -556,7 +556,7 @@ export const FriendCard = () => {
                   )}
 
                   {activeTab === 'portrait' && (
-                    <Portrait userId={friendId} />
+                    <Portrait userId={friendId} friendName={friendProfile?.display_name} />
                   )}
             </div>
           </>

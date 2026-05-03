@@ -26,7 +26,7 @@ let _portraitCache = null // { userId, spotifyProfile, books, readingThemes, rea
  * Portrait tab page — fetches live data, manages all interactions.
  * Friend view: accepts userId prop, read-only.
  */
-export const Portrait = ({ userId: friendUserId }) => {
+export const Portrait = ({ userId: friendUserId, friendName }) => {
   const { profile } = useAuth()
   const navigate = useNavigate()
   const isOwner = !friendUserId
@@ -509,7 +509,7 @@ export const Portrait = ({ userId: friendUserId }) => {
   return (
     <div style={{ maxWidth: '720px', padding: '0 20px' }}>
       <h1 className="handwritten" style={{ fontSize: '42px', marginBottom: '0', marginTop: '8px', marginLeft: '10px', position: 'relative', zIndex: 1, transform: 'translateY(16px)' }}>
-        Portrait
+        {friendName ? `${friendName}'s Portrait` : 'Portrait'}
       </h1>
 
       <div style={{ marginTop: '28px' }}>
