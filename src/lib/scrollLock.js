@@ -18,6 +18,7 @@
 
 let scrollPosition = 0
 let isLocked = false
+let lockedScrollContainer = null
 
 export const scrollLock = {
   enable() {
@@ -28,6 +29,10 @@ export const scrollLock = {
     document.body.style.position = 'fixed'
     document.body.style.top = `-${scrollPosition}px`
     document.body.style.width = '100%'
+    // The actual scroll container in this app is `.app-scroll-content`
+    // (html/body have overflow:hidden). Lock it too — body lock alone is a no-op.
+    lockedScrollContainer = document.querySelector('.app-scroll-content')
+    if (lockedScrollContainer) lockedScrollContainer.style.overflow = 'hidden'
   },
 
   disable() {
@@ -38,5 +43,9 @@ export const scrollLock = {
     document.body.style.removeProperty('top')
     document.body.style.removeProperty('width')
     window.scrollTo(0, scrollPosition)
+    if (lockedScrollContainer) {
+      lockedScrollContainer.style.removeProperty('overflow')
+      lockedScrollContainer = null
+    }
   }
 }

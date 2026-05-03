@@ -186,7 +186,7 @@ export const AddExperienceModal = ({ isOpen, onClose, onCreated }) => {
         </div>
 
         {/* Save */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '4px' }}>
+        <div className="modal-sticky-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
           <button
             onClick={handleClose}
             style={{

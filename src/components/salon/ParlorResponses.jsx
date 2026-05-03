@@ -104,7 +104,7 @@ export const ParlorResponses = ({ responses, userId, onSubmit, onEdit, onDelete,
             transition={{ duration: 0.25, ease: 'easeInOut' }}
             style={{
               overflow: 'hidden',
-              ...(compact ? { maxHeight: '40vh', overflowY: 'auto' } : {})
+              ...(compact ? { maxHeight: 'calc(40vh + var(--keyboard-height, 0px))', overflowY: 'auto' } : {})
             }}
           >
             <div style={{ paddingTop: compact ? '8px' : '16px' }}>

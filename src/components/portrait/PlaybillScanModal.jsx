@@ -259,9 +259,11 @@ export const PlaybillScanModal = ({ isOpen, onClose, onExperiencesAdded }) => {
                           onChange={(e) => setRatings(prev => ({ ...prev, [i]: e.target.value }))}
                           placeholder="\u2014"
                           style={{
-                            width: '56px',
+                            width: '66px',
                             padding: '3px 6px',
-                            fontSize: '13px',
+                            fontSize: '16px',
+                            transform: 'scale(0.85)',
+                            transformOrigin: 'left top',
                             border: '1px solid #ccc',
                             borderRadius: '3px',
                             background: '#FFFEFA',
@@ -276,7 +278,7 @@ export const PlaybillScanModal = ({ isOpen, onClose, onExperiencesAdded }) => {
               ))}
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
+            <div className="modal-sticky-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: '13px', color: '#999' }}>
                 {selectedCount} selected
               </span>

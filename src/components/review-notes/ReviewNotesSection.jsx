@@ -160,9 +160,11 @@ export const ReviewNotesSection = ({
                 placeholder="p. 42, Ch. 3..."
                 maxLength={50}
                 style={{
-                  width: '100px',
+                  width: '118px',
                   padding: '4px 8px',
-                  fontSize: '12px',
+                  fontSize: '16px',
+                  transform: 'scale(0.85)',
+                  transformOrigin: 'left top',
                   border: '1px solid #D9CBAD',
                   borderRadius: '3px',
                   background: '#FFFEFA',

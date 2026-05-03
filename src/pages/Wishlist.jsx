@@ -268,12 +268,13 @@ export const Wishlist = () => {
       {/* Add/Edit Modal */}
       {showModal && (
         <div
+          className="modal-backdrop-keyboard-aware"
           style={{
             position: 'fixed',
             top: 0,
             left: 0,
             right: 0,
-            bottom: 0,
+            bottom: 'var(--keyboard-height, 0px)',
             background: 'rgba(0, 0, 0, 0.5)',
             display: 'flex',
             alignItems: 'center',
@@ -283,6 +284,7 @@ export const Wishlist = () => {
           onClick={(e) => e.stopPropagation()}
         >
           <div
+            className="modal-keyboard-aware"
             style={{
               background: '#FFFEFA',
               border: 'none',
@@ -290,7 +292,7 @@ export const Wishlist = () => {
               padding: '20px 24px',
               maxWidth: '500px',
               width: '90%',
-              maxHeight: '90vh',
+              '--modal-max-vh': '90vh',
               overflowY: 'auto',
               boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
             }}
@@ -378,7 +380,7 @@ export const Wishlist = () => {
 
               {error && <div className="error-message">{error}</div>}
 
-              <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
+              <div className="modal-sticky-actions" style={{ display: 'flex', gap: '12px', margin: '24px -24px -20px', padding: '12px 24px 20px' }}>
                 <button type="submit" className="primary" style={{ flex: 1 }}>
                   Save
                 </button>

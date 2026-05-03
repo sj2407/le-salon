@@ -75,12 +75,13 @@ export const ITunesSearch = ({ isOpen, onClose, onSelect, initialQuery = '' }) =
 
   return createPortal(
     <div
+      className="modal-backdrop-keyboard-aware"
       style={{
         position: 'fixed',
         top: 0,
         left: 0,
         right: 0,
-        bottom: 0,
+        bottom: 'var(--keyboard-height, 0px)',
         background: 'rgba(0, 0, 0, 0.4)',
         display: 'flex',
         alignItems: 'center',
@@ -90,13 +91,14 @@ export const ITunesSearch = ({ isOpen, onClose, onSelect, initialQuery = '' }) =
       onClick={onClose}
     >
       <div
+        className="modal-keyboard-aware"
         style={{
           background: '#FFFEFA',
           border: '1px solid #E8DCC8',
           borderRadius: '8px',
           padding: '16px',
           width: '300px',
-          maxHeight: '70vh',
+          '--modal-max-vh': '70vh',
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
@@ -123,13 +125,13 @@ export const ITunesSearch = ({ isOpen, onClose, onSelect, initialQuery = '' }) =
             padding: '10px 12px',
             border: '1px solid #999',
             borderRadius: '6px',
-            fontSize: '15px',
+            fontSize: '16px',
             boxSizing: 'border-box',
             outline: 'none'
           }}
         />
 
-        <div style={{ flex: 1, overflowY: 'auto', minHeight: '100px', maxHeight: '300px', borderTop: '1px solid #eee', borderBottom: '1px solid #eee' }}>
+        <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, borderTop: '1px solid #eee', borderBottom: '1px solid #eee' }}>
           {isLoading && (
             <div style={{ textAlign: 'center', padding: '24px', color: '#666', fontSize: '14px' }}>
               Searching...

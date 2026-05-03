@@ -178,12 +178,13 @@ export const SectionEditModal = ({ category, entries, onSave, onClose }) => {
   return createPortal(
     <div
       ref={backdropRef}
+      className="modal-backdrop-keyboard-aware"
       style={{
         position: 'fixed',
         top: 0,
         left: 0,
         right: 0,
-        bottom: 0,
+        bottom: 'var(--keyboard-height, 0px)',
         background: 'rgba(0, 0, 0, 0.4)',
         display: 'flex',
         alignItems: 'center',
@@ -193,13 +194,14 @@ export const SectionEditModal = ({ category, entries, onSave, onClose }) => {
       onClick={undefined}
     >
       <div
+        className="modal-keyboard-aware"
         style={{
           background: '#FFFEFA',
           borderRadius: '4px',
           padding: '14px',
           width: '90%',
           maxWidth: '400px',
-          maxHeight: '80vh',
+          '--modal-max-vh': '80vh',
           overflow: 'auto',
           boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)'
         }}
@@ -240,7 +242,7 @@ export const SectionEditModal = ({ category, entries, onSave, onClose }) => {
                     padding: '8px',
                     border: '1px solid #ccc',
                     borderRadius: '3px',
-                    fontSize: '14px',
+                    fontSize: '16px',
                     background: '#FFFEFA',
                     flexShrink: 0,
                   }}
@@ -383,7 +385,7 @@ export const SectionEditModal = ({ category, entries, onSave, onClose }) => {
           />
         )}
 
-        <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+        <div className="modal-sticky-actions" style={{ display: 'flex', gap: '10px', margin: '24px -14px -14px', padding: '12px 14px 14px' }}>
           <button
             onClick={handleSave}
             style={{

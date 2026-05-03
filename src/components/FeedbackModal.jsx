@@ -49,12 +49,13 @@ export const FeedbackModal = ({ onClose }) => {
 
   return (
     <div
+      className="modal-backdrop-keyboard-aware"
       style={{
         position: 'fixed',
         top: 0,
         left: 0,
         right: 0,
-        bottom: 0,
+        bottom: 'var(--keyboard-height, 0px)',
         background: 'rgba(0, 0, 0, 0.5)',
         display: 'flex',
         alignItems: 'center',
@@ -64,12 +65,14 @@ export const FeedbackModal = ({ onClose }) => {
       onClick={() => !submitting && onClose()}
     >
       <div
+        className="modal-keyboard-aware"
         style={{
           background: '#FFFEFA',
           borderRadius: '4px',
           padding: '32px',
           maxWidth: '500px',
           width: '90%',
+          overflowY: 'auto',
           boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)'
         }}
         onClick={(e) => e.stopPropagation()}
@@ -101,7 +104,7 @@ export const FeedbackModal = ({ onClose }) => {
 
               {error && <div className="error-message">{error}</div>}
 
-              <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
+              <div className="modal-sticky-actions" style={{ display: 'flex', gap: '12px', margin: '12px -32px -32px', padding: '12px 32px 32px' }}>
                 <button
                   type="submit"
                   className="primary"

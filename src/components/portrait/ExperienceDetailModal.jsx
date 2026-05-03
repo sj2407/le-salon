@@ -291,7 +291,7 @@ export const ExperienceDetailModal = ({ isOpen, onClose, experience, onUpdated, 
             </div>
 
             {/* Save / Cancel */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '4px' }}>
+            <div className="modal-sticky-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
               <button
                 onClick={handleCancel}
                 disabled={saving}

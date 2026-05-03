@@ -124,12 +124,13 @@ export const CoverSearchModal = ({ isOpen, onClose, onSelect, initialQuery = '',
 
   return createPortal(
     <div
+      className="modal-backdrop-keyboard-aware"
       style={{
         position: 'fixed',
         top: 0,
         left: 0,
         right: 0,
-        bottom: 0,
+        bottom: 'var(--keyboard-height, 0px)',
         background: 'rgba(0, 0, 0, 0.4)',
         display: 'flex',
         alignItems: 'center',
@@ -139,12 +140,13 @@ export const CoverSearchModal = ({ isOpen, onClose, onSelect, initialQuery = '',
       onClick={onClose}
     >
       <div
+        className="modal-keyboard-aware"
         style={{
           background: '#FFFEFA',
           borderRadius: '8px',
           padding: '16px',
           width: '300px',
-          maxHeight: '70vh',
+          '--modal-max-vh': '85vh',
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
@@ -182,7 +184,7 @@ export const CoverSearchModal = ({ isOpen, onClose, onSelect, initialQuery = '',
           />
         )}
 
-        <div style={{ flex: 1, overflowY: 'auto', minHeight: '100px', maxHeight: '300px', borderTop: '1px solid #eee', borderBottom: '1px solid #eee' }}>
+        <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, borderTop: '1px solid #eee', borderBottom: '1px solid #eee' }}>
           {isLoading && (
             <div style={{ textAlign: 'center', padding: '24px', color: '#666', fontSize: '14px' }}>
               Searching...

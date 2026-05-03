@@ -196,6 +196,7 @@ export const DictationModal = ({ isOpen, onClose, onAcceptEntries, mode = 'card'
       {isOpen && (
         <Motion.div
           ref={backdropRef}
+          className="modal-backdrop-keyboard-aware"
           onClick={undefined}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -206,7 +207,7 @@ export const DictationModal = ({ isOpen, onClose, onAcceptEntries, mode = 'card'
             top: 0,
             left: 0,
             right: 0,
-            bottom: 0,
+            bottom: 'var(--keyboard-height, 0px)',
             background: 'rgba(0, 0, 0, 0.4)',
             zIndex: 9999,
             display: 'flex',
@@ -220,13 +221,14 @@ export const DictationModal = ({ isOpen, onClose, onAcceptEntries, mode = 'card'
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.2 }}
+            className="modal-keyboard-aware"
             style={{
               background: '#FFFEFA',
               borderRadius: '8px',
               boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)',
               width: '100%',
               maxWidth: '480px',
-              maxHeight: '80vh',
+              '--modal-max-vh': '80vh',
               overflowY: 'auto',
               padding: '28px 24px'
             }}
@@ -399,7 +401,7 @@ export const DictationModal = ({ isOpen, onClose, onAcceptEntries, mode = 'card'
                             width: '100%',
                             border: 'none',
                             background: 'transparent',
-                            fontSize: '15px',
+                            fontSize: '16px',
                             fontFamily: "'Source Serif 4', Georgia, serif",
                             color: '#2C2C2C',
                             padding: 0,
@@ -428,13 +430,13 @@ export const DictationModal = ({ isOpen, onClose, onAcceptEntries, mode = 'card'
                 </div>
 
                 {parsedEntries.length === 0 ? (
-                  <div style={{ display: 'flex', gap: '12px' }}>
+                  <div className="modal-sticky-actions" style={{ display: 'flex', gap: '12px', margin: '12px -24px -28px', padding: '12px 24px 28px' }}>
                     <button onClick={handleClose} style={{ flex: 1 }}>
                       Close
                     </button>
                   </div>
                 ) : (
-                  <div style={{ display: 'flex', gap: '12px' }}>
+                  <div className="modal-sticky-actions" style={{ display: 'flex', gap: '12px', margin: '12px -24px -28px', padding: '12px 24px 28px' }}>
                     <button onClick={handleAccept} className="primary" style={{ flex: 1 }}>
                       Add to card
                     </button>

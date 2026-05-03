@@ -567,12 +567,13 @@ export const ToDo = () => {
       {/* Add/Edit Modal */}
       {showModal && (
         <div
+          className="modal-backdrop-keyboard-aware"
           style={{
             position: 'fixed',
             top: 0,
             left: 0,
             right: 0,
-            bottom: 0,
+            bottom: 'var(--keyboard-height, 0px)',
             background: 'rgba(0, 0, 0, 0.5)',
             display: 'flex',
             alignItems: 'center',
@@ -588,12 +589,12 @@ export const ToDo = () => {
               padding: '14px',
               maxWidth: '400px',
               width: '90%',
-              maxHeight: '90vh',
+              '--modal-max-vh': '90vh',
               overflowY: 'auto',
               boxShadow: '2px 3px 8px rgba(0, 0, 0, 0.1)'
             }}
             onClick={(e) => e.stopPropagation()}
-            className="profile-edit-compact"
+            className="profile-edit-compact modal-keyboard-aware"
           >
             <h2 className="handwritten" style={{ fontSize: '22px', marginBottom: '10px', marginTop: 0, textAlign: 'center' }}>
               {editingActivity ? 'Edit Activity' : 'Add Activity'}
@@ -704,7 +705,7 @@ export const ToDo = () => {
 
               {error && <div className="error-message">{error}</div>}
 
-              <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+              <div className="modal-sticky-actions" style={{ display: 'flex', gap: '10px', margin: '12px -14px -14px', padding: '12px 14px 14px' }}>
                 <button type="submit" className="primary" style={{ flex: 1 }}>
                   Save
                 </button>

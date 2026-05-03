@@ -181,7 +181,7 @@ export const ProfileEditModal = ({ onClose }) => {
         zIndex: 9999,
         overflowY: 'auto',
         paddingTop: '20px',
-        paddingBottom: '20px'
+        paddingBottom: 'calc(20px + var(--keyboard-height, 0px))'
       }}
       onClick={undefined}
     >

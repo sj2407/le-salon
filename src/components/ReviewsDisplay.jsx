@@ -81,6 +81,7 @@ export const ReviewsDisplay = ({
   const [confirmState, setConfirmState] = useState(null)
   const editInitialRef = useRef(null)
   const editTextareaRef = useRef(null)
+  const editTitleRef = useRef(null)
 
   const filteredReviews = filterTag === 'all'
     ? reviews
@@ -254,6 +255,15 @@ export const ReviewsDisplay = ({
       ta.style.height = ta.scrollHeight + 'px'
     }
   }, [editMode, editReviewText])
+
+  // Auto-resize title textarea (so long titles wrap to multiple lines)
+  useEffect(() => {
+    if (editMode && editTitleRef.current) {
+      const el = editTitleRef.current
+      el.style.height = 'auto'
+      el.style.height = el.scrollHeight + 'px'
+    }
+  }, [editMode, editTitle])
 
   // Render reader body content
   const renderReaderBody = () => {
@@ -437,11 +447,20 @@ export const ReviewsDisplay = ({
                     {editMode ? (
                       <>
                         {editImageUrl ? (
-                          <img src={editImageUrl} alt={editTitle} />
+                          <img
+                            src={editImageUrl}
+                            alt={editTitle}
+                            onClick={TAG_TO_MEDIA_TYPE[editTag] && onOpenCoverSearch ? () => onOpenCoverSearch(editTitle, editTag) : undefined}
+                            style={TAG_TO_MEDIA_TYPE[editTag] && onOpenCoverSearch ? { cursor: 'pointer' } : undefined}
+                          />
                         ) : (
                           <div
                             className="reader-cover-fallback"
-                            style={{ background: FALLBACK_GRADIENTS[editTag] || FALLBACK_GRADIENTS.other }}
+                            onClick={TAG_TO_MEDIA_TYPE[editTag] && onOpenCoverSearch ? () => onOpenCoverSearch(editTitle, editTag) : undefined}
+                            style={{
+                              background: FALLBACK_GRADIENTS[editTag] || FALLBACK_GRADIENTS.other,
+                              ...(TAG_TO_MEDIA_TYPE[editTag] && onOpenCoverSearch ? { cursor: 'pointer' } : {})
+                            }}
                           >
                             {editTitle}
                           </div>
@@ -485,10 +504,12 @@ export const ReviewsDisplay = ({
                   <div className="reader-info">
                     {editMode ? (
                       <>
-                        <input
-                          type="text"
+                        <textarea
+                          ref={editTitleRef}
+                          rows={1}
                           value={editTitle}
                           onChange={(e) => setEditTitle(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault() }}
                           maxLength={200}
                           className="reader-edit-title"
                           placeholder="Title"
@@ -595,7 +616,7 @@ export const ReviewsDisplay = ({
                               borderRadius: '3px',
                               background: '#FFFEFA',
                               fontFamily: 'Source Serif 4, Georgia, serif',
-                              fontSize: '15px',
+                              fontSize: '16px',
                               fontStyle: 'italic',
                               boxSizing: 'border-box'
                             }}

@@ -567,6 +567,35 @@ button.primary:hover {
   margin-bottom: -6px;     /* compensate for scale reducing visual height */
 }
 
+/* Modal card shrinks to fit above the iOS keyboard.
+   Subtracts --keyboard-height (set in main.jsx on Capacitor keyboardWillShow).
+   --modal-max-vh defaults to 85vh; modals override inline if their existing
+   maxHeight is different. */
+.modal-keyboard-aware {
+  max-height: calc(var(--modal-max-vh, 85vh) - var(--keyboard-height, 0px));
+  transition: max-height 0.15s ease;
+}
+
+/* Modal backdrop that ends at the top of the iOS keyboard so flex-centered
+   modal cards sit fully above the keyboard instead of being half-covered.
+   Each backdrop sets bottom: var(--keyboard-height, 0px) inline; this class
+   only adds the transition for smooth open/close. */
+.modal-backdrop-keyboard-aware {
+  transition: bottom 0.15s ease;
+}
+
+/* Action-button row pinned to the visible bottom of the scrollable modal body.
+   Background prevents content bleed-through; subtle shadow gives a separator. */
+.modal-sticky-actions {
+  position: sticky;
+  bottom: 0;
+  background: #FFFEFA;
+  padding-top: 12px;
+  margin-top: 8px;
+  box-shadow: 0 -8px 12px -8px rgba(0, 0, 0, 0.08);
+  z-index: 1;
+}
+
 .error-message {
   color: #C75D5D;
   font-size: 13px;
@@ -1538,6 +1567,7 @@ body.reader-open .app-scroll-content {
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  padding-bottom: var(--keyboard-height, 0px);
 }
 
 .reader-header {
@@ -1661,8 +1691,11 @@ body.reader-open .app-scroll-content {
   border-radius: 0;
   padding: 0 0 4px;
   font-family: inherit;
+  font-style: normal;
   outline: none;
   box-sizing: border-box;
+  resize: none;
+  overflow: hidden;
 }
 
 .reader-edit-title:focus {
@@ -1691,7 +1724,7 @@ body.reader-open .app-scroll-content {
 .reader-edit-textarea {
   width: 100%;
   min-height: 200px;
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.8;
   color: #2C2C2C;
   font-style: italic;

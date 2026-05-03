@@ -38,42 +38,97 @@ export function jsonpFetch(url, callbackParam = 'callback') {
 }
 
 /**
- * Search books via Open Library (free, no key, CORS OK)
- * Fetches more results and filters to those with covers.
+ * Parse a free-form book query into { title, author }.
+ * Recognises common separators users use to combine title + author.
+ * Returns author=null if no separator detected.
+ */
+function parseBookQuery(raw) {
+  const trimmed = (raw || '').trim()
+  if (!trimmed) return { title: '', author: null }
+  const patterns = [
+    /^(.+?)\s+by\s+(.+)$/i,        // "Title by Author"
+    /^(.+?)\s+[—–-]\s+(.+)$/,      // "Title - Author" / "Title – Author"
+    /^(.+?)\s+\|\s+(.+)$/,         // "Title | Author"
+    /^(.+?)[,;]\s+(.+)$/,          // "Title, Author" / "Title; Author"
+  ]
+  for (const re of patterns) {
+    const m = trimmed.match(re)
+    if (m && m[1].trim() && m[2].trim()) {
+      return { title: m[1].trim(), author: m[2].trim() }
+    }
+  }
+  return { title: trimmed, author: null }
+}
+
+// Digits in author name = book metadata leaked author birth/death years
+// (e.g., "Lillian 1905-1984 Hellman"). Drop these from author-search results.
+const authorHasDigits = (name) => /\d/.test(name || '')
+
+/**
+ * Open Library raw fetch+process for a given querystring fragment
+ * (e.g. "title=foo" or "author=bar" or both). Internal helper for the cascade.
+ */
+async function olRun(paramsFragment) {
+  try {
+    const res = await fetch(
+      `https://openlibrary.org/search.json?${paramsFragment}&language=eng&limit=15&fields=key,title,author_name,cover_i,first_publish_year,edition_count`
+    )
+    if (!res.ok) return []
+    const data = await res.json()
+
+    return (data.docs || [])
+      // Filter out study guides / companion books
+      .filter(doc => {
+        const t = (doc.title || '').toLowerCase()
+        return !t.startsWith('clés pour') && !t.startsWith('notes on') &&
+          !t.startsWith('study guide') && !t.startsWith('profil d')
+      })
+      // Prefer results with covers, sort by edition_count (popular editions have better covers)
+      .sort((a, b) => {
+        const aCover = a.cover_i ? 1 : 0
+        const bCover = b.cover_i ? 1 : 0
+        if (aCover !== bCover) return bCover - aCover
+        return (b.edition_count || 0) - (a.edition_count || 0)
+      })
+      .slice(0, 8)
+      .map(doc => ({
+        id: doc.key,
+        title: doc.title,
+        subtitle: [
+          doc.author_name?.[0],
+          doc.first_publish_year
+        ].filter(Boolean).join(', '),
+        imageUrl: doc.cover_i
+          ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg`
+          : '',
+        _author: doc.author_name?.[0] || '',
+      }))
+  } catch {
+    return []
+  }
+}
+
+/**
+ * Open Library cover search with a clean cascade:
+ *   1. title + author (most precise)
+ *   2. title only (drop author — handles misspelled author / stale metadata)
+ *   3. author only (last resort, used when user is searching by author name).
+ * Stops at the first non-empty step. Author-only step filters out date-leaks.
  */
 async function searchOpenLibrary(query) {
-  const encoded = encodeURIComponent(query)
-  const res = await fetch(
-    `https://openlibrary.org/search.json?title=${encoded}&language=eng&limit=15&fields=key,title,author_name,cover_i,first_publish_year,edition_count`
-  )
-  const data = await res.json()
-
-  return (data.docs || [])
-    // Filter out study guides / companion books
-    .filter(doc => {
-      const t = (doc.title || '').toLowerCase()
-      return !t.startsWith('clés pour') && !t.startsWith('notes on') &&
-        !t.startsWith('study guide') && !t.startsWith('profil d')
-    })
-    // Prefer results with covers, sort by edition_count (popular editions have better covers)
-    .sort((a, b) => {
-      const aCover = a.cover_i ? 1 : 0
-      const bCover = b.cover_i ? 1 : 0
-      if (aCover !== bCover) return bCover - aCover
-      return (b.edition_count || 0) - (a.edition_count || 0)
-    })
-    .slice(0, 8)
-    .map(doc => ({
-      id: doc.key,
-      title: doc.title,
-      subtitle: [
-        doc.author_name?.[0],
-        doc.first_publish_year
-      ].filter(Boolean).join(', '),
-      imageUrl: doc.cover_i
-        ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg`
-        : ''
-    }))
+  const enc = encodeURIComponent
+  const { title, author } = parseBookQuery(query)
+  if (author) {
+    let r = await olRun(`title=${enc(title)}&author=${enc(author)}`)
+    if (r.length > 0) return r
+    r = await olRun(`title=${enc(title)}`)
+    if (r.length > 0) return r
+    return (await olRun(`author=${enc(author)}`)).filter(x => !authorHasDigits(x._author))
+  }
+  // No separator: title → author
+  let r = await olRun(`title=${enc(query)}`)
+  if (r.length > 0) return r
+  return (await olRun(`author=${enc(query)}`)).filter(x => !authorHasDigits(x._author))
 }
 
 /**
@@ -88,14 +143,13 @@ function enhanceGoogleBooksUrl(url) {
 }
 
 /**
- * Search books via Google Books (free, no key needed) with enhanced covers.
- * Fetches more results, filters out entries without real covers.
+ * Google Books raw fetch+process for a given q-parameter value.
+ * Internal helper for the cascade.
  */
-async function searchGoogleBooks(query) {
+async function gbRun(qParam) {
   try {
-    const encoded = encodeURIComponent(`intitle:${query}`)
     const res = await fetch(
-      `https://www.googleapis.com/books/v1/volumes?q=${encoded}&langRestrict=en&maxResults=12`
+      `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(qParam)}&langRestrict=en&maxResults=12`
     )
     if (!res.ok) return []
     const data = await res.json()
@@ -111,14 +165,12 @@ async function searchGoogleBooks(query) {
             vi.publishedDate?.slice(0, 4)
           ].filter(Boolean).join(', '),
           imageUrl: enhanceGoogleBooksUrl(vi.imageLinks?.thumbnail),
-          // Metadata for sorting
           _hasDescription: !!vi.description,
           _pageCount: vi.pageCount || 0,
+          _author: vi.authors?.[0] || '',
         }
       })
-      // Filter out results with no cover image
       .filter(r => r.imageUrl)
-      // Sort: prefer results with richer metadata (real editions, not stubs)
       .sort((a, b) => {
         const aScore = (a._hasDescription ? 1 : 0) + (a._pageCount > 50 ? 1 : 0)
         const bScore = (b._hasDescription ? 1 : 0) + (b._pageCount > 50 ? 1 : 0)
@@ -128,6 +180,29 @@ async function searchGoogleBooks(query) {
   } catch {
     return []
   }
+}
+
+/**
+ * Google Books cover search with a clean cascade:
+ *   1. title + author (most precise)
+ *   2. title only (drop author — handles misspelled author / stale metadata)
+ *   3. author only (last resort).
+ * Stops at the first non-empty step. Author-only step filters out date-leaks
+ * (Google sometimes returns books indexed by author birth/death years).
+ */
+async function searchGoogleBooks(query) {
+  const { title, author } = parseBookQuery(query)
+  if (author) {
+    let r = await gbRun(`intitle:${title} inauthor:${author}`)
+    if (r.length > 0) return r
+    r = await gbRun(`intitle:${title}`)
+    if (r.length > 0) return r
+    return (await gbRun(`inauthor:${author}`)).filter(x => !authorHasDigits(x._author))
+  }
+  // No separator: title → author
+  let r = await gbRun(`intitle:${query}`)
+  if (r.length > 0) return r
+  return (await gbRun(`inauthor:${query}`)).filter(x => !authorHasDigits(x._author))
 }
 
 /**
@@ -151,16 +226,13 @@ export async function searchBooks(query) {
 }
 
 /**
- * Fetch the best available cover URL for a book title.
- * Used for refreshing existing review/wishlist covers.
- * Returns the enhanced URL or null if not found.
- * Validates the image is a real cover (>8KB) to avoid placeholders.
+ * Fetch a single Google Books thumbnail URL for a given q-parameter.
+ * Returns the enhanced URL after validating the image is a real cover (>8KB).
  */
-export async function fetchBestBookCover(title) {
+async function fetchValidatedCover(qParam) {
   try {
-    const encoded = encodeURIComponent(title)
     const res = await fetch(
-      `https://www.googleapis.com/books/v1/volumes?q=intitle:${encoded}&maxResults=1`
+      `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(qParam)}&maxResults=1`
     )
     if (!res.ok) return null
     const data = await res.json()
@@ -168,7 +240,6 @@ export async function fetchBestBookCover(title) {
     const url = enhanceGoogleBooksUrl(thumbnail)
     if (!url) return null
 
-    // Verify this is a real cover, not a tiny placeholder
     const head = await fetch(url, { method: 'HEAD' })
     const size = parseInt(head.headers.get('content-length') || '0', 10)
     if (size < 8000) return null
@@ -177,6 +248,25 @@ export async function fetchBestBookCover(title) {
   } catch {
     return null
   }
+}
+
+/**
+ * Fetch the best available cover URL for a book title (or "Title, Author").
+ * Cascades: title+author → title → author. Returns the first validated URL.
+ */
+export async function fetchBestBookCover(query) {
+  const { title, author } = parseBookQuery(query)
+  if (author) {
+    return (
+      (await fetchValidatedCover(`intitle:${title} inauthor:${author}`)) ||
+      (await fetchValidatedCover(`intitle:${title}`)) ||
+      (await fetchValidatedCover(`inauthor:${author}`))
+    )
+  }
+  return (
+    (await fetchValidatedCover(`intitle:${query}`)) ||
+    (await fetchValidatedCover(`inauthor:${query}`))
+  )
 }
 
 /**

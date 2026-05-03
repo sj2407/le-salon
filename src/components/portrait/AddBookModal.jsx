@@ -113,7 +113,7 @@ export const AddBookModal = ({ isOpen, onClose, onCreated }) => {
               padding: '10px 12px',
               border: '1px solid rgba(0,0,0,0.1)',
               borderRadius: '8px',
-              fontSize: '14px',
+              fontSize: '16px',
               background: '#FFFEFA',
               outline: 'none',
               boxSizing: 'border-box',
@@ -136,7 +136,7 @@ export const AddBookModal = ({ isOpen, onClose, onCreated }) => {
               padding: '10px 12px',
               border: '1px solid rgba(0,0,0,0.1)',
               borderRadius: '8px',
-              fontSize: '14px',
+              fontSize: '16px',
               background: '#FFFEFA',
               outline: 'none',
               boxSizing: 'border-box',
@@ -205,7 +205,7 @@ export const AddBookModal = ({ isOpen, onClose, onCreated }) => {
         )}
 
         {/* Save */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '4px' }}>
+        <div className="modal-sticky-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
           <button
             onClick={handleClose}
             style={{

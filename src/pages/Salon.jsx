@@ -598,6 +598,7 @@ export const Salon = () => {
         maxWidth: '720px',
         margin: '0 auto',
         padding: '20px 20px 0',
+        paddingBottom: 'var(--keyboard-height, 0px)',
         overflow: 'hidden'
       }}>
         {/* FIXED TOP: icon + timeline + title */}

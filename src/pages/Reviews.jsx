@@ -864,12 +864,13 @@ export const Reviews = () => {
       {/* Add/Edit Modal */}
       {showModal && (
         <div
+          className="modal-backdrop-keyboard-aware"
           style={{
             position: 'fixed',
             top: 0,
             left: 0,
             right: 0,
-            bottom: 0,
+            bottom: 'var(--keyboard-height, 0px)',
             background: 'rgba(0, 0, 0, 0.5)',
             display: 'flex',
             alignItems: 'center',
@@ -879,6 +880,7 @@ export const Reviews = () => {
           onClick={(e) => e.stopPropagation()}
         >
           <div
+            className="modal-keyboard-aware"
             style={{
               background: '#FFFEFA',
               border: 'none',
@@ -886,7 +888,7 @@ export const Reviews = () => {
               padding: '20px 24px',
               maxWidth: '500px',
               width: '90%',
-              maxHeight: '90vh',
+              '--modal-max-vh': '90vh',
               overflowY: 'auto',
               boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
             }}
@@ -967,7 +969,7 @@ export const Reviews = () => {
                         padding: '8px 10px',
                         border: '1px solid #ccc',
                         borderRadius: '3px',
-                        fontSize: '13px',
+                        fontSize: '16px',
                         fontStyle: 'italic',
                         boxSizing: 'border-box',
                         background: '#FFFEFA'
@@ -1064,7 +1066,7 @@ export const Reviews = () => {
                         width: '100%',
                         minHeight: '60px',
                         padding: '8px 10px',
-                        fontSize: '14px',
+                        fontSize: '16px',
                         lineHeight: 1.5,
                         fontFamily: modalNoteIsQuote ? "'Source Serif 4', Georgia, serif" : 'inherit',
                         fontStyle: modalNoteIsQuote ? 'italic' : 'normal',
@@ -1087,7 +1089,7 @@ export const Reviews = () => {
                         onChange={(e) => setModalNotePageRef(e.target.value)}
                         placeholder="p. 42..."
                         maxLength={50}
-                        style={{ width: '80px', padding: '3px 6px', fontSize: '11px', border: '1px solid #D9CBAD', borderRadius: '3px', background: '#FFFEFA', outline: 'none' }}
+                        style={{ width: '94px', padding: '3px 6px', fontSize: '16px', transform: 'scale(0.85)', transformOrigin: 'left top', border: '1px solid #D9CBAD', borderRadius: '3px', background: '#FFFEFA', outline: 'none' }}
                       />
                       <div style={{ marginLeft: 'auto', display: 'flex', gap: '6px' }}>
                         <button
@@ -1263,7 +1265,7 @@ export const Reviews = () => {
 
               {error && <div className="error-message">{error}</div>}
 
-              <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
+              <div className="modal-sticky-actions" style={{ display: 'flex', gap: '12px', margin: '12px -24px -20px', padding: '12px 24px 20px' }}>
                 <button type="submit" className="primary" style={{ flex: 1 }}>
                   Save
                 </button>

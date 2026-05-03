@@ -58,6 +58,7 @@ export const PortraitModal = ({ isOpen, onClose, title, children, maxWidth = '48
       {isOpen && (
         <motion.div
           ref={backdropRef}
+          className="modal-backdrop-keyboard-aware"
           onClick={undefined}
           variants={backdropVariants}
           initial="initial"
@@ -66,7 +67,10 @@ export const PortraitModal = ({ isOpen, onClose, title, children, maxWidth = '48
           transition={{ duration: 0.2 }}
           style={{
             position: 'fixed',
-            inset: 0,
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 'var(--keyboard-height, 0px)',
             background: 'rgba(0, 0, 0, 0.5)',
             display: 'flex',
             alignItems: 'center',
@@ -76,6 +80,7 @@ export const PortraitModal = ({ isOpen, onClose, title, children, maxWidth = '48
           }}
         >
           <motion.div
+            className="modal-keyboard-aware"
             variants={contentVariants}
             initial="initial"
             animate="animate"
@@ -87,7 +92,6 @@ export const PortraitModal = ({ isOpen, onClose, title, children, maxWidth = '48
               boxShadow: '0 20px 60px rgba(0, 0, 0, 0.25)',
               width: '100%',
               maxWidth,
-              maxHeight: '85vh',
               overflow: 'hidden',
               display: 'flex',
               flexDirection: 'column',

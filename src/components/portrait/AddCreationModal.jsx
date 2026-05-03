@@ -311,7 +311,7 @@ export const AddCreationModal = ({ isOpen, onClose, onCreated, onUpdated, initia
 
       {/* Visibility + Save */}
       {mode && (
-        <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="modal-sticky-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <button
             onClick={() => setIsVisible(!isVisible)}
             style={{

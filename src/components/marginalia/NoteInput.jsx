@@ -41,7 +41,7 @@ export const NoteInput = ({
           padding: '10px',
           border: '1px solid #DDD',
           borderRadius: '3px',
-          fontSize: '14px',
+          fontSize: '16px',
           fontFamily: 'Caveat, cursive',
           resize: 'vertical',
           background: '#FFFEFA',
