@@ -3,7 +3,6 @@ import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import { supabase } from '../lib/supabase'
 import { Link } from 'react-router-dom'
-import { EmptyStateFantom } from '../components/EmptyStateFantom'
 import { ActivityCard } from '../components/ActivityCard'
 import { CoverSearchModal } from '../components/cover-search/CoverSearchModal'
 import { useScrollLock } from '../hooks/useScrollLock'
@@ -516,7 +515,18 @@ export const ToDo = () => {
 
       {filteredActivities.length === 0 ? (
         activities.length === 0 ? (
-          <EmptyStateFantom />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div
+                key={`placeholder-${i}`}
+                className="placeholder-slot"
+                onClick={openAddModal}
+                style={{ minHeight: '70px' }}
+              >
+                Add an activity
+              </div>
+            ))}
+          </div>
         ) : (
           <div style={{ textAlign: 'center', padding: '40px', fontStyle: 'italic', color: '#777' }}>
             {`No activities matching "${cityFilter.trim()}".`}

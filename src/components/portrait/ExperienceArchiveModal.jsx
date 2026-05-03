@@ -1,0 +1,219 @@
+import { useState, useEffect, useRef } from 'react'
+import { PortraitModal } from './PortraitModal'
+import { ConfirmModal } from '../ConfirmModal'
+import { EXPERIENCE_CATEGORIES } from './mockData'
+
+/**
+ * Experience Archive — all past experiences in reverse chronological order.
+ * Owner: ⋯ overflow menu (Edit, Delete) on each row.
+ * Friend view: read-only.
+ */
+export const ExperienceArchiveModal = ({
+  isOpen,
+  onClose,
+  experiences,
+  isOwner,
+  onEditExperience,
+  onDeleteExperience,
+}) => {
+  const [openMenuId, setOpenMenuId] = useState(null)
+  const [confirmState, setConfirmState] = useState(null)
+  const menuRef = useRef(null)
+
+  useEffect(() => {
+    if (openMenuId === null) return
+    const handleClick = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setOpenMenuId(null)
+      }
+    }
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') setOpenMenuId(null)
+    }
+    document.addEventListener('mousedown', handleClick)
+    document.addEventListener('keydown', handleEscape)
+    return () => {
+      document.removeEventListener('mousedown', handleClick)
+      document.removeEventListener('keydown', handleEscape)
+    }
+  }, [openMenuId])
+
+  useEffect(() => {
+    if (!isOpen) setOpenMenuId(null)
+  }, [isOpen])
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return ''
+    const d = new Date(dateStr)
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  }
+
+  const sorted = [...(experiences || [])].sort((a, b) => {
+    if (!a.date && !b.date) return 0
+    if (!a.date) return 1
+    if (!b.date) return -1
+    return new Date(b.date) - new Date(a.date)
+  })
+
+  return (
+    <PortraitModal isOpen={isOpen} onClose={onClose} title="All Experiences" maxWidth="480px">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        {sorted.map(exp => {
+          const cat = EXPERIENCE_CATEGORIES.find(c => c.value === exp.category)
+          const icon = cat?.icon || '✨'
+          const meta = [exp.city, formatDate(exp.date)].filter(Boolean).join(' · ')
+          return (
+            <div
+              key={exp.id}
+              style={{
+                padding: '12px',
+                paddingRight: isOwner ? '44px' : '12px',
+                borderRadius: '10px',
+                background: '#F5F1EB',
+                position: 'relative',
+              }}
+            >
+              {/* ··· overflow menu */}
+              {isOwner && (onEditExperience || onDeleteExperience) && (
+                <div
+                  ref={openMenuId === exp.id ? menuRef : null}
+                  style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 4 }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <button
+                    onClick={() => setOpenMenuId(openMenuId === exp.id ? null : exp.id)}
+                    aria-label="Actions"
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: '4px 6px',
+                      fontSize: '16px',
+                      color: '#999',
+                      lineHeight: 1,
+                      letterSpacing: '1px',
+                    }}
+                  >
+                    &middot;&middot;&middot;
+                  </button>
+                  {openMenuId === exp.id && (
+                    <div
+                      onClick={(e) => e.stopPropagation()}
+                      style={{
+                        position: 'absolute',
+                        top: '100%',
+                        right: 0,
+                        marginTop: '2px',
+                        background: '#FFFEFA',
+                        borderRadius: '4px',
+                        boxShadow: '0 2px 12px rgba(0,0,0,0.12)',
+                        padding: '4px 0',
+                        minWidth: '110px',
+                        zIndex: 10,
+                      }}
+                    >
+                      {onEditExperience && (
+                        <button
+                          onClick={() => { onEditExperience(exp); setOpenMenuId(null) }}
+                          style={{
+                            display: 'block',
+                            width: '100%',
+                            background: 'none',
+                            border: 'none',
+                            padding: '8px 16px',
+                            fontSize: '14px',
+                            color: '#2C2C2C',
+                            cursor: 'pointer',
+                            textAlign: 'left',
+                          }}
+                        >
+                          Edit
+                        </button>
+                      )}
+                      {onDeleteExperience && (
+                        <button
+                          onClick={() => {
+                            setOpenMenuId(null)
+                            setConfirmState({
+                              message: `Delete "${exp.name}" from your experiences?`,
+                              onConfirm: async () => { onDeleteExperience(exp) },
+                            })
+                          }}
+                          style={{
+                            display: 'block',
+                            width: '100%',
+                            background: 'none',
+                            border: 'none',
+                            padding: '8px 16px',
+                            fontSize: '14px',
+                            color: '#C75D5D',
+                            cursor: 'pointer',
+                            textAlign: 'left',
+                          }}
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Title row: icon · name · rating */}
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '14px', lineHeight: 1 }}>{icon}</span>
+                <span style={{ fontSize: '15px', fontWeight: 600, color: '#2C2C2C' }}>
+                  {exp.name}
+                </span>
+                {exp.rating != null && (
+                  <span className="handwritten" style={{ fontSize: '15px', color: '#2C2C2C' }}>
+                    {exp.rating}/10
+                  </span>
+                )}
+              </div>
+
+              {/* Meta: city · date */}
+              {meta && (
+                <div style={{ fontSize: '12px', color: '#999', marginTop: '4px' }}>
+                  {meta}
+                </div>
+              )}
+
+              {/* Note */}
+              {exp.note && (
+                <div style={{
+                  marginTop: '8px',
+                  padding: '10px 12px',
+                  background: '#FFFEFA',
+                  borderRadius: '6px',
+                  fontSize: '13px',
+                  color: '#2C2C2C',
+                  lineHeight: 1.5,
+                  fontFamily: 'Source Serif 4, Georgia, serif',
+                  whiteSpace: 'pre-wrap',
+                }}>
+                  {exp.note}
+                </div>
+              )}
+            </div>
+          )
+        })}
+
+        {sorted.length === 0 && (
+          <div style={{ textAlign: 'center', color: '#999', padding: '20px 0', fontSize: '14px' }}>
+            No experiences yet
+          </div>
+        )}
+      </div>
+      <ConfirmModal
+        isOpen={!!confirmState}
+        onClose={() => setConfirmState(null)}
+        onConfirm={async () => { await confirmState?.onConfirm(); setConfirmState(null) }}
+        title="Confirm"
+        message={confirmState?.message || ''}
+        confirmText="Delete"
+        destructive
+      />
+    </PortraitModal>
+  )
+}

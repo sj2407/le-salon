@@ -6,10 +6,23 @@ import { CATEGORY_CONFIG } from '../lib/cardConstants'
 export const SectionEditModal = ({ category, entries, onSave, onClose }) => {
   const config = CATEGORY_CONFIG[category]
   const backdropRef = useRef(null)
+  const isEntryOptionsMode = Array.isArray(config.entryOptions) && config.entryOptions.length > 0
 
   // Initialize form data ONCE on mount using initializer function (not useEffect)
   const [formData, setFormData] = useState(() => {
     const categoryEntries = entries.filter(e => e.category === category)
+
+    if (isEntryOptionsMode) {
+      // Per-entry shape: each row has its own subcategory picked from entryOptions.
+      // Entries with legacy subcategory values not in entryOptions still render —
+      // their value stays in the dropdown so nothing is lost.
+      const rows = categoryEntries.map(e => ({
+        content: e.content,
+        subcategory: e.subcategory || config.entryOptions[0],
+      }))
+      return { rows: rows.length > 0 ? rows : [{ content: '', subcategory: config.entryOptions[0] }] }
+    }
+
     if (config.subcategories.length > 0) {
       const data = {}
       config.subcategories.forEach(sub => {
@@ -115,7 +128,17 @@ export const SectionEditModal = ({ category, entries, onSave, onClose }) => {
   const handleSave = () => {
     const newEntries = []
 
-    if (config.subcategories.length > 0) {
+    if (isEntryOptionsMode) {
+      ;(formData.rows || []).forEach(row => {
+        if (row.content && row.content.trim()) {
+          newEntries.push({
+            category,
+            subcategory: row.subcategory,
+            content: row.content.trim(),
+          })
+        }
+      })
+    } else if (config.subcategories.length > 0) {
       config.subcategories.forEach(subcategory => {
         const contents = formData[subcategory] || []
         contents.forEach((content, index) => {
@@ -185,7 +208,95 @@ export const SectionEditModal = ({ category, entries, onSave, onClose }) => {
           {titleText}
         </h3>
 
-        {config.subcategories.length > 0 ? (
+        {isEntryOptionsMode ? (
+          <>
+            {(formData.rows || []).map((row, index) => (
+              <div key={index} style={{ display: 'flex', gap: '8px', marginBottom: '8px', alignItems: 'center' }}>
+                <input
+                  type="text"
+                  value={row.content}
+                  onChange={(e) => setFormData(prev => ({
+                    ...prev,
+                    rows: prev.rows.map((r, i) => i === index ? { ...r, content: e.target.value } : r)
+                  }))}
+                  placeholder="What did you see?"
+                  style={{
+                    flex: 1,
+                    padding: '8px 12px',
+                    border: '1px solid #ccc',
+                    borderRadius: '3px',
+                    fontSize: '16px',
+                    minWidth: 0,
+                  }}
+                />
+                <select
+                  value={config.entryOptions.includes(row.subcategory) ? row.subcategory : ''}
+                  onChange={(e) => setFormData(prev => ({
+                    ...prev,
+                    rows: prev.rows.map((r, i) => i === index ? { ...r, subcategory: e.target.value } : r)
+                  }))}
+                  style={{
+                    width: 'auto',
+                    padding: '8px',
+                    border: '1px solid #ccc',
+                    borderRadius: '3px',
+                    fontSize: '14px',
+                    background: '#FFFEFA',
+                    flexShrink: 0,
+                  }}
+                >
+                  {!config.entryOptions.includes(row.subcategory) && row.subcategory && (
+                    <option value={row.subcategory}>{row.subcategory}</option>
+                  )}
+                  {config.entryOptions.map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+                {(formData.rows.length > 1) && (
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({
+                      ...prev,
+                      rows: prev.rows.filter((_, i) => i !== index)
+                    }))}
+                    style={{
+                      padding: '8px 10px',
+                      background: '#FFE5E5',
+                      border: '1px solid #C75D5D',
+                      borderRadius: '3px',
+                      cursor: 'pointer',
+                      color: '#C75D5D',
+                      flexShrink: 0,
+                    }}
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => setFormData(prev => ({
+                ...prev,
+                rows: [...prev.rows, { content: '', subcategory: config.entryOptions[0] }]
+              }))}
+              style={{
+                width: '100%',
+                padding: '8px',
+                background: 'none',
+                border: '1px dashed #c8b89c',
+                borderRadius: '3px',
+                cursor: 'pointer',
+                color: '#888',
+                fontStyle: 'italic',
+                fontSize: '14px',
+                marginTop: '4px',
+              }}
+            >
+              + add an entry
+            </button>
+          </>
+        ) : config.subcategories.length > 0 ? (
           config.subcategories.map(sub => (
             <div key={sub} style={{ marginBottom: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>

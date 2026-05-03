@@ -24,7 +24,14 @@ function buildFormData(entries) {
   Object.keys(CATEGORY_CONFIG).forEach(category => {
     const config = CATEGORY_CONFIG[category]
     const categoryEntries = entries.filter(e => e.category === category)
-    if (config.subcategories.length > 0) {
+    if (Array.isArray(config.entryOptions) && config.entryOptions.length > 0) {
+      // Per-entry mode: array of { content, subcategory } rows
+      const rows = categoryEntries.map(e => ({
+        content: e.content,
+        subcategory: e.subcategory || config.entryOptions[0],
+      }))
+      data[category] = { rows: rows.length > 0 ? rows : [{ content: '', subcategory: config.entryOptions[0] }] }
+    } else if (config.subcategories.length > 0) {
       data[category] = {}
       config.subcategories.forEach(sub => {
         const subEntries = categoryEntries.filter(e => e.subcategory === sub)
@@ -144,7 +151,18 @@ export const CardEdit = ({ entries, displayName, onSave, onCancel }) => {
     Object.keys(formData).forEach(category => {
       const config = CATEGORY_CONFIG[category]
 
-      if (config.subcategories.length > 0) {
+      if (Array.isArray(config.entryOptions) && config.entryOptions.length > 0) {
+        const rows = (formData[category] && formData[category].rows) || []
+        rows.forEach(row => {
+          if (row.content && row.content.trim()) {
+            newEntries.push({
+              category,
+              subcategory: row.subcategory,
+              content: row.content.trim(),
+            })
+          }
+        })
+      } else if (config.subcategories.length > 0) {
         Object.keys(formData[category]).forEach(subcategory => {
           const contents = formData[category][subcategory]
           contents.forEach((content, index) => {
@@ -194,7 +212,102 @@ export const CardEdit = ({ entries, displayName, onSave, onCancel }) => {
           {Icon && <Icon />}
         </div>
         <div className="section-content">
-          {config.subcategories.length > 0 ? (
+          {Array.isArray(config.entryOptions) && config.entryOptions.length > 0 ? (
+            <>
+              {(formData[categoryName]?.rows || []).map((row, index) => (
+                <div key={index} style={{ display: 'flex', gap: '8px', marginBottom: '8px', alignItems: 'center' }}>
+                  <input
+                    type="text"
+                    className="edit-input"
+                    value={row.content}
+                    onChange={(e) => setFormData(prev => ({
+                      ...prev,
+                      [categoryName]: {
+                        ...prev[categoryName],
+                        rows: prev[categoryName].rows.map((r, i) => i === index ? { ...r, content: e.target.value } : r)
+                      }
+                    }))}
+                    placeholder="What did you see?"
+                    style={{ flex: 1, minWidth: 0 }}
+                  />
+                  <select
+                    value={config.entryOptions.includes(row.subcategory) ? row.subcategory : ''}
+                    onChange={(e) => setFormData(prev => ({
+                      ...prev,
+                      [categoryName]: {
+                        ...prev[categoryName],
+                        rows: prev[categoryName].rows.map((r, i) => i === index ? { ...r, subcategory: e.target.value } : r)
+                      }
+                    }))}
+                    style={{
+                      width: 'auto',
+                      padding: '8px',
+                      border: '1px solid #ccc',
+                      borderRadius: '3px',
+                      fontSize: '14px',
+                      background: '#FFFEFA',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {!config.entryOptions.includes(row.subcategory) && row.subcategory && (
+                      <option value={row.subcategory}>{row.subcategory}</option>
+                    )}
+                    {config.entryOptions.map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                  {(formData[categoryName].rows.length > 1) && (
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({
+                        ...prev,
+                        [categoryName]: {
+                          ...prev[categoryName],
+                          rows: prev[categoryName].rows.filter((_, i) => i !== index)
+                        }
+                      }))}
+                      style={{
+                        padding: '8px 10px',
+                        background: '#FFE5E5',
+                        border: '1.5px solid #C75D5D',
+                        borderRadius: '3px',
+                        cursor: 'pointer',
+                        color: '#C75D5D',
+                        flexShrink: 0,
+                      }}
+                      title="Remove"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => setFormData(prev => ({
+                  ...prev,
+                  [categoryName]: {
+                    ...prev[categoryName],
+                    rows: [...prev[categoryName].rows, { content: '', subcategory: config.entryOptions[0] }]
+                  }
+                }))}
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  background: 'none',
+                  border: '1px dashed #c8b89c',
+                  borderRadius: '3px',
+                  cursor: 'pointer',
+                  color: '#888',
+                  fontStyle: 'italic',
+                  fontSize: '14px',
+                  marginTop: '4px',
+                }}
+              >
+                + add an entry
+              </button>
+            </>
+          ) : config.subcategories.length > 0 ? (
             config.subcategories.map(sub => (
               <div key={sub} className="item">
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>

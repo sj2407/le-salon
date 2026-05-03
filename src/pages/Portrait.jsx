@@ -9,6 +9,7 @@ import { MusicDetailModal } from '../components/portrait/MusicDetailModal'
 import { ReadingDetailModal } from '../components/portrait/ReadingDetailModal'
 import { CreationArchiveModal } from '../components/portrait/CreationArchiveModal'
 import { ExperienceDetailModal } from '../components/portrait/ExperienceDetailModal'
+import { ExperienceArchiveModal } from '../components/portrait/ExperienceArchiveModal'
 import { AddCreationModal } from '../components/portrait/AddCreationModal'
 import { AddExperienceModal } from '../components/portrait/AddExperienceModal'
 import { AddBookModal } from '../components/portrait/AddBookModal'
@@ -52,6 +53,7 @@ export const Portrait = ({ userId: friendUserId }) => {
   const [showMusicModal, setShowMusicModal] = useState(false)
   const [showReadingModal, setShowReadingModal] = useState(false)
   const [showCreationArchive, setShowCreationArchive] = useState(false)
+  const [showExperienceArchive, setShowExperienceArchive] = useState(false)
   const [showAddCreation, setShowAddCreation] = useState(false)
   const [showAddExperience, setShowAddExperience] = useState(false)
   const [showAddBook, setShowAddBook] = useState(false)
@@ -350,7 +352,7 @@ export const Portrait = ({ userId: friendUserId }) => {
   const handleScanPlaybill = () => setShowPlaybillScan(true)
   const handleMusicSeeAll = () => setShowMusicModal(true)
   const handleReadingSeeAll = () => setShowReadingModal(true)
-  const handleExperiencesSeeAll = () => { if (experiences.length > 0) setSelectedExperience(experiences[0]) }
+  const handleExperiencesSeeAll = () => setShowExperienceArchive(true)
 
   const handlePortraitImageClick = (img) => {
     if (img.type === 'artist') setShowMusicModal(true)
@@ -588,6 +590,15 @@ export const Portrait = ({ userId: friendUserId }) => {
         onToggleVisibility={handleToggleCreationVisibility}
         onDelete={deleteCreation}
         onEdit={isOwner ? handleEditCreation : undefined}
+      />
+
+      <ExperienceArchiveModal
+        isOpen={showExperienceArchive}
+        onClose={() => setShowExperienceArchive(false)}
+        experiences={experiences}
+        isOwner={isOwner}
+        onEditExperience={isOwner ? handleEditExperience : undefined}
+        onDeleteExperience={isOwner ? handleDeleteExperience : undefined}
       />
 
       <ExperienceDetailModal

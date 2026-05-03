@@ -395,7 +395,32 @@ export const CardDisplay = ({
           {!hasFloatingIcon && Icon && <Icon />}
         </div>
         <div className="section-content">
-          {config.subcategories.length > 0 ? (
+          {Array.isArray(config.entryOptions) && config.entryOptions.length > 0 ? (
+            categoryEntries.length > 0 ? (
+              // Group consecutive entries by subcategory; render each subheader once.
+              (() => {
+                const groups = []
+                categoryEntries.forEach(entry => {
+                  const last = groups[groups.length - 1]
+                  if (last && last.subcategory === entry.subcategory) {
+                    last.entries.push(entry)
+                  } else {
+                    groups.push({ subcategory: entry.subcategory, entries: [entry] })
+                  }
+                })
+                return groups.map((group, gi) => (
+                  <div key={gi} className="item">
+                    {group.subcategory && <p className="item-label">{group.subcategory}</p>}
+                    {group.entries.map(entry => (
+                      <p key={entry.id} className="item-text">{linkifyText(entry.content)}</p>
+                    ))}
+                  </div>
+                ))
+              })()
+            ) : (
+              <p className="item-text" style={{ color: '#999' }}>Nothing yet...</p>
+            )
+          ) : config.subcategories.length > 0 ? (
             categoryEntries.length > 0 ? (
               categoryEntries.map(entry => (
                 <div key={entry.id} className="item">
