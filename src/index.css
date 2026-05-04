@@ -133,6 +133,27 @@ body {
   min-width: 0;
 }
 
+/* Portrait full-width section — same look as .portrait-section-box, just wider.
+   Sits below the 2-col grid; no positional selectors that would collide with
+   My Card's full-width sway hooks. */
+.portrait-full-width-section {
+  background: #FFFEFA;
+  border-radius: 12px;
+  padding: 20px 20px 36px;
+  box-shadow: 2px 3px 8px rgba(0, 0, 0, 0.1);
+  position: relative;
+  margin-top: 16px;
+  overflow: visible;
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  .portrait-full-width-section {
+    padding: 16px 16px 32px;
+    margin-top: 12px;
+  }
+}
+
 /* Sway rotation and animation applied inline via SWAY_STYLES in CardDisplay.jsx */
 /* (nth-child selectors don't work with Reorder.Item wrappers) */
 
@@ -740,7 +761,7 @@ nav {
 
   .section-box {
     padding: 18px;
-    min-height: 160px;
+    min-height: 0;
   }
 
   .portrait-section-box {

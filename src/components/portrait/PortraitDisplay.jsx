@@ -4,6 +4,7 @@ import { MusicSection } from './MusicSection'
 import { ReadingSection } from './ReadingSection'
 import { CreationSection } from './CreationSection'
 import { ExperiencesSection } from './ExperiencesSection'
+import { ViewingSection } from './ViewingSection'
 import { motion, LayoutGroup } from 'framer-motion'
 import { Eye, EyeSlash, CaretUp, CaretDown, CaretLeft, CaretRight } from '@phosphor-icons/react'
 import { hapticTap } from '../../lib/haptics'
@@ -76,6 +77,9 @@ export const PortraitDisplay = ({
   readingGraph,
   creations,
   experiences,
+  experienceThemes,
+  experienceGraph,
+  viewing,
   isOwner,
   // Action callbacks (owner view only)
   onToggleCreationVisibility,
@@ -87,14 +91,20 @@ export const PortraitDisplay = ({
   onScanPlaybill,
   onEditExperience,
   onDeleteExperience,
+  onAddViewing,
+  onEditViewing,
+  onDeleteViewing,
+  onViewingSeeAll,
   // Navigation callbacks
   onPortraitImageClick,
   onBookClick,
   onThemeClick,
   onExperienceClick,
+  onViewingClick,
   onMusicSeeAll,
   onReadingSeeAll,
   onExperiencesSeeAll,
+  onExperienceThemesSeeAll,
   // Connect / import callbacks (owner view)
   onConnectSpotify,
   onDisconnectSpotify,
@@ -114,9 +124,10 @@ export const PortraitDisplay = ({
   const hasBooks = books && books.length > 0
   const hasCreations = creations && creations.length > 0
   const hasExperiences = experiences && experiences.length > 0
+  const hasViewing = viewing && viewing.length > 0
 
   // Everything empty — full-page prompt for owner
-  const everythingEmpty = !hasSpotify && !hasBooks && !hasCreations && !hasExperiences
+  const everythingEmpty = !hasSpotify && !hasBooks && !hasCreations && !hasExperiences && !hasViewing
 
   if (everythingEmpty && !isOwner) {
     return null
@@ -169,13 +180,15 @@ export const PortraitDisplay = ({
     onSectionOrderChange?.(newOrder)
   }, [gridOrder, cols, total, onSectionOrderChange])
 
-  // Map section key → "see all" handler
+  // Map section key → "see all" handler. ExperiencesSection renders its own
+  // "see all" inline (alongside "see all themes"), so we return null here to
+  // suppress the absolute-positioned button PortraitDisplay otherwise overlays.
   const getSeeAllHandler = (key) => {
     switch (key) {
       case 'music': return onMusicSeeAll
       case 'reading': return onReadingSeeAll
       case 'creation': return onViewCreationArchive
-      case 'experiences': return onExperiencesSeeAll
+      case 'experiences': return null
       default: return null
     }
   }
@@ -214,12 +227,16 @@ export const PortraitDisplay = ({
         return (
           <ExperiencesSection
             experiences={experiences}
+            experienceThemes={experienceThemes}
+            experienceGraph={experienceGraph}
             isOwner={isOwner}
             onExperienceClick={onExperienceClick}
             onAddExperience={onAddExperience}
             onScanPlaybill={onScanPlaybill}
             onEditExperience={onEditExperience}
             onDeleteExperience={onDeleteExperience}
+            onSeeAll={onExperiencesSeeAll}
+            onSeeAllThemes={onExperienceThemesSeeAll}
           />
         )
       case 'creation':
@@ -478,6 +495,22 @@ export const PortraitDisplay = ({
             })}
           </div>
         )
+      )}
+
+      {/* Viewing — full-width below the grid, NOT reorderable. Always visible to
+          owner so they can discover the section; hidden on friend view when empty. */}
+      {(hasViewing || isOwner) && (
+        <div className="portrait-full-width-section">
+          <ViewingSection
+            viewing={viewing}
+            isOwner={isOwner}
+            onViewingClick={onViewingClick}
+            onAddViewing={onAddViewing}
+            onEditViewing={onEditViewing}
+            onDeleteViewing={onDeleteViewing}
+            onSeeAll={onViewingSeeAll}
+          />
+        </div>
       )}
     </div>
   )

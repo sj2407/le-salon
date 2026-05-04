@@ -9,18 +9,23 @@ const SCAN_PROMPT =
   'Look at this photo of a playbill, event ticket, theatre program, or concert poster. ' +
   'Extract every distinct show, event, or cultural experience mentioned. ' +
   'For each, provide: "name" (show/event name), "category" (one of: concert, exhibition, restaurant, cinema, theatre, other), ' +
+  '"subcategory" (when category is "theatre", one of: Play, Musical, Opera, Ballet, Stand-up, Concert, Exhibit; otherwise null), ' +
+  '"artist_name" (when category is "concert", the headlining artist or band; otherwise null), ' +
   '"date" (ISO format YYYY-MM-DD if visible, null otherwise), "city" (city or venue name if visible, null otherwise). ' +
-  'Return ONLY a JSON array of objects with those four fields. ' +
+  'Return ONLY a JSON array of objects with those six fields. ' +
   'No preamble, no explanation, just the JSON array.';
 
 interface DetectedExperience {
   name: string;
   category: string;
+  subcategory: string | null;
+  artist_name: string | null;
   date: string | null;
   city: string | null;
 }
 
 const VALID_CATEGORIES = ['concert', 'exhibition', 'restaurant', 'cinema', 'theatre', 'other'];
+const VALID_SUBCATEGORIES = ['Play', 'Musical', 'Opera', 'Ballet', 'Stand-up', 'Concert', 'Exhibit'];
 
 function extractJsonArray(text: string): unknown {
   try {
@@ -47,9 +52,19 @@ function validateAndFilter(parsed: unknown): DetectedExperience[] {
     .map((item: unknown) => {
       const obj = item as Record<string, unknown>;
       const cat = typeof obj.category === 'string' ? obj.category.toLowerCase().trim() : 'other';
+      const rawSub = typeof obj.subcategory === 'string' ? obj.subcategory.trim() : null;
+      // Normalise capitalisation against the allowlist so case-mismatched LLM output still validates
+      const normalisedSub = rawSub
+        ? VALID_SUBCATEGORIES.find(s => s.toLowerCase() === rawSub.toLowerCase()) || null
+        : null;
       return {
         name: (obj.name as string).trim(),
         category: VALID_CATEGORIES.includes(cat) ? cat : 'other',
+        // Subcategory only meaningful for theatre rows; null it otherwise.
+        subcategory: cat === 'theatre' ? normalisedSub : null,
+        artist_name: cat === 'concert' && typeof obj.artist_name === 'string' && obj.artist_name.trim().length > 0
+          ? obj.artist_name.trim()
+          : null,
         date: typeof obj.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(obj.date)
           ? obj.date
           : null,

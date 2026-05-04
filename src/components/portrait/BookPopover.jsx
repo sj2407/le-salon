@@ -31,9 +31,24 @@ export const BookPopover = ({ book, anchorRect, onClose, onViewReview, isOwner, 
 
   if (!book || !anchorRect) return null
 
-  // Position: below and centered on the anchor
+  // Position: below the anchor, ideally centered, but clamped to viewport so
+  // the popover never overflows past the left or right edge of the screen.
+  const POPOVER_WIDTH = 240   // matches maxWidth below
+  const EDGE_PADDING = 8
+  const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 0
   const top = anchorRect.bottom + 8
-  const left = anchorRect.left + anchorRect.width / 2
+  const anchorCenterX = anchorRect.left + anchorRect.width / 2
+  const idealLeft = anchorCenterX - POPOVER_WIDTH / 2
+  const clampedLeft = Math.max(
+    EDGE_PADDING,
+    Math.min(idealLeft, viewportWidth - POPOVER_WIDTH - EDGE_PADDING)
+  )
+  // Arrow position: relative to popover, pointing back at the anchor center.
+  // Clamp inside the popover so the arrow doesn't slide off either end.
+  const arrowLeft = Math.max(
+    12,
+    Math.min(POPOVER_WIDTH - 12, anchorCenterX - clampedLeft)
+  )
 
   // Format rating: 0-10 scale → display as X/10
   const ratingDisplay = book.rating != null ? `${book.rating}/10` : null
@@ -44,15 +59,15 @@ export const BookPopover = ({ book, anchorRect, onClose, onViewReview, isOwner, 
       style={{
         position: 'fixed',
         top: `${top}px`,
-        left: `${left}px`,
-        transform: 'translateX(-50%)',
+        left: `${clampedLeft}px`,
         background: '#FFFEFA',
         borderRadius: '10px',
         boxShadow: '0 8px 30px rgba(0, 0, 0, 0.18)',
         padding: '14px 16px',
         zIndex: 10000,
-        maxWidth: '240px',
-        minWidth: '180px',
+        width: `${POPOVER_WIDTH}px`,
+        maxWidth: `calc(100vw - ${2 * EDGE_PADDING}px)`,
+        boxSizing: 'border-box',
       }}
     >
       <div style={{ fontSize: '15px', fontWeight: 600, color: '#2C2C2C', marginBottom: '4px', lineHeight: 1.3 }}>
@@ -112,11 +127,11 @@ export const BookPopover = ({ book, anchorRect, onClose, onViewReview, isOwner, 
         )}
       </div>
 
-      {/* Arrow */}
+      {/* Arrow — points back at the anchor's center, even when the popover is clamped */}
       <div style={{
         position: 'absolute',
         top: '-6px',
-        left: '50%',
+        left: `${arrowLeft}px`,
         transform: 'translateX(-50%) rotate(45deg)',
         width: '12px',
         height: '12px',

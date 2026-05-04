@@ -5,18 +5,21 @@ import { getCorsHeaders } from '../_shared/cors.ts';
 let cachedAnthropicKey: string | null = null;
 
 // Haiku returns structured JSON: { mood, portrait }
-// mood is one of four labels; portrait is 2-3 sentences of literary prose.
+//
+// Mood vocabulary is open: 1–2 evocative words, 3 only when a qualifier is
+// genuinely needed. Validation enforces shape, not membership.
 const SYSTEM_PROMPT = `You are creating a monthly cultural portrait for Le Salon, a private social app.
 
-Given a person's cultural life this month — music listening, books read, experiences attended, things created — respond with a JSON object containing exactly two fields:
-- "mood": exactly one word from this list [Euphoric, Peaceful, Intense, Melancholic] capturing the overall emotional and aesthetic texture of their entire cultural month. Consider ALL activities, not just music.
-- "portrait": 2-3 sentences in second person. Warm, perceptive, slightly literary — like a thoughtful friend who notices patterns. The #1 ranked artist and top book are the strongest signals — weight them most heavily. Find the thread connecting the most dominant choices. Never use the word "data". Never list statistics.
+Given a person's cultural life this month — music listening, books read, shows and films watched, experiences attended, things created — respond with a JSON object containing exactly two fields:
+- "mood": 1–2 evocative words capturing the texture of the month. 3 words only when a qualifier is genuinely needed (e.g. "Quietly defiant", "Sun-drenched, restless"). Avoid generic fillers like "Mixed", "Eclectic", "Various". Maximum 30 characters. Consider ALL activities, not just music.
+- "portrait": 2-3 sentences in second person. Warm, perceptive, slightly literary — like a thoughtful friend who notices patterns. The #1 ranked artist, the standout book, and the standout show are the strongest signals — weight them most heavily. Find the thread connecting the most dominant choices. Never use the word "data". Never list statistics. Use plain text only — no markdown, no asterisks for emphasis. When you reference a title (book, show, film), wrap it in double quotes (e.g. "Traitors", "Practical Magic"), not asterisks.
 
-If a previous portrait is provided, write something genuinely different — new angle, new observations, different thread. Do not repeat artists, books, or themes already mentioned.
+If a previous portrait is provided, write something genuinely different — new angle, new observations, different thread. Do not repeat artists, books, shows, or themes already mentioned.
 
 Return only valid JSON. No text outside the JSON object.`;
 
-const VALID_MOODS = ['Euphoric', 'Peaceful', 'Intense', 'Melancholic'];
+// Filler moods that defeat the purpose of the open vocabulary.
+const FILLER_MOOD_REGEX = /^(mixed|eclectic|various|nice|good|fine)\b/i;
 
 interface SpotifyProfile {
   user_id: string;
@@ -45,6 +48,7 @@ interface BookWithReview {
   rating: number | null;
   review_id: string | null;
   review_text: string | null;
+  google_books_description: string | null;
   date_read: string | null;
   created_at: string;
 }
@@ -52,6 +56,9 @@ interface BookWithReview {
 interface Experience {
   name: string;
   category: string | null;
+  subcategory: string | null;
+  artist_name: string | null;
+  wikipedia_description: string | null;
   date: string | null;
   city: string | null;
   note: string | null;
@@ -61,6 +68,20 @@ interface Creation {
   type: string;
   title: string | null;
   text_content: string | null;
+}
+
+interface ViewingRow {
+  id: string;
+  type: string;
+  title: string;
+  status: string;
+  source: string;
+  rating: number | null;
+  review_id: string | null;
+  tmdb_overview: string | null;
+  tmdb_release_year: number | null;
+  date_watched: string | null;
+  created_at: string;
 }
 
 const BATCH_SOURCES = ['bookshelf_import', 'goodreads_csv'];
@@ -94,18 +115,48 @@ function filterRecentBooks(books: BookWithReview[]): BookWithReview[] {
   return [...result, ...tierB2, ...tierC2];
 }
 
+// Sibling of filterRecentBooks — same 90/180-day shape, keyed on date_watched.
+// status='watching' plays the role of status='reading'. No batch-source bucket
+// (viewing has no Goodreads-style import equivalent).
+function filterRecentViewing(rows: ViewingRow[]): ViewingRow[] {
+  const ninety = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+  const oneEighty = new Date(Date.now() - 180 * 24 * 60 * 60 * 1000);
+
+  const tierA = rows.filter(r => r.status === 'watching');
+  const tierB = rows.filter(r =>
+    r.status !== 'watching' && r.date_watched != null && new Date(r.date_watched) >= ninety
+  );
+  const tierC = rows.filter(r =>
+    r.status !== 'watching' && r.date_watched == null && new Date(r.created_at) >= ninety
+  );
+
+  const result = [...tierA, ...tierB, ...tierC];
+  if (result.length >= 2) return result;
+
+  const tierB2 = rows.filter(r =>
+    r.status !== 'watching' && r.date_watched != null &&
+    new Date(r.date_watched) >= oneEighty && !tierB.some(x => x.id === r.id)
+  );
+  const tierC2 = rows.filter(r =>
+    r.status !== 'watching' && r.date_watched == null &&
+    new Date(r.created_at) >= oneEighty && !tierC.some(x => x.id === r.id)
+  );
+  return [...result, ...tierB2, ...tierC2];
+}
+
 function buildUserPrompt(
   spotify: SpotifyProfile | null,
   primaryBooks: BookWithReview[],
   contextBooks: BookWithReview[],
   experiences: Experience[],
   creations: Creation[],
+  primaryViewing: ViewingRow[],
+  contextViewing: ViewingRow[],
   previousPortrait: string | null
 ): string {
   const parts: string[] = [];
 
   if (spotify) {
-    // top_artists is always short_term (last 4 weeks) since the sync was updated
     const topArtists = (spotify.top_artists || []).slice(0, 3);
     if (topArtists.length > 0) {
       topArtists.forEach((a, i) => {
@@ -128,25 +179,47 @@ function buildUserPrompt(
     if (musicDetails.length > 0) parts.push(`Music — ${musicDetails.join(', ')}`);
   }
 
-  if (primaryBooks.length > 0) {
-    const bookList = primaryBooks.map(b => b.author ? `${b.title} by ${b.author}` : b.title).join(', ');
-    parts.push(`Reading — primary books (highly rated or reviewed): ${bookList}`);
-  }
+  // Book lines now include a truncated description so Haiku can ground its
+  // observations in actual book content (avoids "fluff" matching on title alone).
+  const renderBook = (b: BookWithReview): string => {
+    const titleAuthor = b.author ? `"${b.title}" by ${b.author}` : `"${b.title}"`;
+    const desc = b.google_books_description ? ` (${b.google_books_description.slice(0, 200)})` : '';
+    return `${titleAuthor}${desc}`;
+  };
 
+  if (primaryBooks.length > 0) {
+    parts.push(`Reading — primary books (highly rated or reviewed): ${primaryBooks.map(renderBook).join('; ')}`);
+  }
   if (contextBooks.length > 0) {
-    const bookList = contextBooks.map(b => b.author ? `${b.title} by ${b.author}` : b.title).join(', ');
-    parts.push(`Reading — context books (currently reading or background): ${bookList}`);
+    parts.push(`Reading — context books (currently reading or background): ${contextBooks.map(renderBook).join('; ')}`);
   }
 
   if (experiences.length > 0) {
     const expList = experiences.map(e => {
       let desc = e.name;
-      if (e.category) desc += ` (${e.category})`;
+      if (e.subcategory) desc += ` (${e.subcategory})`;
+      else if (e.category) desc += ` (${e.category})`;
+      if (e.artist_name) desc += ` — ${e.artist_name}`;
       if (e.city) desc += ` in ${e.city}`;
-      if (e.note) desc += ` — ${e.note.slice(0, 80)}`;
+      if (e.wikipedia_description) desc += ` — ${e.wikipedia_description.slice(0, 200)}`;
+      else if (e.note) desc += ` — ${e.note.slice(0, 80)}`;
       return desc;
     }).join('; ');
     parts.push(`Experiences attended: ${expList}`);
+  }
+
+  // Viewing — TV/movies. Same primary/context split as books.
+  const renderViewing = (v: ViewingRow): string => {
+    const typeLabel = v.type === 'tv' ? 'TV' : 'film';
+    const year = v.tmdb_release_year ? `, ${v.tmdb_release_year}` : '';
+    const overview = v.tmdb_overview ? ` — ${v.tmdb_overview.slice(0, 200)}` : '';
+    return `"${v.title}" (${typeLabel}${year})${overview}`;
+  };
+  if (primaryViewing.length > 0) {
+    parts.push(`Watching — primary (highly rated or reviewed): ${primaryViewing.map(renderViewing).join('; ')}`);
+  }
+  if (contextViewing.length > 0) {
+    parts.push(`Watching — context (currently watching): ${contextViewing.map(renderViewing).join('; ')}`);
   }
 
   if (creations.length > 0) {
@@ -190,6 +263,26 @@ function categorizeBooks(books: BookWithReview[]): { primary: BookWithReview[]; 
   return { primary, context };
 }
 
+// Mirror of categorizeBooks for viewing rows.
+//   rating ≥ 8                       → primary
+//   rating 5-7  AND review attached  → primary
+//   rating 1-4  AND review attached  → primary
+//   status='watching'                → context
+//   else                             → dropped
+function categorizeViewing(rows: ViewingRow[]): { primary: ViewingRow[]; context: ViewingRow[] } {
+  const primary: ViewingRow[] = [];
+  const context: ViewingRow[] = [];
+  for (const r of rows) {
+    const rating = r.rating != null ? Number(r.rating) : null;
+    const hasReview = r.review_id != null;
+    if (rating != null && rating >= 8) { primary.push(r); continue; }
+    if (rating != null && rating >= 5 && rating <= 7) { if (hasReview) primary.push(r); continue; }
+    if (rating != null && rating >= 1 && rating <= 4) { if (hasReview) primary.push(r); continue; }
+    if (r.status === 'watching') { context.push(r); continue; }
+  }
+  return { primary, context };
+}
+
 async function callAnthropic(apiKey: string, userPrompt: string): Promise<{ mood: string; portrait: string } | null> {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -217,18 +310,37 @@ async function callAnthropic(apiKey: string, userPrompt: string): Promise<{ mood
   try {
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : text);
+    // Defensive sanitisation: convert any markdown asterisks Haiku slips in
+    // (e.g. *Title*) into plain double quotes, since the UI renders raw text.
+    const sanitisePortrait = (s: string): string =>
+      s.replace(/\*([^*\n]+?)\*/g, '"$1"').replace(/\*+/g, '');
     return {
       mood: parsed.mood,
-      portrait: parsed.portrait,
+      portrait: typeof parsed.portrait === 'string' ? sanitisePortrait(parsed.portrait) : parsed.portrait,
     };
   } catch {
     return null;
   }
 }
 
+// Open mood vocabulary: validate shape (word count + length + not filler).
 function validateResponse(result: { mood: string; portrait: string } | null): boolean {
   if (!result) return false;
-  if (!VALID_MOODS.includes(result.mood)) return false;
+  if (!result.mood || typeof result.mood !== 'string') return false;
+  const trimmed = result.mood.trim();
+  if (trimmed.length === 0 || trimmed.length > 30) {
+    console.warn('mood rejected (length):', JSON.stringify(result.mood));
+    return false;
+  }
+  const wordCount = trimmed.split(/\s+/).length;
+  if (wordCount < 1 || wordCount > 3) {
+    console.warn('mood rejected (word count):', JSON.stringify(result.mood));
+    return false;
+  }
+  if (FILLER_MOOD_REGEX.test(trimmed)) {
+    console.warn('mood rejected (filler):', JSON.stringify(result.mood));
+    return false;
+  }
   if (!result.portrait || result.portrait.length < 60 || result.portrait.length > 700) return false;
   return true;
 }
@@ -304,19 +416,17 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    // Fetch all cultural data using admin client (cron) or user client (JWT)
     const dataClient = supabaseUser ?? supabaseAdmin;
-
     const sixtyDaysAgo = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-    const [booksRes, experiencesRes, creationsRes] = await Promise.all([
+    const [booksRes, experiencesRes, creationsRes, viewingRes] = await Promise.all([
       dataClient
         .from('books')
-        .select('id, title, author, status, source, rating, review_id, date_read, created_at, reviews(review_text)')
+        .select('id, title, author, status, source, rating, review_id, google_books_description, date_read, created_at, reviews(review_text)')
         .eq('user_id', userId),
       supabaseAdmin
         .from('experiences')
-        .select('name, category, date, city, note')
+        .select('name, category, subcategory, artist_name, wikipedia_description, date, city, note')
         .eq('user_id', userId)
         .or(`date.gte.${sixtyDaysAgo},and(date.is.null,created_at.gte.${new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString()})`)
         .order('date', { ascending: false, nullsFirst: false })
@@ -328,6 +438,10 @@ Deno.serve(async (req: Request) => {
         .eq('is_visible', true)
         .order('created_at', { ascending: false })
         .limit(10),
+      supabaseAdmin
+        .from('viewing')
+        .select('id, type, title, status, source, rating, review_id, tmdb_overview, tmdb_release_year, date_watched, created_at')
+        .eq('user_id', userId),
     ]);
 
     const allBooks: BookWithReview[] = (booksRes.data || []).map((b: Record<string, unknown>) => ({
@@ -339,6 +453,7 @@ Deno.serve(async (req: Request) => {
       rating: b.rating as number | null,
       review_id: b.review_id as string | null,
       review_text: (b.reviews as Record<string, unknown> | null)?.review_text as string | null,
+      google_books_description: b.google_books_description as string | null,
       date_read: b.date_read as string | null,
       created_at: b.created_at as string,
     }));
@@ -348,6 +463,9 @@ Deno.serve(async (req: Request) => {
     const experiences: Experience[] = (experiencesRes.data || []).map((e: Record<string, unknown>) => ({
       name: e.name as string,
       category: e.category as string | null,
+      subcategory: e.subcategory as string | null,
+      artist_name: e.artist_name as string | null,
+      wikipedia_description: e.wikipedia_description as string | null,
       date: e.date as string | null,
       city: e.city as string | null,
       note: e.note as string | null,
@@ -359,7 +477,24 @@ Deno.serve(async (req: Request) => {
       text_content: c.text_content as string | null,
     }));
 
+    const allViewing: ViewingRow[] = (viewingRes.data || []).map((v: Record<string, unknown>) => ({
+      id: v.id as string,
+      type: v.type as string,
+      title: v.title as string,
+      status: v.status as string,
+      source: v.source as string,
+      rating: v.rating as number | null,
+      review_id: v.review_id as string | null,
+      tmdb_overview: v.tmdb_overview as string | null,
+      tmdb_release_year: v.tmdb_release_year as number | null,
+      date_watched: v.date_watched as string | null,
+      created_at: v.created_at as string,
+    }));
+
+    const recentViewing = filterRecentViewing(allViewing);
+
     const { primary: primaryBooks, context: contextBooks } = categorizeBooks(books);
+    const { primary: primaryViewing, context: contextViewing } = categorizeViewing(recentViewing);
 
     const hasSpotify = spotify != null && (
       (spotify.top_artists && spotify.top_artists.length > 0) ||
@@ -368,8 +503,9 @@ Deno.serve(async (req: Request) => {
     const hasBooks = primaryBooks.length > 0 || contextBooks.length > 0;
     const hasExperiences = experiences.length > 0;
     const hasCreations = creations.length > 0;
+    const hasViewing = primaryViewing.length > 0 || contextViewing.length > 0;
 
-    if (!hasSpotify && !hasBooks && !hasExperiences && !hasCreations) {
+    if (!hasSpotify && !hasBooks && !hasExperiences && !hasCreations && !hasViewing) {
       return new Response(JSON.stringify({ error: 'No cultural data available to generate a portrait' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
@@ -388,6 +524,8 @@ Deno.serve(async (req: Request) => {
       contextBooks,
       experiences,
       creations,
+      primaryViewing,
+      contextViewing,
       spotify?.portrait_text || null
     );
 
@@ -413,7 +551,7 @@ Deno.serve(async (req: Request) => {
       portrait_text: result!.portrait,
       portrait_generated_at: new Date().toISOString(),
       mood_label: result!.mood,
-      mood_line: null, // mood_line is now derived by Haiku holistically; not a formula-based descriptor
+      mood_line: null,
     };
     if (manual) updateFields.last_portrait_manual_at = new Date().toISOString();
 

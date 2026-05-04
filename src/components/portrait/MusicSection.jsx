@@ -257,6 +257,11 @@ export const MusicSection = ({ spotifyProfile, onSeeAll, isOwner, onConnectSpoti
             fontSize: '12px',
             color: '#FFFEFA',
             fontWeight: 500,
+            // Defensive — open mood vocab can return 2-3 word labels.
+            maxWidth: '100%',
+            whiteSpace: 'normal',
+            wordBreak: 'break-word',
+            lineHeight: 1.3,
           }}>
             {mood_label}
           </span>

@@ -4,13 +4,18 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import { EXPERIENCE_CATEGORIES } from './mockData'
 
+const SUBCATEGORIES = ['Play', 'Musical', 'Opera', 'Ballet', 'Stand-up', 'Concert', 'Exhibit']
+
 /**
- * Add Experience modal — name, category, date, city, note.
+ * Add Experience modal — name, category, subcategory (theatre), artist_name (concert),
+ * date, city, note. Fires Wikipedia enrichment after insert.
  */
 export const AddExperienceModal = ({ isOpen, onClose, onCreated }) => {
   const { profile } = useAuth()
   const [name, setName] = useState('')
   const [category, setCategory] = useState('other')
+  const [subcategory, setSubcategory] = useState('')
+  const [artistName, setArtistName] = useState('')
   const [date, setDate] = useState('')
   const [city, setCity] = useState('')
   const [note, setNote] = useState('')
@@ -19,6 +24,8 @@ export const AddExperienceModal = ({ isOpen, onClose, onCreated }) => {
   const reset = () => {
     setName('')
     setCategory('other')
+    setSubcategory('')
+    setArtistName('')
     setDate('')
     setCity('')
     setNote('')
@@ -34,6 +41,10 @@ export const AddExperienceModal = ({ isOpen, onClose, onCreated }) => {
     if (!profile?.id || !name.trim()) return
     setSaving(true)
 
+    // Subcategory only meaningful for theatre, artist_name only for concert
+    const subToPersist = category === 'theatre' && subcategory ? subcategory : null
+    const artistToPersist = category === 'concert' && artistName.trim() ? artistName.trim() : null
+
     try {
       const { data, error } = await supabase
         .from('experiences')
@@ -41,6 +52,8 @@ export const AddExperienceModal = ({ isOpen, onClose, onCreated }) => {
           user_id: profile.id,
           name: name.trim(),
           category,
+          subcategory: subToPersist,
+          artist_name: artistToPersist,
           date: date || null,
           city: city.trim() || null,
           note: note.trim() || null,
@@ -51,7 +64,44 @@ export const AddExperienceModal = ({ isOpen, onClose, onCreated }) => {
 
       if (error) throw error
 
-      onCreated(data)
+      // Fire Wikipedia enrichment. enrichment_attempted_at is set in all exit paths.
+      let updates = { enrichment_attempted_at: new Date().toISOString() }
+      try {
+        const { data: session } = await supabase.auth.getSession()
+        const res = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/experience-enrich`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${session.session.access_token}`,
+            },
+            body: JSON.stringify({
+              name: name.trim(),
+              category,
+              subcategory: subToPersist,
+              artist_name: artistToPersist,
+            }),
+          }
+        )
+        if (res.ok) {
+          const result = await res.json()
+          if (result.success) {
+            if (result.description) updates.wikipedia_description = result.description
+            if (result.wikipedia_url) updates.wikipedia_url = result.wikipedia_url
+          }
+        }
+      } catch { /* swallow — at least mark attempted */ }
+
+      // Persist enrichment + return updated row to caller
+      const { data: enriched } = await supabase
+        .from('experiences')
+        .update(updates)
+        .eq('id', data.id)
+        .select()
+        .single()
+
+      onCreated(enriched || data)
       handleClose()
     } catch (err) {
       console.error('Error creating experience:', err)
@@ -113,6 +163,60 @@ export const AddExperienceModal = ({ isOpen, onClose, onCreated }) => {
             ))}
           </div>
         </div>
+
+        {/* Subcategory — only when theatre */}
+        {category === 'theatre' && (
+          <div>
+            <label style={{ fontSize: '13px', color: '#666', display: 'block', marginBottom: '6px' }}>
+              Type
+            </label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+              {SUBCATEGORIES.map(opt => (
+                <button
+                  key={opt}
+                  onClick={() => setSubcategory(subcategory === opt ? '' : opt)}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: '14px',
+                    border: 'none',
+                    background: subcategory === opt ? '#2C2C2C' : '#F5F1EB',
+                    color: subcategory === opt ? '#FFFEFA' : '#666',
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  {opt}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Artist name — only when concert (Wikipedia search uses this for disambiguation) */}
+        {category === 'concert' && (
+          <div>
+            <label style={{ fontSize: '13px', color: '#666', display: 'block', marginBottom: '4px' }}>
+              Artist
+            </label>
+            <input
+              type="text"
+              placeholder="Beyoncé"
+              value={artistName}
+              onChange={(e) => setArtistName(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid rgba(0,0,0,0.1)',
+                borderRadius: '8px',
+                fontSize: '16px',
+                background: '#FFFEFA',
+                outline: 'none',
+                boxSizing: 'border-box',
+              }}
+            />
+          </div>
+        )}
 
         {/* Date + City row */}
         <div style={{ display: 'flex', gap: '10px' }}>

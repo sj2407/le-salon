@@ -119,6 +119,8 @@ export const PlaybillScanModal = ({ isOpen, onClose, onExperiencesAdded }) => {
           user_id: profile.id,
           name: exp.name,
           category: exp.category || 'other',
+          subcategory: exp.subcategory || null,
+          artist_name: exp.artist_name || null,
           date: exp.date || null,
           city: exp.city || null,
           source: 'playbill_scan',
@@ -127,11 +129,49 @@ export const PlaybillScanModal = ({ isOpen, onClose, onExperiencesAdded }) => {
         }
       })
 
-      const { error } = await supabase.from('experiences').insert(rows)
+      const { data: insertedRows, error } = await supabase
+        .from('experiences')
+        .insert(rows)
+        .select()
       if (error) throw error
 
-      if (onExperiencesAdded) onExperiencesAdded(rows.length)
+      if (onExperiencesAdded) onExperiencesAdded((insertedRows || rows).length)
       handleClose()
+
+      // Fire Wikipedia enrichment per row with a 100ms stagger to be polite.
+      // Fire-and-forget — modal already closed; row-level updates land async.
+      ;(async () => {
+        const { data: session } = await supabase.auth.getSession()
+        const token = session?.session?.access_token
+        if (!token || !insertedRows) return
+        for (const row of insertedRows) {
+          try {
+            const res = await fetch(
+              `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/experience-enrich`,
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify({
+                  name: row.name,
+                  category: row.category,
+                  subcategory: row.subcategory,
+                  artist_name: row.artist_name,
+                }),
+              }
+            )
+            const updates = { enrichment_attempted_at: new Date().toISOString() }
+            if (res.ok) {
+              const result = await res.json()
+              if (result.success) {
+                if (result.description) updates.wikipedia_description = result.description
+                if (result.wikipedia_url) updates.wikipedia_url = result.wikipedia_url
+              }
+            }
+            await supabase.from('experiences').update(updates).eq('id', row.id)
+          } catch { /* continue with the next row */ }
+          await new Promise(r => setTimeout(r, 100))
+        }
+      })()
     } catch (err) {
       console.error('Error adding scanned experiences:', err)
       setError('Failed to add some experiences')

@@ -1,6 +1,23 @@
 import { useState, useRef } from 'react'
 import { QuillMenu } from './QuillMenu'
+import { ExperienceGraphCompact } from './ExperienceGraphCompact'
 import { useOutsideClick } from '../../hooks/useOutsideClick'
+
+const CATEGORY_LABELS = {
+  concert: 'Concert',
+  exhibition: 'Exhibition',
+  restaurant: 'Restaurant',
+  cinema: 'Cinema',
+  theatre: 'Theatre',
+  other: 'Other',
+}
+
+// Inline tag shown next to the experience name. Subcategory wins (more specific);
+// otherwise falls back to the category label so every row carries a tag.
+function rowTag(exp) {
+  if (exp.subcategory) return exp.subcategory
+  return CATEGORY_LABELS[exp.category] || null
+}
 
 const emptyStateButtonStyle = {
   padding: '10px 14px',
@@ -20,25 +37,31 @@ const emptyStateButtonStyle = {
  */
 export const ExperiencesSection = ({
   experiences,
+  experienceThemes,
+  experienceGraph,
   isOwner,
   onExperienceClick,
   onAddExperience,
   onScanPlaybill,
   onEditExperience,
   onDeleteExperience,
+  onSeeAll,
+  onSeeAllThemes,
 }) => {
   const safeExperiences = experiences || []
   const [openMenuId, setOpenMenuId] = useState(null)
   const menuRef = useRef(null)
   useOutsideClick(menuRef, () => setOpenMenuId(null), openMenuId !== null)
 
-  // Sort reverse chronological
-  const sorted = [...safeExperiences].sort((a, b) => {
+  // Sort reverse chronological — full sorted list used for the themes graph;
+  // the inline list shows only the 3 most recent.
+  const sortedAll = [...safeExperiences].sort((a, b) => {
     if (!a.date && !b.date) return 0
     if (!a.date) return 1
     if (!b.date) return -1
     return new Date(b.date) - new Date(a.date)
   })
+  const sorted = sortedAll.slice(0, 3)
 
   // Empty state — only the add cell for owner, nothing for friend
   if (sorted.length === 0 && !isOwner) return null
@@ -122,8 +145,22 @@ export const ExperiencesSection = ({
                 }}
               >
                 <span style={{ fontWeight: 500 }}>{exp.name}</span>
+                {rowTag(exp) && (
+                  <span style={{
+                    display: 'inline-block',
+                    marginLeft: '8px',
+                    padding: '1px 8px',
+                    borderRadius: '10px',
+                    background: '#F5F1EB',
+                    fontSize: '11px',
+                    color: '#666',
+                    verticalAlign: '2px',
+                  }}>
+                    {rowTag(exp)}
+                  </span>
+                )}
                 {exp.rating != null && (
-                  <span className="handwritten" style={{ color: '#2C2C2C', fontSize: '14px', marginLeft: '6px' }}>
+                  <span className="handwritten" style={{ color: '#2C2C2C', fontSize: '14px', marginLeft: '8px' }}>
                     {exp.rating}/10
                   </span>
                 )}
@@ -210,6 +247,72 @@ export const ExperiencesSection = ({
           )
         })}
       </div>
+
+      {/* Themes — top 3 inline, click → opens full themes modal */}
+      {experienceGraph && experienceGraph.themes?.length > 0 && experienceGraph.edges?.length > 0 && (
+        <div style={{ marginTop: '16px', borderTop: '1px solid rgba(0,0,0,0.06)', paddingTop: '12px' }}>
+          <p style={{
+            margin: '0 0 4px 0',
+            fontSize: '11px',
+            color: '#999',
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
+            fontWeight: 600,
+          }}>
+            Recurring themes
+          </p>
+          <ExperienceGraphCompact
+            experiences={sortedAll}
+            experienceGraph={experienceGraph}
+            onClick={onSeeAllThemes}
+          />
+        </div>
+      )}
+
+      {/* Footer: see all themes (left) + see all experiences (right) on the same line */}
+      {(onSeeAll || onSeeAllThemes) && (
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginTop: '12px',
+        }}>
+          {onSeeAllThemes && experienceGraph?.edges?.length > 0 ? (
+            <button
+              type="button"
+              onClick={onSeeAllThemes}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '13px',
+                color: '#4A7BA7',
+                fontStyle: 'italic',
+                padding: 0,
+              }}
+            >
+              see all themes
+            </button>
+          ) : <span />}
+          {onSeeAll && (
+            <button
+              type="button"
+              onClick={onSeeAll}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '13px',
+                color: '#4A7BA7',
+                fontStyle: 'italic',
+                padding: 0,
+              }}
+            >
+              see all
+            </button>
+          )}
+        </div>
+      )}
     </>
   )
 }

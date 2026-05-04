@@ -74,13 +74,17 @@ export const PortraitCard = ({ spotifyProfile, books, onImageClick, isOwner }) =
             transition={{ duration: prefersReduced ? 0 : 0.5, delay: 0, ease: 'easeOut' }}
             style={{
               margin: '0 0 10px 0',
-              fontSize: '42px',
+              // Defensive — open mood vocab can return 2-3 word labels.
+              // Scales down on narrow screens before wrapping kicks in.
+              fontSize: 'clamp(28px, 7vw, 42px)',
               fontStyle: 'italic',
               fontWeight: 400,
               color: '#FFFEFA',
               lineHeight: 1.1,
               letterSpacing: '-0.5px',
               fontFamily: 'Source Serif 4, Georgia, serif',
+              maxWidth: '100%',
+              wordBreak: 'break-word',
             }}
           >
             {moodLabel}

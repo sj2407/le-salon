@@ -17,6 +17,7 @@ export const ExperienceArchiveModal = ({
   onDeleteExperience,
 }) => {
   const [openMenuId, setOpenMenuId] = useState(null)
+  const [expandedId, setExpandedId] = useState(null)
   const [confirmState, setConfirmState] = useState(null)
   const menuRef = useRef(null)
 
@@ -159,12 +160,24 @@ export const ExperienceArchiveModal = ({
                 </div>
               )}
 
-              {/* Title row: icon · name · rating */}
+              {/* Title row: icon · name · subcategory tag · rating */}
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', flexWrap: 'wrap' }}>
                 <span style={{ fontSize: '14px', lineHeight: 1 }}>{icon}</span>
                 <span style={{ fontSize: '15px', fontWeight: 600, color: '#2C2C2C' }}>
                   {exp.name}
                 </span>
+                {exp.subcategory && (
+                  <span style={{
+                    display: 'inline-block',
+                    padding: '1px 8px',
+                    borderRadius: '10px',
+                    background: '#E8DCC8',
+                    fontSize: '11px',
+                    color: '#666',
+                  }}>
+                    {exp.subcategory}
+                  </span>
+                )}
                 {exp.rating != null && (
                   <span className="handwritten" style={{ fontSize: '15px', color: '#2C2C2C' }}>
                     {exp.rating}/10
@@ -172,10 +185,57 @@ export const ExperienceArchiveModal = ({
                 )}
               </div>
 
-              {/* Meta: city · date */}
-              {meta && (
+              {/* Meta: city · date · artist (when concert) */}
+              {(meta || exp.artist_name) && (
                 <div style={{ fontSize: '12px', color: '#999', marginTop: '4px' }}>
-                  {meta}
+                  {[meta, exp.artist_name].filter(Boolean).join(' · ')}
+                </div>
+              )}
+
+              {/* Wikipedia description — tap to expand/collapse */}
+              {exp.wikipedia_description && (
+                <div style={{ marginTop: '8px' }}>
+                  <div
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setExpandedId(expandedId === exp.id ? null : exp.id)
+                    }}
+                    title={expandedId === exp.id ? 'Tap to collapse' : 'Tap to read more'}
+                    style={{
+                      padding: '10px 12px',
+                      background: '#FFFEFA',
+                      borderRadius: '6px',
+                      fontSize: '13px',
+                      color: '#2C2C2C',
+                      lineHeight: 1.5,
+                      fontFamily: 'Source Serif 4, Georgia, serif',
+                      cursor: 'pointer',
+                      ...(expandedId === exp.id
+                        ? {}
+                        : {
+                            display: '-webkit-box',
+                            WebkitLineClamp: 3,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                          }
+                      ),
+                    }}
+                  >
+                    {exp.wikipedia_description}
+                  </div>
+                  {exp.wikipedia_url && (
+                    <div style={{ marginTop: '4px', fontSize: '12px' }}>
+                      <a
+                        href={exp.wikipedia_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ color: '#4A7BA7', textDecoration: 'underline' }}
+                      >
+                        Read on Wikipedia →
+                      </a>
+                    </div>
+                  )}
                 </div>
               )}
 
