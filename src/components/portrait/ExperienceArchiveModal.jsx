@@ -160,37 +160,70 @@ export const ExperienceArchiveModal = ({
                 </div>
               )}
 
-              {/* Title row: icon · name · subcategory tag · rating */}
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '14px', lineHeight: 1 }}>{icon}</span>
-                <span style={{ fontSize: '15px', fontWeight: 600, color: '#2C2C2C' }}>
-                  {exp.name}
-                </span>
-                {exp.subcategory && (
-                  <span style={{
-                    display: 'inline-block',
-                    padding: '1px 8px',
-                    borderRadius: '10px',
+              {/* Header row: cover thumb + title block */}
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                {exp.image_url ? (
+                  <img
+                    src={exp.image_url}
+                    alt={exp.name}
+                    style={{
+                      width: '54px',
+                      height: '80px',
+                      objectFit: 'cover',
+                      borderRadius: '4px',
+                      flexShrink: 0,
+                      boxShadow: '0 1px 4px rgba(0,0,0,0.15)',
+                    }}
+                  />
+                ) : (
+                  <div style={{
+                    width: '54px',
+                    height: '80px',
                     background: '#E8DCC8',
-                    fontSize: '11px',
-                    color: '#666',
+                    borderRadius: '4px',
+                    flexShrink: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '20px',
                   }}>
-                    {exp.subcategory}
-                  </span>
+                    {icon}
+                  </div>
                 )}
-                {exp.rating != null && (
-                  <span className="handwritten" style={{ fontSize: '15px', color: '#2C2C2C' }}>
-                    {exp.rating}/10
-                  </span>
-                )}
-              </div>
 
-              {/* Meta: city · date · artist (when concert) */}
-              {(meta || exp.artist_name) && (
-                <div style={{ fontSize: '12px', color: '#999', marginTop: '4px' }}>
-                  {[meta, exp.artist_name].filter(Boolean).join(' · ')}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  {/* Title row */}
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '15px', fontWeight: 600, color: '#2C2C2C' }}>
+                      {exp.name}
+                    </span>
+                    {exp.subcategory && (
+                      <span style={{
+                        display: 'inline-block',
+                        padding: '1px 8px',
+                        borderRadius: '10px',
+                        background: '#E8DCC8',
+                        fontSize: '11px',
+                        color: '#666',
+                      }}>
+                        {exp.subcategory}
+                      </span>
+                    )}
+                    {exp.rating != null && (
+                      <span className="handwritten" style={{ fontSize: '15px', color: '#2C2C2C' }}>
+                        {exp.rating}/10
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Meta: city · date · artist */}
+                  {(meta || exp.artist_name) && (
+                    <div style={{ fontSize: '12px', color: '#999', marginTop: '4px' }}>
+                      {[meta, exp.artist_name].filter(Boolean).join(' · ')}
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
 
               {/* Wikipedia description — tap to expand/collapse */}
               {exp.wikipedia_description && (

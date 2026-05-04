@@ -14,9 +14,10 @@ interface EnrichInput {
 interface EnrichResult {
   description: string | null;
   wikipedia_url: string | null;
+  image_url: string | null;
 }
 
-const NULL_RESULT: EnrichResult = { description: null, wikipedia_url: null };
+const NULL_RESULT: EnrichResult = { description: null, wikipedia_url: null, image_url: null };
 
 // Wikipedia OpenSearch — returns up to `limit` candidate page titles for a query.
 async function wikiOpenSearch(query: string): Promise<string[]> {
@@ -44,11 +45,17 @@ async function wikiSummary(title: string): Promise<EnrichResult> {
     const extract = (data.extract as string | undefined) || '';
     if (!extract) return NULL_RESULT;
     const wikiUrl = data.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${encodeURIComponent(title)}`;
+    // Prefer the medium-sized thumbnail (typically 320px wide) over originalimage —
+    // page leads can be huge. Both fields share the same shape: { source, width, height }.
+    const imageUrl = (data.thumbnail?.source as string | undefined)
+      || (data.originalimage?.source as string | undefined)
+      || null;
     // Store the full extract — Wikipedia summaries are naturally short (typically
     // 200-800 chars), and a hard char-slice cuts mid-word. The UI clamps visually.
     return {
       description: extract,
       wikipedia_url: wikiUrl,
+      image_url: imageUrl,
     };
   } catch {
     return NULL_RESULT;
@@ -148,7 +155,7 @@ Deno.serve(async (req: Request) => {
 
       const { data: row, error: rowErr } = await supabaseAdmin
         .from('experiences')
-        .select('id, name, category, subcategory, artist_name, wikipedia_description, enrichment_attempted_at')
+        .select('id, name, category, subcategory, artist_name, wikipedia_description, image_url, enrichment_attempted_at')
         .eq('id', experienceId)
         .single();
       if (rowErr || !row) {
@@ -159,7 +166,8 @@ Deno.serve(async (req: Request) => {
       }
 
       const updates: Record<string, unknown> = { enrichment_attempted_at: new Date().toISOString() };
-      if (!row.wikipedia_description) {
+      // Re-fetch when description OR image is missing — both come from the same Wikipedia call.
+      if (!row.wikipedia_description || !row.image_url) {
         const result = await enrichOne({
           name: row.name,
           category: row.category,
@@ -168,6 +176,9 @@ Deno.serve(async (req: Request) => {
         });
         if (result.description) updates.wikipedia_description = result.description;
         if (result.wikipedia_url) updates.wikipedia_url = result.wikipedia_url;
+        // Only fill image_url when row currently has none — never overwrite a
+        // user-picked or playbill-scanned cover.
+        if (result.image_url && !row.image_url) updates.image_url = result.image_url;
       }
 
       await supabaseAdmin.from('experiences').update(updates).eq('id', experienceId);

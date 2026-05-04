@@ -31,6 +31,35 @@ const emptyStateButtonStyle = {
   transition: 'background 0.15s',
 }
 
+const CoverPlaceholder = ({ name }) => (
+  <div style={{
+    width: '40px',
+    height: '60px',
+    background: '#E8DCC8',
+    borderRadius: '3px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '4px',
+    boxSizing: 'border-box',
+    flexShrink: 0,
+  }}>
+    <span style={{
+      fontSize: '8px',
+      color: '#2C2C2C',
+      textAlign: 'center',
+      lineHeight: 1.2,
+      fontStyle: 'italic',
+      overflow: 'hidden',
+      display: '-webkit-box',
+      WebkitLineClamp: 3,
+      WebkitBoxOrient: 'vertical',
+    }}>
+      {name}
+    </span>
+  </div>
+)
+
 /**
  * Experiences section — bulleted list of cultural experiences.
  * Section quill menu (owner) for scan/add. Per-row three-dot menu (owner) for edit/delete.
@@ -119,8 +148,8 @@ export const ExperiencesSection = ({
         <h3 className="handwritten" style={{ margin: 0, fontSize: '24px', color: '#2C2C2C' }}>Experiences</h3>
       </div>
 
-      {/* Bullet list */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+      {/* Row list — cover thumb + name + tag/rating, mirroring Viewing */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {sorted.map(exp => {
           const menuOpen = openMenuId === exp.id
           return (
@@ -130,12 +159,29 @@ export const ExperiencesSection = ({
                 position: 'relative',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '6px',
+                gap: '10px',
                 fontSize: '14px',
                 color: '#2C2C2C',
-                lineHeight: 1.5,
+                lineHeight: 1.4,
               }}
             >
+              {exp.image_url ? (
+                <img
+                  src={exp.image_url}
+                  alt={exp.name}
+                  style={{
+                    width: '40px',
+                    height: '60px',
+                    objectFit: 'cover',
+                    borderRadius: '3px',
+                    flexShrink: 0,
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.12)',
+                  }}
+                />
+              ) : (
+                <CoverPlaceholder name={exp.name} />
+              )}
+
               <div
                 onClick={() => onExperienceClick && onExperienceClick(exp)}
                 style={{
@@ -144,26 +190,17 @@ export const ExperiencesSection = ({
                   cursor: onExperienceClick ? 'pointer' : 'default',
                 }}
               >
-                <span style={{ fontWeight: 500 }}>{exp.name}</span>
-                {rowTag(exp) && (
-                  <span style={{
-                    display: 'inline-block',
-                    marginLeft: '8px',
-                    padding: '1px 8px',
-                    borderRadius: '10px',
-                    background: '#F5F1EB',
-                    fontSize: '11px',
-                    color: '#666',
-                    verticalAlign: '2px',
-                  }}>
-                    {rowTag(exp)}
-                  </span>
-                )}
-                {exp.rating != null && (
-                  <span className="handwritten" style={{ color: '#2C2C2C', fontSize: '14px', marginLeft: '8px' }}>
-                    {exp.rating}/10
-                  </span>
-                )}
+                <div style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {exp.name}
+                </div>
+                <div style={{ fontSize: '12px', color: '#777', marginTop: '2px' }}>
+                  {rowTag(exp)}
+                  {exp.rating != null && (
+                    <span className="handwritten" style={{ color: '#2C2C2C', fontSize: '14px', marginLeft: '8px' }}>
+                      {exp.rating}/10
+                    </span>
+                  )}
+                </div>
               </div>
 
               {showRowMenu && (

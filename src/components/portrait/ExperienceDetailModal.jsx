@@ -169,50 +169,74 @@ export const ExperienceDetailModal = ({ isOpen, onClose, experience, onUpdated, 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {!editing ? (
           <>
-            {/* Category */}
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '4px 10px',
-              borderRadius: '14px',
-              background: '#F5F1EB',
-              fontSize: '13px',
-              color: '#666',
-              alignSelf: 'flex-start',
-            }}>
-              {icon} {categoryLabel}
-            </div>
-
-            {/* Rating */}
-            {experience.rating != null && (
-              <div className="handwritten" style={{ fontSize: '20px', color: '#2C2C2C' }}>
-                {experience.rating}/10
-              </div>
-            )}
-
-            {/* Date & City */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              {experience.date && (
-                <div style={{ fontSize: '14px', color: '#2C2C2C' }}>
-                  {formatDate(experience.date)}
+            {/* Cover + meta header (mirrors ViewingDetailModal) */}
+            <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+              {experience.image_url ? (
+                <img
+                  src={experience.image_url}
+                  alt={experience.name}
+                  style={{
+                    width: '90px',
+                    height: '135px',
+                    objectFit: 'cover',
+                    borderRadius: '4px',
+                    flexShrink: 0,
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+                  }}
+                />
+              ) : (
+                <div style={{
+                  width: '90px',
+                  height: '135px',
+                  background: '#E8DCC8',
+                  borderRadius: '4px',
+                  flexShrink: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '32px',
+                }}>
+                  {icon}
                 </div>
               )}
-              {experience.city && (
-                <div style={{ fontSize: '14px', color: '#666' }}>
-                  {experience.city}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '3px 10px',
+                  borderRadius: '14px',
+                  background: '#F5F1EB',
+                  fontSize: '12px',
+                  color: '#666',
+                  marginBottom: '6px',
+                }}>
+                  {icon} {categoryLabel}
                 </div>
-              )}
-            </div>
-
-            {/* Subcategory + Artist row */}
-            {(experience.subcategory || experience.artist_name) && (
-              <div style={{ fontSize: '13px', color: '#666' }}>
-                {experience.subcategory && <span>{experience.subcategory}</span>}
-                {experience.subcategory && experience.artist_name && <span> · </span>}
-                {experience.artist_name && <span>{experience.artist_name}</span>}
+                {experience.rating != null && (
+                  <div className="handwritten" style={{ fontSize: '20px', color: '#2C2C2C' }}>
+                    {experience.rating}/10
+                  </div>
+                )}
+                {experience.date && (
+                  <div style={{ fontSize: '13px', color: '#666', marginTop: '4px' }}>
+                    {formatDate(experience.date)}
+                  </div>
+                )}
+                {experience.city && (
+                  <div style={{ fontSize: '13px', color: '#666' }}>
+                    {experience.city}
+                  </div>
+                )}
+                {(experience.subcategory || experience.artist_name) && (
+                  <div style={{ fontSize: '13px', color: '#666', marginTop: '4px' }}>
+                    {experience.subcategory && <span>{experience.subcategory}</span>}
+                    {experience.subcategory && experience.artist_name && <span> · </span>}
+                    {experience.artist_name && <span>{experience.artist_name}</span>}
+                  </div>
+                )}
               </div>
-            )}
+            </div>
 
             {/* Wikipedia description */}
             {experience.wikipedia_description && (
