@@ -10,7 +10,6 @@ const TYPE_OPTIONS = [
 const STATUS_OPTIONS = [
   { value: 'watched', label: 'Watched' },
   { value: 'watching', label: 'Watching' },
-  { value: 'want_to_watch', label: 'Want to watch' },
 ]
 
 /**

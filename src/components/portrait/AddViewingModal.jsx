@@ -136,7 +136,6 @@ export const AddViewingModal = ({ isOpen, onClose, onCreated }) => {
   const statusOptions = [
     { value: 'watched', label: 'Watched' },
     { value: 'watching', label: 'Watching' },
-    { value: 'want_to_watch', label: 'Want to watch' },
   ]
 
   return (
