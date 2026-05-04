@@ -24,6 +24,7 @@ export const ViewingDetailModal = ({ isOpen, onClose, viewing, onUpdated, startI
   const [status, setStatus] = useState('watched')
   const [rating, setRating] = useState('')
   const [dateWatched, setDateWatched] = useState('')
+  const [note, setNote] = useState('')
   const [saving, setSaving] = useState(false)
   const [enriching, setEnriching] = useState(false)
   // Track which row we've already auto-enriched in this open cycle so we don't re-fire
@@ -42,6 +43,7 @@ export const ViewingDetailModal = ({ isOpen, onClose, viewing, onUpdated, startI
     setStatus(viewing.status || 'watched')
     setRating(viewing.rating == null ? '' : String(viewing.rating))
     setDateWatched(viewing.date_watched || '')
+    setNote(viewing.note || '')
   }, [isOpen, viewing, startInEdit, isOwner])
 
   // Auto-enrich on open: row has no overview AND enrichment was never attempted.
@@ -138,6 +140,7 @@ export const ViewingDetailModal = ({ isOpen, onClose, viewing, onUpdated, startI
           status,
           rating: ratingValue,
           date_watched: dateWatched || null,
+          note: note.trim() || null,
         })
         .eq('id', viewing.id)
         .select()
@@ -214,6 +217,23 @@ export const ViewingDetailModal = ({ isOpen, onClose, viewing, onUpdated, startI
                 fontFamily: 'Source Serif 4, Georgia, serif',
               }}>
                 {viewing.tmdb_overview}
+              </div>
+            )}
+
+            {/* Note */}
+            {viewing.note && (
+              <div style={{
+                padding: '12px 14px',
+                background: '#FFFEFA',
+                border: '1px solid rgba(0,0,0,0.06)',
+                borderRadius: '10px',
+                fontSize: '14px',
+                color: '#2C2C2C',
+                lineHeight: 1.6,
+                fontFamily: 'Source Serif 4, Georgia, serif',
+                whiteSpace: 'pre-wrap',
+              }}>
+                {viewing.note}
               </div>
             )}
 
@@ -352,6 +372,31 @@ export const ViewingDetailModal = ({ isOpen, onClose, viewing, onUpdated, startI
                   borderRadius: '8px',
                   fontSize: '16px',
                   background: '#FFFEFA',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+
+            <div>
+              <label style={{ fontSize: '13px', color: '#666', display: 'block', marginBottom: '4px' }}>
+                Note (optional)
+              </label>
+              <textarea
+                placeholder="What stood out?"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                rows={3}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  border: '1px solid rgba(0,0,0,0.1)',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  fontFamily: 'Source Serif 4, Georgia, serif',
+                  lineHeight: 1.5,
+                  background: '#FFFEFA',
+                  resize: 'vertical',
                   outline: 'none',
                   boxSizing: 'border-box',
                 }}

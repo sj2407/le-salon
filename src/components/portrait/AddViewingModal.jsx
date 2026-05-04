@@ -15,6 +15,8 @@ export const AddViewingModal = ({ isOpen, onClose, onCreated }) => {
   const [status, setStatus] = useState('watched')
   const [rating, setRating] = useState(null)
   const [dateWatched, setDateWatched] = useState(() => new Date().toISOString().slice(0, 10))
+  const [dateDirty, setDateDirty] = useState(false)
+  const [note, setNote] = useState('')
   const [saving, setSaving] = useState(false)
 
   const reset = () => {
@@ -23,6 +25,8 @@ export const AddViewingModal = ({ isOpen, onClose, onCreated }) => {
     setStatus('watched')
     setRating(null)
     setDateWatched(new Date().toISOString().slice(0, 10))
+    setDateDirty(false)
+    setNote('')
     setSaving(false)
   }
 
@@ -98,6 +102,7 @@ export const AddViewingModal = ({ isOpen, onClose, onCreated }) => {
           status,
           rating,
           date_watched: status === 'watched' ? (dateWatched || null) : null,
+          note: note.trim() || null,
           source: 'manual',
           enrichment_attempted_at: new Date().toISOString(),
           ...enrichment,
@@ -260,7 +265,7 @@ export const AddViewingModal = ({ isOpen, onClose, onCreated }) => {
             <input
               type="date"
               value={dateWatched}
-              onChange={(e) => setDateWatched(e.target.value)}
+              onChange={(e) => { setDateWatched(e.target.value); setDateDirty(true) }}
               style={{
                 width: '100%',
                 padding: '10px 12px',
@@ -270,10 +275,37 @@ export const AddViewingModal = ({ isOpen, onClose, onCreated }) => {
                 background: '#FFFEFA',
                 outline: 'none',
                 boxSizing: 'border-box',
+                color: dateDirty ? '#2C2C2C' : '#999',
               }}
             />
           </div>
         )}
+
+        {/* Note (optional) */}
+        <div>
+          <label style={{ fontSize: '13px', color: '#666', display: 'block', marginBottom: '4px' }}>
+            Note (optional)
+          </label>
+          <textarea
+            placeholder="What stood out?"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            rows={3}
+            style={{
+              width: '100%',
+              padding: '10px 12px',
+              border: '1px solid rgba(0,0,0,0.1)',
+              borderRadius: '8px',
+              fontSize: '16px',
+              fontFamily: 'Source Serif 4, Georgia, serif',
+              lineHeight: 1.5,
+              background: '#FFFEFA',
+              resize: 'vertical',
+              outline: 'none',
+              boxSizing: 'border-box',
+            }}
+          />
+        </div>
 
         {/* Save / Cancel */}
         <div className="modal-sticky-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>

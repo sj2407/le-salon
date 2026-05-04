@@ -9,10 +9,14 @@ import { useAuth } from '../../contexts/AuthContext'
  */
 export const AddBookModal = ({ isOpen, onClose, onCreated }) => {
   const { profile } = useAuth()
+  const today = () => new Date().toISOString().slice(0, 10)
   const [title, setTitle] = useState('')
   const [author, setAuthor] = useState('')
   const [status, setStatus] = useState('read')
   const [rating, setRating] = useState(null)
+  const [dateRead, setDateRead] = useState(today)
+  const [dateDirty, setDateDirty] = useState(false)
+  const [note, setNote] = useState('')
   const [saving, setSaving] = useState(false)
 
   const reset = () => {
@@ -20,6 +24,9 @@ export const AddBookModal = ({ isOpen, onClose, onCreated }) => {
     setAuthor('')
     setStatus('read')
     setRating(null)
+    setDateRead(today())
+    setDateDirty(false)
+    setNote('')
     setSaving(false)
   }
 
@@ -70,7 +77,9 @@ export const AddBookModal = ({ isOpen, onClose, onCreated }) => {
           title: title.trim(),
           author: author.trim() || null,
           status,
-          rating,
+          rating: status === 'read' ? rating : null,
+          date_read: status === 'read' ? (dateRead || null) : null,
+          note: note.trim() || null,
           source: 'manual',
           ...enrichment,
         })
@@ -92,7 +101,6 @@ export const AddBookModal = ({ isOpen, onClose, onCreated }) => {
   const statusOptions = [
     { value: 'reading', label: 'Reading' },
     { value: 'read', label: 'Read' },
-    { value: 'want_to_read', label: 'Want to read' },
   ]
 
   return (
@@ -203,6 +211,57 @@ export const AddBookModal = ({ isOpen, onClose, onCreated }) => {
             </div>
           </div>
         )}
+
+        {/* Date read (only for read books) */}
+        {status === 'read' && (
+          <div>
+            <label style={{ fontSize: '13px', color: '#666', display: 'block', marginBottom: '4px' }}>
+              Date read
+            </label>
+            <input
+              type="date"
+              value={dateRead}
+              onChange={(e) => { setDateRead(e.target.value); setDateDirty(true) }}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid rgba(0,0,0,0.1)',
+                borderRadius: '8px',
+                fontSize: '16px',
+                background: '#FFFEFA',
+                outline: 'none',
+                boxSizing: 'border-box',
+                color: dateDirty ? '#2C2C2C' : '#999',
+              }}
+            />
+          </div>
+        )}
+
+        {/* Note (optional) */}
+        <div>
+          <label style={{ fontSize: '13px', color: '#666', display: 'block', marginBottom: '4px' }}>
+            Note (optional)
+          </label>
+          <textarea
+            placeholder="What stood out?"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            rows={3}
+            style={{
+              width: '100%',
+              padding: '10px 12px',
+              border: '1px solid rgba(0,0,0,0.1)',
+              borderRadius: '8px',
+              fontSize: '16px',
+              fontFamily: 'Source Serif 4, Georgia, serif',
+              lineHeight: 1.5,
+              background: '#FFFEFA',
+              resize: 'vertical',
+              outline: 'none',
+              boxSizing: 'border-box',
+            }}
+          />
+        </div>
 
         {/* Save */}
         <div className="modal-sticky-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>

@@ -12,12 +12,14 @@ const SUBCATEGORIES = ['Play', 'Musical', 'Opera', 'Ballet', 'Stand-up', 'Concer
  */
 export const AddExperienceModal = ({ isOpen, onClose, onCreated }) => {
   const { profile } = useAuth()
+  const today = () => new Date().toISOString().slice(0, 10)
   const [name, setName] = useState('')
   const [category, setCategory] = useState('other')
   const [subcategory, setSubcategory] = useState('')
   const [artistName, setArtistName] = useState('')
-  const [date, setDate] = useState('')
-  const [city, setCity] = useState('')
+  const [rating, setRating] = useState(null)
+  const [date, setDate] = useState(today)
+  const [dateDirty, setDateDirty] = useState(false)
   const [note, setNote] = useState('')
   const [saving, setSaving] = useState(false)
 
@@ -26,8 +28,9 @@ export const AddExperienceModal = ({ isOpen, onClose, onCreated }) => {
     setCategory('other')
     setSubcategory('')
     setArtistName('')
-    setDate('')
-    setCity('')
+    setRating(null)
+    setDate(today())
+    setDateDirty(false)
     setNote('')
     setSaving(false)
   }
@@ -54,8 +57,8 @@ export const AddExperienceModal = ({ isOpen, onClose, onCreated }) => {
           category,
           subcategory: subToPersist,
           artist_name: artistToPersist,
+          rating,
           date: date || null,
-          city: city.trim() || null,
           note: note.trim() || null,
           source: 'manual',
         })
@@ -218,49 +221,58 @@ export const AddExperienceModal = ({ isOpen, onClose, onCreated }) => {
           </div>
         )}
 
-        {/* Date + City row */}
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <div style={{ flex: 1 }}>
-            <label style={{ fontSize: '13px', color: '#666', display: 'block', marginBottom: '4px' }}>
-              Date
-            </label>
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                border: '1px solid rgba(0,0,0,0.1)',
-                borderRadius: '8px',
-                fontSize: '16px',
-                background: '#FFFEFA',
-                outline: 'none',
-                boxSizing: 'border-box',
-              }}
-            />
+        {/* Rating */}
+        <div>
+          <label style={{ fontSize: '13px', color: '#666', display: 'block', marginBottom: '6px' }}>
+            Rating
+          </label>
+          <div style={{ display: 'flex', gap: '4px' }}>
+            {[2, 4, 6, 8, 10].map(val => (
+              <button
+                key={val}
+                onClick={() => setRating(rating === val ? null : val)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '22px',
+                  padding: '2px',
+                  color: rating != null && val <= rating ? '#4A7BA7' : '#ddd',
+                  transition: 'color 0.1s',
+                }}
+              >
+                ★
+              </button>
+            ))}
+            {rating != null && (
+              <span style={{ fontSize: '12px', color: '#999', alignSelf: 'center', marginLeft: '6px' }}>
+                {rating}/10
+              </span>
+            )}
           </div>
-          <div style={{ flex: 1 }}>
-            <label style={{ fontSize: '13px', color: '#666', display: 'block', marginBottom: '4px' }}>
-              City
-            </label>
-            <input
-              type="text"
-              placeholder="Paris"
-              value={city}
-              onChange={(e) => setCity(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                border: '1px solid rgba(0,0,0,0.1)',
-                borderRadius: '8px',
-                fontSize: '16px',
-                background: '#FFFEFA',
-                outline: 'none',
-                boxSizing: 'border-box',
-              }}
-            />
-          </div>
+        </div>
+
+        {/* Date */}
+        <div>
+          <label style={{ fontSize: '13px', color: '#666', display: 'block', marginBottom: '4px' }}>
+            Date
+          </label>
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => { setDate(e.target.value); setDateDirty(true) }}
+            style={{
+              width: '100%',
+              padding: '10px 12px',
+              border: '1px solid rgba(0,0,0,0.1)',
+              borderRadius: '8px',
+              fontSize: '16px',
+              background: '#FFFEFA',
+              outline: 'none',
+              boxSizing: 'border-box',
+              color: dateDirty ? '#2C2C2C' : '#999',
+            }}
+          />
         </div>
 
         {/* Note */}

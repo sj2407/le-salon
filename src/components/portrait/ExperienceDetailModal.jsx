@@ -410,48 +410,26 @@ export const ExperienceDetailModal = ({ isOpen, onClose, experience, onUpdated, 
               />
             </div>
 
-            {/* Date + City */}
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <div style={{ flex: 1 }}>
-                <label style={{ fontSize: '13px', color: '#666', display: 'block', marginBottom: '4px' }}>
-                  Date
-                </label>
-                <input
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    border: '1px solid rgba(0,0,0,0.1)',
-                    borderRadius: '8px',
-                    fontSize: '16px',
-                    background: '#FFFEFA',
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                  }}
-                />
-              </div>
-              <div style={{ flex: 1 }}>
-                <label style={{ fontSize: '13px', color: '#666', display: 'block', marginBottom: '4px' }}>
-                  City
-                </label>
-                <input
-                  type="text"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    border: '1px solid rgba(0,0,0,0.1)',
-                    borderRadius: '8px',
-                    fontSize: '16px',
-                    background: '#FFFEFA',
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                  }}
-                />
-              </div>
+            {/* Date */}
+            <div>
+              <label style={{ fontSize: '13px', color: '#666', display: 'block', marginBottom: '4px' }}>
+                Date
+              </label>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  border: '1px solid rgba(0,0,0,0.1)',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  background: '#FFFEFA',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+              />
             </div>
 
             {/* Note */}

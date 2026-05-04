@@ -1935,3 +1935,12 @@ body.reader-open .app-scroll-content {
   background: linear-gradient(90deg, transparent, #D9CBAD, transparent);
   margin: 32px auto 24px;
 }
+
+/* iOS WKWebView renders <input type="date"> with its value centered and
+   italicized by default, which clashes with the framed text inputs alongside
+   it. Force left-align + non-italic so the visual matches Title/Author/etc. */
+input[type="date"] {
+  text-align: left;
+  font-style: normal;
+  font-family: inherit;
+}
