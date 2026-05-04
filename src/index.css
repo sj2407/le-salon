@@ -1938,9 +1938,14 @@ body.reader-open .app-scroll-content {
 
 /* iOS WKWebView renders <input type="date"> with its value centered and
    italicized by default, which clashes with the framed text inputs alongside
-   it. Force left-align + non-italic so the visual matches Title/Author/etc. */
+   it. It also gives the input an intrinsic min-content width (sized to fit
+   the rendered date string + native chrome) which can push past width: 100%
+   in narrow modals. Force visual + layout consistency. */
 input[type="date"] {
   text-align: left;
   font-style: normal;
   font-family: inherit;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
