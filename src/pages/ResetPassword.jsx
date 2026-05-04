@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { getPostLoginPath } from '../lib/postLoginPath'
 
 export const ResetPassword = () => {
   const navigate = useNavigate()
@@ -68,10 +69,11 @@ export const ResetPassword = () => {
 
     setLoading(true)
     try {
-      const { error: updateError } = await supabase.auth.updateUser({ password })
+      const { data, error: updateError } = await supabase.auth.updateUser({ password })
       if (updateError) throw updateError
       setMessage('Password updated successfully!')
-      setTimeout(() => navigate('/'), 2000)
+      const path = await getPostLoginPath(data?.user?.id)
+      setTimeout(() => navigate(path), 2000)
     } catch (err) {
       setError(err.message || 'Failed to update password')
     } finally {

@@ -120,11 +120,14 @@ export const Onboarding = () => {
         // Non-fatal
       }
     }
-    // Mark the App splash as already played for this session. the closing
-    // VideoStep IS the splash. Without this, App.jsx would fire it again on
-    // /my-corner mount.
+    // Mark the App splash as already played for today. The closing VideoStep
+    // IS the splash. Without this, App.jsx would fire it again on /my-corner
+    // mount. Once-per-user-per-day key matches App.jsx.
     try {
-      sessionStorage.setItem('salon-intro-played', '1')
+      if (user) {
+        const today = new Date().toISOString().slice(0, 10)
+        localStorage.setItem(`salon-intro-last-played:${user.id}`, today)
+      }
     } catch {
       // Non-fatal
     }

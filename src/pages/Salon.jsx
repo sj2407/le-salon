@@ -31,8 +31,10 @@ export const Salon = () => {
   const [showCommonplace, setShowCommonplace] = useState(false)
   const [hasNewCommonplaceEntries, setHasNewCommonplaceEntries] = useState(false)
   const [nextWeekTitle, setNextWeekTitle] = useState(null)
-  // Intro video is now hoisted to App.jsx — Salon just checks sessionStorage for catch-up gate
-  const introPlayed = !!sessionStorage.getItem('salon-intro-played')
+  // Intro video is now hoisted to App.jsx — Salon just checks the once-per-day
+  // localStorage stamp for the catch-up gate.
+  const introPlayed = !!user
+    && localStorage.getItem(`salon-intro-last-played:${user.id}`) === new Date().toISOString().slice(0, 10)
   // Catch-up page: always checks for pending shares on mount
   const [catchUpDone, setCatchUpDone] = useState(false)
 

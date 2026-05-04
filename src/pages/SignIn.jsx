@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { getRedirectUrl } from '../lib/redirectUrl'
+import { getPostLoginPath } from '../lib/postLoginPath'
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 48 48">
@@ -32,8 +33,9 @@ export const SignIn = () => {
     setLoading(true)
 
     try {
-      await signIn(email, password)
-      navigate('/')
+      const data = await signIn(email, password)
+      const path = await getPostLoginPath(data?.user?.id)
+      navigate(path)
     } catch (err) {
       setError(err.message || 'Failed to sign in')
     } finally {

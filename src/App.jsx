@@ -66,7 +66,7 @@ const PublicRoute = ({ children }) => {
   }
 
   if (user) {
-    return <Navigate to="/" replace />
+    return <Navigate to="/my-corner" replace />
   }
 
   return children
@@ -77,12 +77,19 @@ function AppContent() {
   const navigate = useNavigate()
   const { user } = useAuth()
   // Intro video — hoisted here so it renders BEFORE Suspense/lazy load
-  const [introPlayed, setIntroPlayed] = useState(() => !!sessionStorage.getItem('salon-intro-played'))
+  // Gate: once-per-user-per-day. Key scoped to user id so a different user on
+  // the same device still sees the intro on their first login of the day.
+  const introKey = user ? `salon-intro-last-played:${user.id}` : null
+  const todayISO = () => new Date().toISOString().slice(0, 10)
+  const [introPlayed, setIntroPlayed] = useState(() => {
+    if (!introKey) return false
+    return localStorage.getItem(introKey) === todayISO()
+  })
   const introVideoRef = useRef(null)
   const handleIntroDone = useCallback(() => {
     setIntroPlayed(true)
-    sessionStorage.setItem('salon-intro-played', '1')
-  }, [])
+    if (introKey) localStorage.setItem(introKey, todayISO())
+  }, [introKey])
 
   useShareTokenSync(user)
   usePushNotifications(user, navigate, introPlayed)
@@ -204,7 +211,8 @@ function AppContent() {
   // Suppressed during /onboarding because the closing VideoStep IS the splash.
   // Re-reads sessionStorage at render so VideoStep's flag write is honored.
   const splashAlreadyPlayed = typeof window !== 'undefined'
-    && !!sessionStorage.getItem('salon-intro-played')
+    && introKey
+    && localStorage.getItem(introKey) === todayISO()
   if (
     user
     && !introPlayed

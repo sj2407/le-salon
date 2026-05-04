@@ -178,7 +178,6 @@ export const AuthProvider = ({ children }) => {
         // Non-fatal — don't block logout if cleanup fails
       }
     }
-    sessionStorage.removeItem('salon-intro-played')
     sessionStorage.removeItem('salon-biometric-unlocked')
     const { error } = await supabase.auth.signOut()
     if (error) throw error
