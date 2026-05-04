@@ -1936,16 +1936,24 @@ body.reader-open .app-scroll-content {
   margin: 32px auto 24px;
 }
 
-/* iOS WKWebView renders <input type="date"> with its value centered and
-   italicized by default, which clashes with the framed text inputs alongside
-   it. It also gives the input an intrinsic min-content width (sized to fit
-   the rendered date string + native chrome) which can push past width: 100%
-   in narrow modals. Force visual + layout consistency. */
+/* iOS WKWebView draws <input type="date"> with its own native control that
+   ignores text-align / font-style / min-width on the input element itself
+   (so the displayed value stays italic + centered + intrinsically wide,
+   pushing past the modal column). Strip the native appearance so normal
+   CSS applies, and target the inner ::-webkit-date-and-time-value to
+   left-align the displayed text. macOS Safari respects all of this without
+   the appearance reset, but the rule applies cleanly to both. */
 input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
   text-align: left;
   font-style: normal;
   font-family: inherit;
   min-width: 0;
   max-width: 100%;
   box-sizing: border-box;
+}
+input[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
+  font-style: normal;
 }
