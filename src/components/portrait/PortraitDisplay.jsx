@@ -9,7 +9,7 @@ import { motion, LayoutGroup } from 'framer-motion'
 import { Eye, EyeSlash, CaretUp, CaretDown, CaretLeft, CaretRight } from '@phosphor-icons/react'
 import { hapticTap } from '../../lib/haptics'
 
-const DEFAULT_SECTIONS = ['music', 'reading', 'experiences', 'creation']
+const DEFAULT_SECTIONS = ['music', 'reading', 'experiences', 'viewing', 'creation']
 
 /** Breakpoint must match .grid in index.css (1fr at ≤768px) */
 const MOBILE_BREAKPOINT = 768
@@ -136,10 +136,20 @@ export const PortraitDisplay = ({
   // Show/hide portrait card based on data
   const showPortraitCard = hasSpotify && spotifyProfile?.mood_label
 
-  // Merge saved order with defaults (same pattern as CardDisplay)
+  // Merge saved order with defaults. Missing sections (e.g. a newly added
+  // 'viewing') are inserted at their DEFAULT_SECTIONS position rather than
+  // appended at the end, so saved orders absorb new sections in the right slot.
   const gridOrder = sectionOrder.length > 0
-    ? [...sectionOrder.filter(s => DEFAULT_SECTIONS.includes(s)),
-       ...DEFAULT_SECTIONS.filter(s => !sectionOrder.includes(s))]
+    ? (() => {
+        const result = sectionOrder.filter(s => DEFAULT_SECTIONS.includes(s))
+        DEFAULT_SECTIONS.forEach((s, defaultIdx) => {
+          if (result.includes(s)) return
+          const insertAt = result.findIndex(r => DEFAULT_SECTIONS.indexOf(r) > defaultIdx)
+          if (insertAt === -1) result.push(s)
+          else result.splice(insertAt, 0, s)
+        })
+        return result
+      })()
     : DEFAULT_SECTIONS
 
   // Check if a section has data (or is owner) so we know whether to render
@@ -148,6 +158,7 @@ export const PortraitDisplay = ({
       case 'music': return (spotifyProfile?.is_active) || isOwner
       case 'reading': return hasBooks || isOwner
       case 'experiences': return hasExperiences || isOwner
+      case 'viewing': return hasViewing || isOwner
       case 'creation': return hasCreations || isOwner
       default: return false
     }
@@ -189,6 +200,7 @@ export const PortraitDisplay = ({
       case 'reading': return onReadingSeeAll
       case 'creation': return onViewCreationArchive
       case 'experiences': return null
+      case 'viewing': return null
       default: return null
     }
   }
@@ -237,6 +249,18 @@ export const PortraitDisplay = ({
             onDeleteExperience={onDeleteExperience}
             onSeeAll={onExperiencesSeeAll}
             onSeeAllThemes={onExperienceThemesSeeAll}
+          />
+        )
+      case 'viewing':
+        return (
+          <ViewingSection
+            viewing={viewing}
+            isOwner={isOwner}
+            onViewingClick={onViewingClick}
+            onAddViewing={onAddViewing}
+            onEditViewing={onEditViewing}
+            onDeleteViewing={onDeleteViewing}
+            onSeeAll={onViewingSeeAll}
           />
         )
       case 'creation':
@@ -497,21 +521,6 @@ export const PortraitDisplay = ({
         )
       )}
 
-      {/* Viewing — full-width below the grid, NOT reorderable. Always visible to
-          owner so they can discover the section; hidden on friend view when empty. */}
-      {(hasViewing || isOwner) && (
-        <div className="portrait-full-width-section">
-          <ViewingSection
-            viewing={viewing}
-            isOwner={isOwner}
-            onViewingClick={onViewingClick}
-            onAddViewing={onAddViewing}
-            onEditViewing={onEditViewing}
-            onDeleteViewing={onDeleteViewing}
-            onSeeAll={onViewingSeeAll}
-          />
-        </div>
-      )}
     </div>
   )
 }
