@@ -30,6 +30,7 @@ import { readFileSync } from 'fs'
 import { createClient } from '@supabase/supabase-js'
 import { config } from 'dotenv'
 import { parseMarkdown } from './lib/parse-markdown.js'
+import { buildPayload, upsertWeek, generateTTS } from './lib/load-week-core.js'
 
 config()
 
@@ -43,63 +44,32 @@ async function loadWeek(filePath, weekOf, periodStart, periodEnd) {
   const content = readFileSync(filePath, 'utf-8')
   const parsed = parseMarkdown(content)
 
+  const payload = buildPayload(parsed, weekOf, { periodStart, periodEnd })
+
   console.log(`Loading: "${parsed.title}" for week of ${weekOf}`)
   console.log(`  Body: ${parsed.body.length} chars`)
   console.log(`  Quote: ${parsed.quote ? parsed.quote.substring(0, 60) + '...' : 'none'}`)
   console.log(`  Attribution: ${parsed.quoteAttribution || 'none'}`)
   console.log(`  Further reading: ${parsed.furtherReading.length} items`)
   console.log(`  Sources: ${parsed.sources.length} items`)
-  if (periodStart != null) console.log(`  Period: ${periodStart} to ${periodEnd}`)
+  console.log(`  Period: ${payload.period_start_year ?? '—'} to ${payload.period_end_year ?? '—'}`)
 
-  const payload = {
-    week_of: weekOf,
-    parlor_title: parsed.title,
-    parlor_body: parsed.body,
-    parlor_quote: parsed.quote,
-    parlor_quote_attribution: parsed.quoteAttribution,
-    parlor_further_reading: parsed.furtherReading,
-    parlor_sources: parsed.sources,
-  }
-
-  if (periodStart != null) payload.period_start_year = periodStart
-  if (periodEnd != null) payload.period_end_year = periodEnd
-
-  const { data, error } = await supabase
-    .from('salon_weeks')
-    .upsert(payload, { onConflict: 'week_of' })
-    .select()
-
-  if (error) {
+  let weekId
+  try {
+    weekId = await upsertWeek(supabase, payload)
+  } catch (error) {
     console.error('Error inserting:', error.message)
     process.exit(1)
   }
-
-  const weekId = data[0].id
   console.log(`\nInserted/updated successfully (id: ${weekId})`)
 
   // Pre-generate TTS audio
   console.log('\nGenerating TTS audio...')
-  try {
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-    const res = await fetch(
-      `${process.env.VITE_SUPABASE_URL}/functions/v1/tts`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${serviceKey}`
-        },
-        body: JSON.stringify({ salon_week_id: weekId })
-      }
-    )
-    const result = await res.json()
-    if (result.url) {
-      console.log(`  Audio ready: ${result.url}`)
-    } else {
-      console.error('  Audio generation failed:', result.error || 'unknown error')
-    }
-  } catch (err) {
-    console.error('  Audio generation failed:', err.message)
+  const tts = await generateTTS(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, weekId, true)
+  if (tts.ok) {
+    console.log(`  Audio ready: ${tts.url}`)
+  } else {
+    console.error('  Audio generation failed:', tts.error)
   }
 }
 

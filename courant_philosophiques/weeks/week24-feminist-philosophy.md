@@ -1,3 +1,7 @@
+---
+period_start_year: 1949
+period_end_year: 2011
+---
 # Feminist Philosophy — De Beauvoir to Butler
 
 In 1946, sitting at the Café des Deux Magots in Paris, Simone de Beauvoir set out to write a short autobiographical essay. She intended to describe herself, and found she could not begin without answering a prior question: what has it meant to be a woman? Her own immediate response was that the question hardly applied. She had passed the agrégation in philosophy at twenty-one, finishing second to Sartre. She lived independently. Then she looked again at the world she had moved through, at its books, its laws, its assumptions, and saw that this world had always been a masculine one, and that her own freedom inside it had been the privilege of someone permitted to forget her sex. *The Second Sex* came out three years later.

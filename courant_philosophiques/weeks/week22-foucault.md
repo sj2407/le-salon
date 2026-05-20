@@ -1,3 +1,7 @@
+---
+period_start_year: 1961
+period_end_year: 1984
+---
 # Foucault: Knowledge and Power
 
 On 28 March 1757, Robert-François Damiens was taken in a cart to the Place de Grève in Paris. He had tried to stab Louis XV in January and been convicted of regicide, which the law punished as parricide, since the king was held to be the father of the realm. Over several hours, before tens of thousands of spectators, executioners tore flesh from his arms and thighs with red-hot pincers, poured molten lead and burning sulphur into the wounds, and harnessed four horses to his limbs to rend the body apart. Damiens was the last person drawn and quartered in France.

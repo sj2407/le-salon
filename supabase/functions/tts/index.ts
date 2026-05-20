@@ -100,7 +100,7 @@ Deno.serve(async (req: Request) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    const { salon_week_id } = await req.json();
+    const { salon_week_id, force } = await req.json();
     if (!salon_week_id) {
       return new Response(JSON.stringify({ error: "salon_week_id required" }), {
         status: 400,
@@ -111,15 +111,17 @@ Deno.serve(async (req: Request) => {
     const audioPath = `week-${salon_week_id}.mp3`;
     const publicUrl = `${Deno.env.get("SUPABASE_URL")}/storage/v1/object/public/salon-audio/${audioPath}`;
 
-    // Check if audio already exists
-    const { data: files } = await supabaseAdmin.storage
-      .from("salon-audio")
-      .list("", { search: `week-${salon_week_id}.mp3` });
+    // Reuse existing audio unless a forced regeneration was requested.
+    if (!force) {
+      const { data: files } = await supabaseAdmin.storage
+        .from("salon-audio")
+        .list("", { search: `week-${salon_week_id}.mp3` });
 
-    if (files && files.length > 0) {
-      return new Response(JSON.stringify({ url: publicUrl }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      if (files && files.length > 0) {
+        return new Response(JSON.stringify({ url: publicUrl }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     // Fetch essay text
@@ -156,12 +158,12 @@ Deno.serve(async (req: Request) => {
     const chunks = chunkText(text);
     console.log(`Generating audio for ${chunks.length} chunk(s), total ${text.length} chars`);
 
-    // Generate audio for each chunk sequentially
-    const audioBuffers: ArrayBuffer[] = [];
-    for (const chunk of chunks) {
-      const buf = await generateChunkAudio(chunk, openaiKey);
-      audioBuffers.push(buf);
-    }
+    // Generate chunks in parallel. Long essays produce 3-4 chunks; doing them
+    // sequentially pushes wall-clock time past the edge function's ~150s limit
+    // (observed 504s). Promise.all preserves order for concatenation.
+    const audioBuffers: ArrayBuffer[] = await Promise.all(
+      chunks.map((chunk) => generateChunkAudio(chunk, openaiKey))
+    );
 
     // Concatenate MP3 buffers
     const totalLength = audioBuffers.reduce((acc, buf) => acc + buf.byteLength, 0);
@@ -177,11 +179,15 @@ Deno.serve(async (req: Request) => {
       .from("salon-audio")
       .upload(audioPath, combined.buffer, {
         contentType: "audio/mpeg",
-        upsert: false,
+        upsert: force === true,
       });
 
     if (uploadError) {
       console.error("Upload error:", uploadError);
+      return new Response(
+        JSON.stringify({ error: `Audio upload failed: ${uploadError.message}` }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     return new Response(

@@ -1,4 +1,8 @@
-Derrida and Deconstruction
+---
+period_start_year: 1967
+period_end_year: 2004
+---
+# Derrida and Deconstruction
 
 On 21 October 1966, at Johns Hopkins University, a thirty-six-year-old Algerian-born philosopher named Jacques Derrida read a paper called "La structure, le signe et le jeu dans le discours des sciences humaines" ("Structure, Sign, and Play in the Discourse of the Human Sciences"). He was a last-minute substitute for an absent Belgian anthropologist and had written the lecture in less than two weeks. The conference, "The Languages of Criticism and the Sciences of Man," was organized by the new Humanities Center to introduce American academics to structuralism, the French intellectual movement of the previous decade. Roland Barthes, Jacques Lacan, and Jean Hyppolite, Derrida's old teacher, were there. By the end of the conference, structuralism had been overtaken by what would soon be called post-structuralism, with Derrida's lecture cited as its founding document.
 

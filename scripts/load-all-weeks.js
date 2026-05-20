@@ -2,11 +2,12 @@
 /* global process */
 
 /**
- * Batch-load all unloaded philosophy week entries.
+ * Idempotent sync of all philosophy week markdown files into salon_weeks.
  *
- * Scans courant_philosophiques/weeks/week*.md for files with week numbers,
- * computes the Monday date for each, loads missing ones into the database,
- * and triggers TTS audio generation.
+ * For each week file, decides one of:
+ *   insert - week not in DB -> upsert + generate audio
+ *   update - week in DB but content changed -> upsert + refresh audio if parlor_body changed
+ *   skip   - week in DB and content identical -> do nothing
  *
  * Usage:
  *   node scripts/load-all-weeks.js
@@ -23,12 +24,12 @@ import { join } from 'path'
 import { createClient } from '@supabase/supabase-js'
 import { config } from 'dotenv'
 import { parseMarkdown } from './lib/parse-markdown.js'
+import { buildPayload, upsertWeek, generateTTS, diffWeek, audioPlan } from './lib/load-week-core.js'
 
 config()
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
-const ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY
 
 if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
   console.error('Missing required environment variables: VITE_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY')
@@ -49,24 +50,12 @@ function weekToDate(weekNum) {
   return date.toISOString().split('T')[0]
 }
 
-async function generateTTS(weekId) {
-  try {
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/tts`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${ANON_KEY}`
-      },
-      body: JSON.stringify({ salon_week_id: weekId })
-    })
-    const result = await res.json()
-    if (result.url) {
-      return { ok: true, url: result.url }
-    }
-    return { ok: false, error: result.error || 'unknown error' }
-  } catch (err) {
-    return { ok: false, error: err.message }
-  }
+/** Whether a week's audio file already exists in storage. */
+async function audioExists(weekId) {
+  const { data } = await supabase.storage
+    .from('salon-audio')
+    .list('', { search: `week-${weekId}.mp3`, limit: 100 })
+  return Array.isArray(data) && data.some((o) => o.name === `week-${weekId}.mp3`)
 }
 
 async function main() {
@@ -95,78 +84,84 @@ async function main() {
     filePath: join(weeksDir, f.filename)
   }))
 
-  // Check which weeks are already loaded
+  // Fetch existing rows with all compared fields (single query)
   const { data: existingWeeks, error: fetchError } = await supabase
     .from('salon_weeks')
-    .select('week_of')
+    .select([
+      'id',
+      'week_of',
+      'parlor_title',
+      'parlor_body',
+      'parlor_quote',
+      'parlor_quote_attribution',
+      'parlor_further_reading',
+      'parlor_sources',
+      'period_start_year',
+      'period_end_year',
+    ].join(','))
 
   if (fetchError) {
     console.error('Error fetching existing weeks:', fetchError.message)
     process.exit(1)
   }
 
-  const existingDates = new Set(existingWeeks.map(w => w.week_of))
+  // Build a lookup map: week_of -> existing row
+  const existingByDate = new Map(existingWeeks.map(w => [w.week_of, w]))
 
-  const toLoad = weekEntries.filter(e => !existingDates.has(e.weekOf))
-  const skipped = weekEntries.filter(e => existingDates.has(e.weekOf))
+  console.log(`\nSyncing ${weekEntries.length} week(s)...\n`)
 
-  if (skipped.length > 0) {
-    console.log(`\nSkipping ${skipped.length} already loaded: ${skipped.map(s => `week${s.weekNum} (${s.weekOf})`).join(', ')}`)
-  }
-
-  if (toLoad.length === 0) {
-    console.log('\nAll weeks are already loaded. Nothing to do.')
-    process.exit(0)
-  }
-
-  console.log(`\nLoading ${toLoad.length} new week(s)...\n`)
-
+  let inserted = 0
+  let updated = 0
+  let skipped = 0
   let failures = 0
+  let audioFailures = 0
 
-  for (const entry of toLoad) {
+  for (const entry of weekEntries) {
     console.log(`--- Week ${entry.weekNum}: ${entry.weekOf} (${entry.filename}) ---`)
 
     try {
       const content = readFileSync(entry.filePath, 'utf-8')
       const parsed = parseMarkdown(content)
+      const payload = buildPayload(parsed, entry.weekOf)
 
-      console.log(`  Title: "${parsed.title}"`)
-      console.log(`  Body: ${parsed.body.length} chars`)
-      console.log(`  Quote: ${parsed.quote ? 'yes' : 'none'}`)
-      console.log(`  Further reading: ${parsed.furtherReading.length} items`)
-      console.log(`  Sources: ${parsed.sources.length} items`)
+      const existingRow = existingByDate.get(entry.weekOf) ?? null
+      const { action, audioNeedsRefresh } = diffWeek(existingRow, payload)
 
-      const { data, error } = await supabase
-        .from('salon_weeks')
-        .upsert(
-          {
-            week_of: entry.weekOf,
-            parlor_title: parsed.title,
-            parlor_body: parsed.body,
-            parlor_quote: parsed.quote,
-            parlor_quote_attribution: parsed.quoteAttribution,
-            parlor_further_reading: parsed.furtherReading,
-            parlor_sources: parsed.sources,
-          },
-          { onConflict: 'week_of' }
-        )
-        .select()
-
-      if (error) throw error
-
-      const weekId = data[0].id
-      console.log(`  Inserted (id: ${weekId})`)
-
-      // Generate TTS audio
-      console.log('  Generating TTS audio...')
-      const tts = await generateTTS(weekId)
-      if (tts.ok) {
-        console.log(`  Audio ready: ${tts.url}`)
+      let weekId
+      if (action === 'skip') {
+        skipped++
+        weekId = existingRow.id
       } else {
-        console.warn(`  Audio generation failed: ${tts.error} (non-fatal)`)
+        console.log(`  Decision: ${action}`)
+        console.log(`  Title: "${parsed.title}"`)
+        console.log(`  Body: ${parsed.body.length} chars`)
+        console.log(`  Quote: ${parsed.quote ? 'yes' : 'none'}`)
+        console.log(`  Further reading: ${parsed.furtherReading.length} items`)
+        console.log(`  Sources: ${parsed.sources.length} items`)
+        console.log(`  Period: ${payload.period_start_year ?? '—'} to ${payload.period_end_year ?? '—'}`)
+        weekId = await upsertWeek(supabase, payload)
+        console.log(`  ${action === 'insert' ? 'Inserted' : 'Updated'} (id: ${weekId})`)
+        if (action === 'insert') inserted++
+        else updated++
       }
 
-      console.log('  Done.\n')
+      // Audio: self-healing. Force a fresh file when content/narration changed;
+      // generate when the file is simply missing (even for an otherwise-unchanged week).
+      const present = await audioExists(weekId)
+      const plan = audioPlan(action, audioNeedsRefresh, present)
+      if (plan !== 'none') {
+        const force = plan === 'regenerate'
+        console.log(force ? '  (Re)generating audio...' : '  Audio missing — generating...')
+        const tts = await generateTTS(SUPABASE_URL, SERVICE_ROLE_KEY, weekId, force)
+        if (tts.ok) {
+          console.log(`  Audio ready: ${tts.url}`)
+        } else {
+          console.error(`  ::error:: Audio generation failed for ${entry.weekOf}: ${tts.error}`)
+          audioFailures++
+        }
+      }
+
+      if (action !== 'skip') console.log('  Done.\n')
     } catch (err) {
       console.error(`  FAILED: ${err.message}\n`)
       failures++
@@ -175,12 +170,12 @@ async function main() {
 
   // Summary
   console.log('=== Summary ===')
-  console.log(`  Loaded: ${toLoad.length - failures}`)
-  console.log(`  Skipped: ${skipped.length}`)
-  if (failures > 0) {
-    console.log(`  Failed: ${failures}`)
-    process.exit(1)
-  }
+  console.log(`  Inserted: ${inserted}`)
+  console.log(`  Updated:  ${updated}`)
+  console.log(`  Skipped:  ${skipped}`)
+  if (audioFailures > 0) console.log(`  Audio failures: ${audioFailures}`)
+  if (failures > 0) console.log(`  Failed:   ${failures}`)
+  if (failures > 0 || audioFailures > 0) process.exit(1)
 }
 
 main()
