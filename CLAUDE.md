@@ -98,6 +98,10 @@ When implementing new UI features, always include cancel/close functionality and
 
 After implementing features, run a quick manual interaction test and report any edge cases before marking complete. If session may be interrupted, note remaining work in a TODO comment.
 
+## Visual Review Output Format
+
+**Anything I have to review that involves images, layout, or visual composition (carousel proposals, mockups, design comparisons, slide previews) must be rendered as a standalone HTML file and opened in the browser.** I cannot visualize image-driven proposals from a chat description — I need to see the actual images laid out the way they'll appear. Write a single `.html` file (inline CSS, no build step), reference real image URLs or local asset paths, and open it with `open <path>`. Text-only proposals (script copy, code review notes, audits with no visual content) stay in chat.
+
 ## Development Rules
 
 ### Be Proactive, Not Just Reactive
