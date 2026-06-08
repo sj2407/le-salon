@@ -4,6 +4,10 @@ import { apiCall } from '../_shared/apiProxy.ts';
 import { getSecret } from '../_shared/vaultClient.ts';
 import { getCorsHeaders } from '../_shared/cors.ts';
 
+// Supabase Edge Functions global for background tasks: keeps the instance alive
+// until the promise settles, after the HTTP response has been returned.
+declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void };
+
 // ── Platform detection ──────────────────────────────────────────────
 
 function detectPlatform(url: string): string {
@@ -275,6 +279,10 @@ Image: ${metadata.image ? 'Yes' : 'No'}`;
         system: CLASSIFICATION_PROMPT,
         messages: [{ role: 'user', content: userMessage }],
       }),
+      // Safety valve: bound the background isolate's lifetime. A healthy Haiku
+      // call returns in ~1-3s; 12s never trips a good call, and on timeout the
+      // AbortError takes the existing catch path → needs_review (no data change).
+      signal: AbortSignal.timeout(12000),
     }),
   });
 
@@ -363,7 +371,112 @@ async function resolveUser(
   return { userId: user.id };
 }
 
+// ── Background enrichment ───────────────────────────────────────────
+// Runs AFTER the HTTP response via EdgeRuntime.waitUntil. Performs the exact
+// same work the handler used to do inline (unfurl → sanitize → classify ‖
+// rehost), then UPDATEs the skeleton row. The terminal row is byte-for-byte
+// identical to the old single-INSERT flow; only the timing and INSERT→UPDATE
+// differ. Must never throw out of here unhandled.
+
+async function enrichShare(
+  supabaseAdmin: ReturnType<typeof createClient>,
+  shareId: string,
+  url: string,
+  platform: string,
+): Promise<void> {
+  // Best-effort only: log if the isolate is torn down mid-enrichment. The
+  // reconcile_stuck_shares cron is the actual recovery guarantee, NOT this.
+  const onUnload = () => {
+    console.warn(`share-intake: shutdown during enrichment of share ${shareId}`);
+  };
+  addEventListener('beforeunload', onUnload);
+
+  // Hoisted so the failure path can persist whatever metadata was gathered
+  // before a crash (e.g. unfurl succeeded but the API key was missing), so a
+  // 'failed' row still carries a title/image rather than being bare.
+  let metadata: UnfurledMetadata = {
+    title: null, description: null, image: null, site_name: null, url,
+  };
+
+  try {
+    // Unfurl URL (verbatim from the old inline flow)
+    metadata = await unfurlUrl(url);
+    metadata.title = sanitizeForLlm(metadata.title, 200);
+    metadata.description = sanitizeForLlm(metadata.description, 500);
+    metadata.site_name = sanitizeForLlm(metadata.site_name, 100);
+
+    const anthropicKey = await getSecret(supabaseAdmin, 'anthropic_api_key');
+    if (!anthropicKey) throw new Error('Classification API key not configured');
+
+    // Classification + image re-hosting in parallel (verbatim)
+    let classifyError: string | null = null;
+    const [classResult, rehostedUrl] = await Promise.all([
+      classifyWithHaiku(url, platform, metadata, anthropicKey)
+        .catch((err: Error) => {
+          console.error('Haiku classification failed, storing for manual review:', err);
+          classifyError = err.message;
+          return null;
+        }),
+      metadata.image ? rehostImage(metadata.image, supabaseAdmin) : Promise.resolve(null),
+    ]);
+
+    if (rehostedUrl) metadata.image = rehostedUrl;
+
+    // Same two payload shapes as the old insert, now applied as an UPDATE.
+    // Both are a completed enrichment → enrichment_status 'done' (a classify
+    // failure is needs_review, not a failed enrichment).
+    const updatePayload = classifyError || !classResult
+      ? {
+          raw_metadata: metadata,
+          ai_classification: null,
+          ai_extracted_fields: { error: classifyError },
+          routed_to: null,
+          needs_review: true,
+          enrichment_status: 'done',
+        }
+      : {
+          raw_metadata: metadata,
+          ai_classification: classResult.classification,
+          ai_extracted_fields: {
+            ...classResult.fields,
+            confidence: classResult.confidence,
+          },
+          routed_to: classResult.routed_to,
+          needs_review: false,
+          enrichment_status: 'done',
+        };
+
+    const { error: updateError } = await supabaseAdmin
+      .from('pending_shares')
+      .update(updatePayload)
+      .eq('id', shareId);
+
+    if (updateError) throw new Error(`Enrichment update failed: ${updateError.message}`);
+  } catch (err) {
+    // Enrichment crashed entirely (key missing, update failed, etc.). The
+    // skeleton row already exists, so the share is never lost — flag it for
+    // manual review, persisting any metadata gathered so far. Scope to
+    // 'enriching' so we can never clobber a row already marked 'done'. Guard the
+    // update itself so a failure here can't escape as an unhandled rejection
+    // inside waitUntil (the reconcile_stuck_shares cron is the final backstop).
+    console.error('share-intake enrichment failed:', err);
+    try {
+      await supabaseAdmin
+        .from('pending_shares')
+        .update({ raw_metadata: metadata, needs_review: true, enrichment_status: 'failed' })
+        .eq('id', shareId)
+        .eq('enrichment_status', 'enriching');
+    } catch (updateErr) {
+      console.error('share-intake failed to mark share for review:', updateErr);
+    }
+  } finally {
+    removeEventListener('beforeunload', onUnload);
+  }
+}
+
 // ── Main handler ────────────────────────────────────────────────────
+// Synchronous phase: authorize, enforce rate-limit + dedup, insert a skeleton
+// row, and ACK immediately. Enrichment runs in the background (above).
 
 Deno.serve(async (req: Request) => {
   const corsHeaders = getCorsHeaders(req);
@@ -378,7 +491,7 @@ Deno.serve(async (req: Request) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    // Resolve user identity
+    // Resolve user identity (auth gate — must precede everything)
     const authResult = await resolveUser(req, supabaseAdmin);
     if ('error' in authResult) {
       return new Response(
@@ -415,119 +528,85 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Rate limiting: max 20 shares per hour
-    const { count: recentCount } = await supabaseAdmin
-      .from('pending_shares')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', userId)
-      .gte('created_at', new Date(Date.now() - 60 * 60 * 1000).toISOString());
+    // Pre-checks: rate-limit count + duplicate lookup run in parallel (both are
+    // independent reads scoped to userId). Insert stays strictly after them.
+    const [rateResult, dupResult] = await Promise.all([
+      supabaseAdmin
+        .from('pending_shares')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .gte('created_at', new Date(Date.now() - 60 * 60 * 1000).toISOString()),
+      supabaseAdmin
+        .from('pending_shares')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('source_url', url)
+        .eq('status', 'pending')
+        .maybeSingle(),
+    ]);
 
-    if ((recentCount ?? 0) >= 20) {
+    if ((rateResult.count ?? 0) >= 20) {
       return new Response(
         JSON.stringify({ error: 'Rate limit: max 20 shares per hour' }),
         { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Duplicate check
-    const { data: existingShare } = await supabaseAdmin
-      .from('pending_shares')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('source_url', url)
-      .eq('status', 'pending')
-      .maybeSingle();
-
-    if (existingShare) {
+    if (dupResult.data) {
       return new Response(
-        JSON.stringify({ message: 'Already pending', existing_id: existingShare.id }),
+        JSON.stringify({ message: 'Already pending', existing_id: dupResult.data.id }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Step 1: Detect platform
     const platform = detectPlatform(url);
 
-    // Step 2: Unfurl URL
-    const metadata = await unfurlUrl(url);
-
-    // Sanitize metadata before LLM prompt
-    metadata.title = sanitizeForLlm(metadata.title, 200);
-    metadata.description = sanitizeForLlm(metadata.description, 500);
-    metadata.site_name = sanitizeForLlm(metadata.site_name, 100);
-
-    // Step 3: Get API key and classify
-    const anthropicKey = await getSecret(supabaseAdmin, 'anthropic_api_key');
-    if (!anthropicKey) {
-      return new Response(
-        JSON.stringify({ error: 'Classification API key not configured' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Run classification + image re-hosting in parallel
-    let classification: ClassificationResult | null = null;
-    let classifyError: string | null = null;
-
-    const [classResult, rehostedUrl] = await Promise.all([
-      classifyWithHaiku(url, platform, metadata, anthropicKey)
-        .catch((err: Error) => {
-          console.error('Haiku classification failed, storing for manual review:', err);
-          classifyError = err.message;
-          return null;
-        }),
-      metadata.image ? rehostImage(metadata.image, supabaseAdmin) : Promise.resolve(null),
-    ]);
-
-    classification = classResult;
-    if (rehostedUrl) metadata.image = rehostedUrl;
-
-    // Step 4: Insert into pending_shares
-    const insertPayload = classifyError
-      ? {
-          user_id: userId,
-          source_url: url,
-          source_platform: platform,
-          raw_metadata: metadata,
-          ai_classification: null,
-          ai_extracted_fields: { error: classifyError },
-          routed_to: null,
-          status: 'pending',
-          needs_review: true,
-        }
-      : {
-          user_id: userId,
-          source_url: url,
-          source_platform: platform,
-          raw_metadata: metadata,
-          ai_classification: classification!.classification,
-          ai_extracted_fields: {
-            ...classification!.fields,
-            confidence: classification!.confidence,
-          },
-          routed_to: classification!.routed_to,
-          status: 'pending',
-          needs_review: false,
-        };
-
+    // Skeleton insert: only the synchronously-known columns. Enrichment fields
+    // keep their schema defaults (raw_metadata {}, ai_* null, needs_review false).
+    // enrichment_status='enriching' marks the row as in-progress so the UI and
+    // the realtime listener hold off until the background UPDATE lands.
     const { data: share, error: insertError } = await supabaseAdmin
       .from('pending_shares')
-      .insert(insertPayload)
+      .insert({
+        user_id: userId,
+        source_url: url,
+        source_platform: platform,
+        status: 'pending',
+        enrichment_status: 'enriching',
+      })
       .select('id')
       .single();
 
     if (insertError) {
+      // Race-safe dedup: a concurrent share of the same URL hit the partial
+      // unique index. Return the same "already pending" shape as the soft check.
+      if ((insertError as { code?: string }).code === '23505') {
+        const { data: existing } = await supabaseAdmin
+          .from('pending_shares')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('source_url', url)
+          .eq('status', 'pending')
+          .maybeSingle();
+        return new Response(
+          JSON.stringify({ message: 'Already pending', existing_id: existing?.id ?? null }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
       throw new Error(`Insert failed: ${insertError.message}`);
     }
 
+    // Enrich in the background — the function instance stays alive until this
+    // promise settles, independent of the iOS extension's lifecycle.
+    EdgeRuntime.waitUntil(enrichShare(supabaseAdmin, share.id, url, platform));
+
+    // Fast ack: the share sheet dismisses on this. No title yet (enrichment is
+    // still running); the client fills it in via the realtime UPDATE.
     return new Response(
       JSON.stringify({
         success: true,
         share_id: share.id,
-        classification: classification?.classification || null,
-        routed_to: classification?.routed_to || null,
-        title: classification?.fields?.title || metadata.title || url,
-        needs_review: !!classifyError,
+        status: 'enriching',
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

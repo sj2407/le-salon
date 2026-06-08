@@ -163,18 +163,45 @@ function AppContent() {
         supabase.realtime.setAuth(session.access_token)
       }
       shareCountRef.current = 0
+
+      // One banner per share, fired only once the row is enriched. A share now
+      // arrives as a skeleton INSERT (enrichment_status='enriching') with no
+      // title, then an UPDATE flips it to 'done'. Notify on whichever event
+      // carries the finished row, and never twice for the same share.
+      const notifyShare = (row) => {
+        shareCountRef.current += 1
+        const count = shareCountRef.current
+        const title = count > 1
+          ? `${count} items shared`
+          : (row?.ai_extracted_fields?.title || 'New item shared')
+        setShareNotification({ title })
+      }
+
       channel = supabase
         .channel('global-share-notify')
         .on('postgres_changes', {
           event: 'INSERT', schema: 'public', table: 'pending_shares',
           filter: `user_id=eq.${user.id}`
         }, (payload) => {
-          shareCountRef.current += 1
-          const count = shareCountRef.current
-          const title = count > 1
-            ? `${count} items shared`
-            : (payload.new?.ai_extracted_fields?.title || 'New item shared')
-          setShareNotification({ title })
+          // Skip the skeleton row; we notify when enrichment reaches a terminal
+          // state via the UPDATE below. A row inserted without enrichment_status
+          // (schema default 'done') still notifies here.
+          if (payload.new?.enrichment_status === 'enriching') return
+          notifyShare(payload.new)
+        })
+        .on('postgres_changes', {
+          event: 'UPDATE', schema: 'public', table: 'pending_shares',
+          filter: `user_id=eq.${user.id}`
+        }, (payload) => {
+          // Fire once, when enrichment first reaches a terminal state (done or
+          // failed — a failed share should not be silent). Not on later edits
+          // like status→confirmed, and not twice (a late failed→done won't
+          // re-fire). REPLICA IDENTITY FULL makes payload.old reliable.
+          const isTerminal = (s) => s === 'done' || s === 'failed'
+          if (isTerminal(payload.new?.enrichment_status) &&
+              !isTerminal(payload.old?.enrichment_status)) {
+            notifyShare(payload.new)
+          }
         })
         .subscribe()
     }

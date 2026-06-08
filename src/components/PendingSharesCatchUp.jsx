@@ -45,11 +45,15 @@ export const PendingSharesCatchUp = ({ onDone }) => {
 
   const fetchShares = useCallback(async () => {
     if (!user) return
+    // Exclude rows still being enriched in the background: they have no title,
+    // image, or classification yet, so showing or confirming one would create a
+    // garbage item. They surface once enrichment flips them off 'enriching'.
     const { data, error } = await supabase
       .from('pending_shares')
       .select('*')
       .eq('user_id', user.id)
       .eq('status', 'pending')
+      .neq('enrichment_status', 'enriching')
       .order('created_at', { ascending: true })
 
     if (!error && data) {
@@ -64,6 +68,28 @@ export const PendingSharesCatchUp = ({ onDone }) => {
   useEffect(() => {
     fetchShares()
   }, [fetchShares])
+
+  // Live fill-in: if a share finishes enriching while this screen is open,
+  // refetch so it appears (or updates) in place rather than only on remount.
+  useEffect(() => {
+    if (!user) return
+    const channel = supabase
+      .channel('catchup-share-updates')
+      .on('postgres_changes', {
+        event: 'UPDATE', schema: 'public', table: 'pending_shares',
+        filter: `user_id=eq.${user.id}`
+      }, (payload) => {
+        // Refetch when a share first reaches a terminal state (done or failed),
+        // so it appears in place rather than only on remount.
+        const isTerminal = (s) => s === 'done' || s === 'failed'
+        if (isTerminal(payload.new?.enrichment_status) &&
+            !isTerminal(payload.old?.enrichment_status)) {
+          fetchShares()
+        }
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [user, fetchShares])
 
   // If no shares after loading, skip straight to Salon
   useEffect(() => {

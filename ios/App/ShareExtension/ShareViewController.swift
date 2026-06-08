@@ -57,12 +57,12 @@ class ShareViewController: UIViewController {
         request.httpMethod = "POST"
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.timeoutInterval = 15
+        request.timeoutInterval = 8
 
         let body: [String: Any] = ["url": urlString]
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
 
-        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+        URLSession.shared.dataTask(with: request) { [weak self] _, response, error in
             DispatchQueue.main.async {
                 if let error = error {
                     self?.close(withError: "Failed to share: \(error.localizedDescription)")
@@ -75,13 +75,10 @@ class ShareViewController: UIViewController {
                 }
 
                 if httpResponse.statusCode == 200 {
-                    var title = "Link"
-                    if let data = data,
-                       let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                       let responseTitle = json["title"] as? String {
-                        title = responseTitle
-                    }
-                    self?.close(withSuccess: "Shared to Le Salon: \(title)")
+                    // The server now acks before enrichment finishes, so there is
+                    // no title to show yet. Confirm the save; details fill in
+                    // inside the app via realtime.
+                    self?.close(withSuccess: "Saved to Le Salon")
                 } else if httpResponse.statusCode == 401 {
                     self?.close(withError: "Token expired — regenerate in Le Salon settings")
                 } else if httpResponse.statusCode == 429 {
@@ -101,7 +98,7 @@ class ShareViewController: UIViewController {
     private func close(withSuccess message: String) {
         let alert = UIAlertController(title: "✓", message: message, preferredStyle: .alert)
         present(alert, animated: true) {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
                 self?.extensionContext?.completeRequest(returningItems: nil)
             }
         }
