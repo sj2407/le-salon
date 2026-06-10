@@ -16,12 +16,37 @@ import { TAG_TO_MEDIA_TYPE } from '../lib/coverSearchApis'
 import { Microphone, Plus } from '@phosphor-icons/react'
 import { ReviewNotesSection } from '../components/review-notes/ReviewNotesSection'
 import { ConfirmModal } from '../components/ConfirmModal'
+import { registerSessionCache } from '../lib/sessionCaches'
 
 // Module-level caches — survive unmount, instant render on return
 let _reviewsCache = null
 let _friendsCache = null
 let _commentsCache = null
 let _notesCache = null
+
+// Clear on sign-out / account switch so the next user never sees these.
+registerSessionCache(() => {
+  _reviewsCache = null
+  _friendsCache = null
+  _commentsCache = null
+  _notesCache = null
+})
+
+// One batched insert for recommendation notifications. Previously this was a
+// per-friend loop duplicated in handleSave and handleReaderSaveEdit (one awaited
+// insert per friend); now a single round trip. friendIds may be empty (no-op).
+const insertRecommendationNotifications = async ({ friendIds, actorId, actorName, reviewId, title }) => {
+  if (!friendIds || friendIds.length === 0) return
+  const rows = friendIds.map(friendId => ({
+    user_id: friendId,
+    type: 'recommendation',
+    actor_id: actorId,
+    reference_id: reviewId,
+    reference_name: title,
+    message: `${actorName} recommended ${title}`
+  }))
+  await supabase.from('notifications').insert(rows)
+}
 
 export const Reviews = () => {
   const { profile } = useAuth()
@@ -85,19 +110,21 @@ export const Reviews = () => {
       if (!books || books.length === 0) return
 
       const coverMap = Object.fromEntries(books.map(b => [b.review_id, b.cover_url]))
-      let updated = 0
 
-      for (const review of bookReviews) {
-        const betterUrl = coverMap[review.id]
-        // Never overwrite a manually-set cover; never overwrite with null
-        if (betterUrl && betterUrl !== review.image_url && !review.cover_manual) {
-          await supabase
-            .from('reviews')
-            .update({ image_url: betterUrl })
-            .eq('id', review.id)
-          updated++
-        }
-      }
+      // Apply per-row cover updates concurrently (was sequential awaits). Each
+      // update is still its own scoped query; only the latency changes.
+      // Never overwrite a manually-set cover; never overwrite with null.
+      const pendingCoverUpdates = bookReviews
+        .filter(review => {
+          const betterUrl = coverMap[review.id]
+          return betterUrl && betterUrl !== review.image_url && !review.cover_manual
+        })
+        .map(review => supabase
+          .from('reviews')
+          .update({ image_url: coverMap[review.id] })
+          .eq('id', review.id))
+      const updated = pendingCoverUpdates.length
+      await Promise.all(pendingCoverUpdates)
 
       if (updated > 0) {
         // Silent refresh — update state without spinner flash
@@ -444,18 +471,13 @@ export const Reviews = () => {
           .from('review_recommendations')
           .insert(recommendations)
 
-        for (const friendId of newFriendIds) {
-          await supabase
-            .from('notifications')
-            .insert({
-              user_id: friendId,
-              type: 'recommendation',
-              actor_id: profile.id,
-              reference_id: reviewId,
-              reference_name: formData.title,
-              message: `${profile.display_name} recommended ${formData.title}`
-            })
-        }
+        await insertRecommendationNotifications({
+          friendIds: newFriendIds,
+          actorId: profile.id,
+          actorName: profile.display_name,
+          reviewId,
+          title: formData.title
+        })
       } else {
         await supabase
           .from('review_recommendations')
@@ -609,18 +631,13 @@ export const Reviews = () => {
 
         if (recsError) throw recsError
 
-        for (const friendId of newFriendIds) {
-          await supabase
-            .from('notifications')
-            .insert({
-              user_id: friendId,
-              type: 'recommendation',
-              actor_id: profile.id,
-              reference_id: reviewId,
-              reference_name: title,
-              message: `${profile.display_name} recommended ${title}`
-            })
-        }
+        await insertRecommendationNotifications({
+          friendIds: newFriendIds,
+          actorId: profile.id,
+          actorName: profile.display_name,
+          reviewId,
+          title
+        })
       } else if (reviewId) {
         await supabase
           .from('review_recommendations')

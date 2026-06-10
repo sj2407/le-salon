@@ -139,18 +139,19 @@ export const ToDo = () => {
         .not('date_text', 'is', null)
 
       if (unparsed?.length) {
-        for (const activity of unparsed) {
-          const parsed = parseDate(activity.date_text)
-          if (parsed) {
-            await supabase
-              .from('activities')
-              .update({
-                date_parsed: parsed,
-                is_archived: parsed < today
-              })
-              .eq('id', activity.id)
-          }
-        }
+        // Apply per-row date backfills concurrently (was sequential awaits).
+        // Each update is still its own scoped query; only the latency changes.
+        const updates = unparsed
+          .map(activity => ({ activity, parsed: parseDate(activity.date_text) }))
+          .filter(({ parsed }) => parsed)
+          .map(({ activity, parsed }) => supabase
+            .from('activities')
+            .update({
+              date_parsed: parsed,
+              is_archived: parsed < today
+            })
+            .eq('id', activity.id))
+        await Promise.all(updates)
       }
     } catch (_err) {
       // silently handled

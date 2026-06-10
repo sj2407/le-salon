@@ -4,6 +4,7 @@ import { AnimatePresence, motion as Motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import { supabase } from '../lib/supabase'
+import { registerSessionCache } from '../lib/sessionCaches'
 import { TAG_ICONS, TAG_OPTIONS, TAG_LABELS } from '../lib/reviewConstants'
 import { TagAutocomplete } from '../components/TagAutocomplete'
 import { FilterDropdown } from '../components/FilterDropdown'
@@ -53,6 +54,12 @@ const fetchOgImage = async (url) => {
 // Module-level caches — survive unmount, instant render on return
 let _listeItemsCache = null
 let _listeRecsCache = null
+
+// Clear on sign-out / account switch so the next user never sees these.
+registerSessionCache(() => {
+  _listeItemsCache = null
+  _listeRecsCache = null
+})
 
 export const LaListe = () => {
   const { profile } = useAuth()

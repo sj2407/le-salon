@@ -2,6 +2,18 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { getCorsHeaders } from '../_shared/cors.ts';
 
+// Constant-time string compare (same pattern as spotify-sync) — used to verify
+// the service-role bearer without leaking length/contents via timing.
+function timingSafeEqual(a: string, b: string): boolean {
+  const enc = new TextEncoder();
+  const aBytes = enc.encode(a);
+  const bBytes = enc.encode(b);
+  if (aBytes.length !== bBytes.length) return false;
+  let diff = 0;
+  for (let i = 0; i < aBytes.length; i++) diff |= aBytes[i] ^ bBytes[i];
+  return diff === 0;
+}
+
 function chunkText(text: string, maxLen = 4000): string[] {
   const chunks: string[] = [];
   let remaining = text;
@@ -54,12 +66,13 @@ Deno.serve(async (req: Request) => {
     }
 
     const token = authHeader.replace("Bearer ", "");
-    // Decode JWT payload to check role (service_role bypasses user auth)
-    let isServiceRole = false;
-    try {
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      isServiceRole = payload.role === "service_role";
-    } catch { /* not a valid JWT, will fail user auth below */ }
+    // Service-role bypass (used by scripts/load-week.js). Verify by constant-time
+    // comparing the raw bearer against the real service-role key — NOT by decoding
+    // an unsigned `role` claim. The anon key is itself a signed JWT carrying a
+    // `role`, and an attacker can hand-craft `x.{"role":"service_role"}.y` with no
+    // valid signature, so trusting the decoded claim was an auth bypass.
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    const isServiceRole = serviceRoleKey.length > 0 && timingSafeEqual(token, serviceRoleKey);
 
     // Allow service-role key (used by load-week.js) to bypass user auth
     if (!isServiceRole) {

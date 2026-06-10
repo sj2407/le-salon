@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { Capacitor } from '@capacitor/core'
 import { supabase } from '../lib/supabase'
 import { getRedirectUrl } from '../lib/redirectUrl'
+import { clearAllSessionCaches } from '../lib/sessionCaches'
 
 const AuthContext = createContext({})
 
@@ -50,6 +51,12 @@ export const AuthProvider = ({ children }) => {
       // Token refresh for same user (e.g. tab switch) — don't update state
       // Allow SIGNED_IN events through even for same user (needed for PKCE code exchange)
       if (event === 'TOKEN_REFRESHED' && newUserId === currentUserIdRef.current) return
+
+      // User changed (sign-out → null, or account switch) — drop any module-level
+      // caches holding the previous user's data so the next user can't see them.
+      if (newUserId !== currentUserIdRef.current) {
+        clearAllSessionCaches()
+      }
 
       currentUserIdRef.current = newUserId
       setUser(session?.user ?? null)
